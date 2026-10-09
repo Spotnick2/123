@@ -11,11 +11,32 @@ Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 | 1 | Warlock spell IDs: learned ranks vs. existing IDs for demons, Fel Domination, Demonic Sacrifice, Soul Link, armors, Create Healthstone / Soulstone, Ritual of Summoning, Portal of Summoning (402265) | `book` | #1 | OPEN |
 | 2 | Active pet: GUID NPC id, family, pet bar | `pet` | #1 | OPEN |
 | 3 | Stones and shards: item IDs created, counts, cooldowns, item spells, cache misses | `stones` | #1 | OPEN |
-| 4 | Ritual of Summoning: channel start / stop / success, `INCOMING_SUMMON_CHANGED` and `IncomingSummonStatus` through accept, decline, timeout, arrival | `watch on` | #1 | OPEN |
+| 4 | Ritual of Summoning: channel start / stop / success, `INCOMING_SUMMON_CHANGED` and `IncomingSummonStatus` through accept, decline, timeout, arrival | `watch on` | #1 | OPEN (needs a Warlock with Ritual) |
 | 5 | Secure `unitN`: Ritual as a spell action, Soulstone as an item action, both click edges, in combat, after a roster reshuffle | `secure <unit>` | #2 | OPEN |
 | 6 | Trade: `InitiateTrade` from a click, `TRADE_SHOW` recipient, placing a stone from the event vs. from a click | `trade <unit>`, `tradeitem <id>` | #2 | OPEN |
-| 7 | Chat: PARTY / RAID / INSTANCE_CHAT sent typed vs. from a timer, seen by another player; incoming sender name / GUID, group and non-group whispers | `say <chan>`, `watch on` | #2 | OPEN |
-| 8 | Range and position for group members (near, far, offline, instanced): `UnitPosition`, `UnitDistanceSquared`, `CheckInteractDistance`, `UnitIsVisible`, `UnitInRange`, map, spell range | `range` | #2 | OPEN |
+| 7 | Chat: PARTY / RAID / INSTANCE_CHAT sent typed vs. from a timer, seen by another player; incoming sender name / GUID, group and non-group whispers | `say <chan>`, `watch on` | #2 | PARTIAL (run 1) |
+| 8 | Range and position for group members (near, far, offline, instanced): `UnitPosition`, `UnitDistanceSquared`, `CheckInteractDistance`, `UnitIsVisible`, `UnitInRange`, map, spell range | `range` | #2 | PARTIAL (run 1: far, open world) |
+
+## Run 1 — build 70334, 2026-10-09, open world, party of 2
+
+Player in Dun Morogh, party1 in Stormwind (about 2500 yd away), both on Eastern Kingdoms, no instance.
+The Warlock account's results were lost to a probe bug (fixed: results after a `/reload` went to a
+table nothing saved), so rows 1–3 and 5–6 need a re-run.
+
+**Range (row 8), all readable (not secret) unless noted:**
+- `UnitPosition("player")` / `("party1")`: plain x, y, 0, instance 0.
+- `UnitDistanceSquared("party1")`: `6380325, true`.
+- `CheckInteractDistance(party1, 4)`: `false`.
+- `UnitIsVisible`: `false`.
+- `C_Map.GetBestMapForUnit`: player 1426 (Dun Morogh), party1 1453 (Stormwind).
+- `UnitInRange`: **secret, both returns**, as GlassRaidFrames measured.
+- `C_Spell.IsSpellInRange(5697, party1)`: `nil`, because that character doesn't know the spell.
+- `C_IncomingSummon.IncomingSummonStatus("party1")`: `0` (None), readable.
+
+Still open: near (same spot), offline, inside an instance.
+
+**Chat (row 7):** `C_ChatInfo.SendChatMessage(..., "PARTY")` raised no error either typed or from a
+1 s timer. Still open: whether the other player received both.
 
 Already measured elsewhere (do not re-probe): see `docs/DESIGN.md` and
 `C:\Projects\References\PORTING-TBC-TO-FOREVER.md`.

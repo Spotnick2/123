@@ -41,9 +41,19 @@ end
 OneTwoThreeProbe = {}
 
 -- Fresh every session: a measurement belongs to the session and build it
--- was taken in.
-OneTwoThreeProbeDB = { results = {}, log = {} }
-local DB = OneTwoThreeProbeDB
+-- was taken in. SavedVariables load AFTER this file and replace the global
+-- with last session's table, so ADDON_LOADED puts this one back; without it
+-- every result after a /reload went to a table nothing saves.
+local DB = { results = {}, log = {} }
+OneTwoThreeProbeDB = DB
+
+local loader = CreateFrame("Frame")
+loader:RegisterEvent("ADDON_LOADED")
+loader:SetScript("OnEvent", function(self, _, name)
+    if name ~= "OneTwoThreeProbe" then return end
+    OneTwoThreeProbeDB = DB
+    self:UnregisterEvent("ADDON_LOADED")
+end)
 
 local function IsSecret(v)
     local test = G("issecretvalue")
