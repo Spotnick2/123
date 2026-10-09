@@ -36,8 +36,8 @@ explicit policy (option).
 - Announcements: "summoning X, click the portal" / "need clickers", configurable and throttled.
 
 ## Portal of Summoning
-Grimoire of Portal of Summoning (item 216748, teaches 402265) is in the database; whether it is
-live is unknown. Everything about it is hidden unless the spell is known.
+Grimoire of Portal of Summoning (item 216748; its use-spell 402265 is the generic "Learning" teach spell, not the portal) is in the database; whether it is
+live is unknown. Everything about it is hidden unless the spell is known; its own spell ID is still to be measured.
 
 ## Already answered by sibling addons
 | Topic | Where |

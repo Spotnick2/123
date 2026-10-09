@@ -2,13 +2,14 @@
 
 Run the probe on a Warlock: `pwsh Tools/deploy.ps1 -Probe`, restart the client (a new addon folder),
 `/console scriptErrors 1`, then the `/123probe` commands below. Results print in chat and are saved
-to `WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua` on `/reload` or logout.
+to `WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua` on `/reload` or logout, one entry per
+session under `runs` (earlier sessions are kept).
 
 Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
 | # | Question | Probe | Issue | Status |
 |---|---|---|---|---|
-| 1 | Warlock spell IDs: learned ranks vs. existing IDs for demons, Fel Domination, Demonic Sacrifice, Soul Link, armors, Create Healthstone / Soulstone, Ritual of Summoning, Portal of Summoning (402265) | `book` | #1 | PARTIAL (run 2: low level) |
+| 1 | Warlock spell IDs: learned ranks vs. existing IDs for demons, Fel Domination, Demonic Sacrifice, Soul Link, armors, Create Healthstone / Soulstone, Ritual of Summoning, Portal of Summoning (spell ID unknown; 402265 is only the Grimoire's "Learning" teach spell) | `book` | #1 | PARTIAL (run 2: low level) |
 | 2 | Active pet: GUID NPC id, family, pet bar | `pet` | #1 | PARTIAL (run 2: Voidwalker) |
 | 3 | Stones and shards: item IDs created, counts, cooldowns, item spells, cache misses | `stones` | #1 | PARTIAL (run 2) |
 | 4 | Ritual of Summoning: channel start / stop / success, `INCOMING_SUMMON_CHANGED` and `IncomingSummonStatus` through accept, decline, timeout, arrival | `watch on` | #1 | OPEN (needs a Warlock with Ritual) |
@@ -21,7 +22,7 @@ Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
 Player in Dun Morogh, party1 in Stormwind (about 2500 yd away), both on Eastern Kingdoms, no instance.
 The Warlock account's results were lost to a probe bug (fixed: results after a `/reload` went to a
-table nothing saved), so rows 1–3 and 5–6 need a re-run.
+table nothing saved), so rows 1–6 need a re-run (row 4 once the Warlock has Ritual).
 
 **Range (row 8), all readable (not secret) unless noted:**
 - `UnitPosition("player")` / `("party1")`: plain x, y, 0, instance 0.
