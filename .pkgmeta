@@ -1,0 +1,36 @@
+package-as: 123
+
+enable-nolib-creation: no
+
+manual-changelog:
+  filename: CHANGELOG.md
+  markup-type: markdown
+
+# Embedded libraries, pinned to a tag (never latest; bump only in a release
+# made anyway). No comment on a value line: the packager keeps it.
+externals:
+  Libs/LibGlass-1.0:
+    url: https://github.com/Spotnick2/LibGlass
+    tag: r5
+
+# YAML list. Each pattern matches the whole path from the package root.
+# The library's own ignore list is not honoured by CurseForge's packager,
+# so it is repeated here.
+ignore:
+  - .claude
+  - .github
+  - .gitignore
+  - .gitattributes
+  - AGENTS.md
+  - CLAUDE.md
+  - README.md
+  - CHANGELOG.md
+  - docs
+  - tests
+  - Tools
+  - Libs/LibGlass-1.0/tests
+  - Libs/LibGlass-1.0/docs
+  - Libs/LibGlass-1.0/Tools
+  - Libs/LibGlass-1.0/AGENTS.md
+  - Libs/LibGlass-1.0/CLAUDE.md
+  - Libs/LibGlass-1.0/README.md

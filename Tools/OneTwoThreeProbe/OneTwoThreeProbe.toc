@@ -1,0 +1,8 @@
+## Interface: 16001
+## Title: |cff9482c9123 Probe|r
+## Notes: Dev-only API probe for 123 on WoW: Forever. /123probe
+## Author: Spotnick
+## Version: dev
+## SavedVariables: OneTwoThreeProbeDB
+
+OneTwoThreeProbe.lua

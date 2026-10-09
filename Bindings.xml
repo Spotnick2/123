@@ -1,0 +1,5 @@
+<Bindings>
+    <Binding name="ONETWOTHREE_TOGGLE" category="123">
+        OneTwoThree_Toggle()
+    </Binding>
+</Bindings>

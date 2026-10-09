@@ -1,0 +1,21 @@
+name: Codex handoff
+description: Art or animation work handed to Codex.
+labels: ["codex-handoff", "art"]
+body:
+  - type: textarea
+    id: task
+    attributes:
+      label: Task
+      description: What Codex produces, and what it must not change (layout, secure buttons).
+    validations:
+      required: true
+  - type: textarea
+    id: references
+    attributes:
+      label: References
+      description: Mockups, motion studies, current screenshots. The handoff folder follows PortalRoulette-Codex-Handoff/START-HERE.txt.
+  - type: textarea
+    id: done
+    attributes:
+      label: Done when
+      description: Generator scripts (never hand-edited TGAs), tests green, deployed, a short report of what to check in game.

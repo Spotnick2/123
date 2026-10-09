@@ -1,0 +1,21 @@
+name: Measurement
+description: Something to confirm in game with the probe (/123probe) before code relies on it.
+labels: ["measure"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: What to measure
+      description: The API or behaviour, and why a feature depends on it.
+    validations:
+      required: true
+  - type: textarea
+    id: how
+    attributes:
+      label: How
+      description: Probe commands, setup (solo / group / instance / combat), what counts as an answer.
+  - type: textarea
+    id: result
+    attributes:
+      label: Result
+      description: Build, date, observations. Copy the final answer into docs/FOREVER-PROBE.md.

@@ -1,0 +1,17 @@
+## Interface: 16001
+## Title: 123
+## Notes: Warlock summons, demons & stones on one small glass bar.
+## Author: Spotnick
+## Version: @project-version@
+## SavedVariables: OneTwoThreeDB
+
+Libs\LibStub\LibStub.lua
+Libs\LibGlass-1.0\LibGlass-1.0.xml
+
+Core\Constants.lua
+Core\Compat.lua
+Core\DB.lua
+Core\Events.lua
+UI\Skin.lua
+UI\Bar.lua
+Core\Init.lua
