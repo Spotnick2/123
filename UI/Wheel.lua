@@ -7,6 +7,8 @@
 --     no demon out, all five spread from 8 to 4. The active demon is the
 --     centre, a 3D portrait (ns.Portrait), and is never offered again here.
 --   * Click a demon: summon it. Shift-click: Fel Domination first, once known.
+--   * Inferno and Ritual of Doom (Data.MAJOR_DEMONS) sit on smaller beads at
+--     half past 7 and half past 4, either side of the Sacrifice pill.
 --   * The pill under the centre: Demonic Sacrifice when the talent is known,
 --     else the Voidwalker's own Sacrifice (a pet action). Hidden otherwise.
 --
@@ -39,6 +41,8 @@ local NODE = 64
 local RADIUS = 132
 local CENTER = 124
 local SLOTS = 5
+local MAJOR = 50
+local MAJOR_RADIUS = 150
 
 local function clockOffset(clock, radius)
     local angle = math.rad(90 - (clock % 12) * 30)
@@ -70,10 +74,10 @@ local function plate(parent, anchor, size)
     return label
 end
 
-function Wheel:CreateNode(index)
+function Wheel:CreateNode(index, size)
     local root = self.root
     local button = SA.Create(root, "OneTwoThreeWheelNode" .. index)
-    button:SetSize(NODE, NODE)
+    button:SetSize(size or NODE, size or NODE)
     button:SetFrameLevel(root:GetFrameLevel() + 20)
 
     -- Everything visible on a mouse-disabled child of the button.
@@ -95,7 +99,11 @@ function Wheel:CreateNode(index)
     sub:SetPoint("TOP", label, "BOTTOM", 0, -1)
     sub:SetTextColor(1, 1, 1, 0.6)
 
-    local node = { index = index, button = button, glass = glass, icon = icon, label = label, sub = sub }
+    local count = Skin:Font(top, 12, "RIGHT")
+    count:SetPoint("BOTTOMRIGHT", -4, 3)
+
+    local node = { index = index, button = button, glass = glass, icon = icon, label = label, sub = sub,
+        count = count }
     button:SetScript("OnEnter", function() hover:Show() end)
     button:SetScript("OnLeave", function() hover:Hide() end)
     -- Insecure PostClick, after the cast: the wheel's job is done.
@@ -128,7 +136,7 @@ end
 
 function Wheel:CreateSacrifice()
     local button = SA.Create(self.root, "OneTwoThreeWheelSacrifice")
-    button:SetSize(170, 26)
+    button:SetSize(140, 26)
     button:SetFrameLevel(self.root:GetFrameLevel() + 20)
     button:SetPoint("TOP", self.center, "BOTTOM", 0, -40)
     local visual = CreateFrame("Frame", nil, button)
@@ -198,6 +206,15 @@ function Wheel:Create()
     for index = 1, SLOTS do
         self.nodes[index] = self:CreateNode(index)
     end
+    -- The major demons: fixed beads, placed once.
+    self.majors = {}
+    for i, major in ipairs(Data.MAJOR_DEMONS) do
+        local node = self:CreateNode(SLOTS + i, MAJOR)
+        node.spellID, node.fixed = major.spell, true
+        local x, y = clockOffset(major.clock, MAJOR_RADIUS)
+        node.button:SetPoint("CENTER", disc, "CENTER", x, y)
+        self.majors[i] = node
+    end
     self:CreateSacrifice()
 
     -- Escape: a proxy in UISpecialFrames whose OnHide closes the wheel. No
@@ -265,12 +282,17 @@ function Wheel:Resolve()
         node.known = node.spellID ~= nil and API.IsKnown(node.spellID)
         node.clock = node.spellID and arcClock(index, #list, from, to) or nil
     end
+    for _, node in ipairs(self.majors) do
+        node.known = API.IsKnown(node.spellID)
+    end
     self.active = active
 
+    -- Sacrifice is for the demons Data.DEMON_NPC knows: an Infernal or a
+    -- Doomguard (or an unmeasured demon) gets no pill.
     local sac = self.sacrifice
     sac.action, sac.text, sac.effectText = nil, nil, nil
-    if self.petOut then
-        local demon = active and demonName(active) or self:PetFamily()
+    if active then
+        local demon = demonName(active)
         if API.IsKnown(Data.DEMONIC_SACRIFICE) then
             sac.action = { type = "spell", spell = Data.DEMONIC_SACRIFICE }
             sac.text = API.SpellName(Data.DEMONIC_SACRIFICE) or "Demonic Sacrifice"
@@ -316,6 +338,9 @@ function Wheel:SyncSecure()
         SA.Apply(node.button, actions)
         node.button:SetShown(node.spellID ~= nil)
     end
+    for _, node in ipairs(self.majors) do
+        SA.Apply(node.button, { node.known and { type = "spell", spell = node.spellID } or nil })
+    end
     local sac = self.sacrifice
     SA.Apply(sac.button, { sac.action })
     sac.button:SetShown(sac.action ~= nil)
@@ -324,13 +349,16 @@ end
 -- Repaint everything non-secure. Safe in combat.
 function Wheel:Paint()
     if not self.root then return end
-    for _, node in ipairs(self.nodes) do
+    local beads = {}
+    for _, node in ipairs(self.nodes) do beads[#beads + 1] = node end
+    for _, node in ipairs(self.majors) do beads[#beads + 1] = node end
+    for _, node in ipairs(beads) do
         if node.spellID then
             node.icon:SetTexture(API.SpellIcon(node.spellID))
             node.icon:SetDesaturated(not node.known)
             node.icon:SetAlpha(node.known and 1 or 0.45)
-            node.label:SetText(demonName(node.spellID))
-            node.sub:SetText(node.known and "" or "Not learned")
+            node.label:SetText(node.fixed and (API.SpellName(node.spellID) or "") or demonName(node.spellID))
+            self:PaintReagent(node)
         end
     end
     if self.petOut then
@@ -350,6 +378,24 @@ function Wheel:Paint()
     local sac = self.sacrifice
     sac.label:SetText(sac.text or "")
     sac.effect:SetText(sac.effectText or "")
+end
+
+-- The reagent a summon consumes: "No <reagent>" under a learned bead that
+-- can't be cast for want of it, and how many are carried on the major
+-- demons' beads (their reagents are rare; shards are on the bar).
+function Wheel:PaintReagent(node)
+    local itemID = Data.REAGENT[node.spellID]
+    local have = itemID and API.ItemCount(itemID)
+    node.count:SetText(node.fixed and itemID and have or "")
+    if not node.known then
+        node.sub:SetText("Not learned")
+    elseif itemID and have == 0 then
+        local name = API.ItemName(itemID)
+        if not name then API.RequestItemData(itemID) end
+        node.sub:SetText("|cffff6060No " .. (name or "reagent") .. "|r")
+    else
+        node.sub:SetText("")
+    end
 end
 
 -- New state (pet, spells): resolve, re-arm (deferred in combat), repaint.
@@ -451,5 +497,11 @@ function Wheel:Initialize()
     end)
     ns.Events:Register("SPELLS_CHANGED", refresh)
     ns.Events:Register("PET_BAR_UPDATE", refresh)
+    ns.Events:Register("BAG_UPDATE_DELAYED", function()
+        if Wheel.open then Wheel:Paint() end
+    end)
+    ns.Events:Register("GET_ITEM_INFO_RECEIVED", function()
+        if Wheel.open then Wheel:Paint() end
+    end)
     ns.Events:Register("PLAYER_REGEN_DISABLED", function() Wheel:OnCombatStart() end)
 end

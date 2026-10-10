@@ -20,6 +20,10 @@ re-summons the last demon. In combat the wheel can't open, so both clicks summon
   Voidwalker, Felhunter, left to right); with none out, all five spread from 8 to 4. The active demon is the centre, a 3D portrait (AltStable's
   recipe: NPC id from the pet GUID, display ID through a PlayerModel, ModelScene actor), never
   offered again. Not learned yet: greyed out, no action.
+- Inferno and Ritual of Doom sit on smaller beads at half past 7 and half past 4, either side of
+  the pill, with their reagent count (Infernal Stone, Demonic Figurine). An Infernal or Doomguard
+  out is never the Demon button's demon and gets no Sacrifice pill.
+- A learned bead whose reagent is missing says so ("No Soul Shard": every summon but the Imp).
 - Click summons and closes the wheel; shift-click casts Fel Domination first, once learned.
 - The pill under the centre: Demonic Sacrifice when the talent is known, with the active demon's
   line of its description (Forever's effects differ from Vanilla's); otherwise the Voidwalker's

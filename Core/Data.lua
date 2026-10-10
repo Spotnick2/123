@@ -26,6 +26,24 @@ ns.Data = {
     -- the left, the Imp at the top, the Voidwalker and Felhunter on the right.
     WHEEL_ORDER = { 712, 713, 688, 697, 691 },
 
+    -- The major demons, on their own smaller beads low on the wheel (#4): not
+    -- pets to switch to, and never the Demon button's "last demon". Inferno
+    -- (level 50) drops an Infernal where you click; Ritual of Doom (60) is a
+    -- group ritual for a Doomguard. Both exist on Forever (run 2).
+    MAJOR_DEMONS = {
+        { spell = 1122, clock = 7.5 },     -- Inferno
+        { spell = 18540, clock = 4.5 },    -- Ritual of Doom
+    },
+
+    -- What each summon consumes (Wowhead's Forever database): a Soul Shard
+    -- for every demon but the Imp, an Infernal Stone for Inferno, a Demonic
+    -- Figurine for Ritual of Doom. The wheel shows what is missing.
+    REAGENT = {
+        [697] = 6265, [712] = 6265, [713] = 6265, [691] = 6265,
+        [1122] = 5565,      -- Infernal Stone
+        [18540] = 16583,    -- Demonic Figurine
+    },
+
     -- The active pet's NPC id (from its GUID) -> its summon spell, so the
     -- Demon button follows the demon that is out. Imp 416 and Voidwalker 1860
     -- measured on 70334 (#17); Succubus and Felhunter are Vanilla's NPC ids,

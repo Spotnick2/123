@@ -186,6 +186,10 @@ function API.ItemName(itemID)
     return nil
 end
 
+function API.RequestItemData(itemID)
+    pcall(C_Item.RequestLoadItemDataByID, itemID)
+end
+
 -- Raw count: may be secret in combat. Pass it to a FontString as is.
 function API.ItemCountRaw(itemID)
     local ok, count = pcall(C_Item.GetItemCount, itemID)
