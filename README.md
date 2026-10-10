@@ -20,6 +20,9 @@ summoning help, and a summon queue of everyone who typed **123**.
 - `/123 confirm`: ask (or stop asking) before re-summoning the demon that is out
 - `/123 debug`: client build, load state and what each bar button is armed with
 
+## Download
+[CurseForge: forever-123](https://www.curseforge.com/wow/addons/forever-123) (project 1735903).
+
 ## Requirements
 WoW: Forever (1.60.1). Uses [LibGlass-1.0](https://github.com/Spotnick2/LibGlass) and
 [LibShowcase-1.0](https://github.com/Spotnick2/LibShowcase), embedded.
