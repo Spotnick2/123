@@ -21,7 +21,7 @@ local _, ns = ...
 local Presentation = {}
 ns.Presentation = Presentation
 
-local NEEDS_MINOR = 3 -- r3, the first release: onGameUIShown, dialog-aware HideGameUI
+local NEEDS_MINOR = 4 -- r4: opt-in world-name hiding during the presentation
 
 function Presentation:Lib()
     if self.lib ~= nil then
@@ -40,6 +40,7 @@ function Presentation:Lib()
             -- A function: OneTwoThreeDB is replaced at login.
             db = function() return ns.db and ns.db.showcase end,
             hideUI = false, -- the UI hide is driven separately below
+            hideWorldNames = true,
             anchorStrata = "HIGH",
             onForcedExit = function(reason)
                 if ns.Wheel then ns.Wheel:OnForcedExit(reason) end

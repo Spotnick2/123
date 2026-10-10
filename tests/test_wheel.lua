@@ -138,7 +138,9 @@ before = #WoW.sounds
 click(imp.button)
 H.eq(ns.char.demon, 688, "the Imp picked on the wheel is the Demon button's now")
 H.eq(#WoW.sounds, before + 1, "clicking the Imp speaks")
-H.check(not Wheel.open and not Wheel.root:IsShown(), "summoning closes the wheel")
+H.check(not Wheel.open and not imp.button:IsMouseEnabled(), "summoning closes input immediately")
+WoW.tick(0.31)
+H.check(not Wheel.root:IsShown(), "the visual close finishes")
 
 -- Fel Domination, Demonic Sacrifice and Inferno, once learned.
 WoW.spells[18708].known = true
@@ -291,15 +293,23 @@ WoW.runTimers(1)
 
 -- With the real LibShowcase: opening hides the game UI and lifts the root.
 if haveLib then
-    H.check(ns.Presentation:Lib() ~= nil, "LibShowcase r3+ is picked up")
+    H.check(ns.Presentation:Lib() ~= nil, "LibShowcase r4+ is picked up")
+    WoW.cvars.UnitNameFriendlyPlayerName = "1"
+    WoW.cvars.UnitNameFriendlyMinionName = "1"
     H.slash("ONETWOTHREE", "wheel")
     H.check(Wheel.open, "/123 wheel opens it")
     H.eq(WoW.uiVisible, false, "the game UI is hidden")
+    H.eq(WoW.cvars.UnitNameFriendlyPlayerName, "0", "cinematic opening hides player world names")
+    H.eq(WoW.cvars.UnitNameFriendlyMinionName, "0", "cinematic opening hides minion world names")
     H.eq(Wheel.root:GetParent(), nil, "the root is lifted out of UIParent")
     H.slash("ONETWOTHREE", "wheel")
     WoW.runTimers(5)
     H.check(not Wheel.open, "and closes it")
     H.eq(WoW.uiVisible, true, "the game UI is back")
+    H.eq(WoW.cvars.UnitNameFriendlyPlayerName, "0", "names stay hidden through the camera exit")
+    WoW.tick(0.5) -- LibShowcase restores captured names after its 0.45 s exit.
+    H.eq(WoW.cvars.UnitNameFriendlyPlayerName, "1", "closing restores player world names")
+    H.eq(WoW.cvars.UnitNameFriendlyMinionName, "1", "closing restores minion world names")
     H.eq(Wheel.root:GetParent(), UIParent, "the root is back under UIParent")
 else
     io.write("test_wheel: LibShowcase part skipped (no checkout at " .. root .. ")\n")

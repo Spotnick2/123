@@ -16,7 +16,7 @@ H.check(ns.Skin:Glass() ~= nil, "LibGlass r5+ is picked up")
 H.check(ns.Bar.glass.top ~= nil, "the bar is glass")
 H.eq(H.messagesMatching("not found"), 0, "no fallback warning")
 
--- The Warlock colour (the wheel: fel green) at 60%, at the surface's own opacity (AltStable #220).
+-- The bar's Warlock colour at 60%, at its own opacity (AltStable #220).
 local function near(x, y) return math.abs(x - y) < 1e-6 end
 local function tinted(g, what, color)
     local want = color or { 0.53, 0.53, 0.93 }
@@ -27,7 +27,8 @@ local function tinted(g, what, color)
 end
 tinted(ns.Bar.glass, "the bar")
 ns.Wheel:Open()
-tinted(ns.Wheel.nodes[1].glass, "a wheel bead", ns.Colors.FEL)
+tinted(ns.Bar.glass, "the bar after opening the wheel")
+H.eq(ns.Wheel.nodes[1].ring:GetTexture(), ns.Media.WHEEL_NODE, "the wheel uses its own carved metal frame")
 ns.Wheel:Close()
 
 H.done("test_glass")

@@ -27,8 +27,8 @@
 --   * Each bead is the demon's live, idling face (ns.Portrait.Head: the
 --     creature's portrait camera, GlassUnitFrames' recipe), else the icon.
 --   * It opens two thirds of the way across the screen (owner), not centred.
---   * Art (title crest, rune ring) and animation layers are the Codex
---     handoff (#13); this is the structure and the fel colours.
+--   * Fel art and animation live in WheelEffects (#13). Secure buttons
+--     stay fixed; a normal close disarms mouse input before its short fade.
 -- ============================================================
 
 local _, ns = ...
@@ -37,6 +37,7 @@ local API = ns.API
 local SA = ns.SecureAction
 local Data = ns.Data
 local Skin = ns.Skin
+local FX = ns.WheelEffects
 
 local Wheel = { nodes = {}, open = false }
 ns.Wheel = Wheel
@@ -46,8 +47,9 @@ local ROOT_W, ROOT_H = 480, 600
 local DISC = 440
 local BEAD = 76
 -- The portrait model's square: inscribed in the bead, its edges under the
--- ring, whose hole is this square's inscribed circle (make_bead_ring.py's
--- INNER = 0.70 of the radius). A 3D model can't be masked.
+-- metal node (Media/Wheel_Node_256.tga, Tools/make_wheel_art.py), whose
+-- opaque band starts at this square's inscribed circle. A 3D model can't
+-- be masked.
 local MODEL = math.floor(BEAD * 0.695)
 local RADIUS = 162
 local CENTER = 170
@@ -82,15 +84,19 @@ function Wheel:CreateNode(index, entry)
     button:SetPoint("CENTER", self.disc, "CENTER", x, y)
 
     -- Everything visible on a mouse-disabled child of the button.
-    -- Sized, not SetAllPoints: LibGlass's Disc wants a square host with a
-    -- size when it is built, and the root has no anchor yet.
+    -- Sized before construction so texture extents are independent of
+    -- whether the root's anchors have resolved yet.
     local visual = CreateFrame("Frame", nil, button)
     visual:SetSize(BEAD, BEAD)
     visual:SetPoint("CENTER")
     visual:EnableMouse(false)
-    local glass = Skin:Disc(visual, "disc_small", FEL)
-    local top = glass.top or visual
+    local top = visual
+    local face = Skin:RoundTexture(visual, "BACKGROUND")
+    face:SetTexture(ns.Media.WHITE)
+    face:SetVertexColor(0.025, 0.035, 0.025, 0.95)
+    local halo = FX.Texture(visual, "WHEEL_GLOW", BEAD * 1.45, BEAD * 1.45, "BACKGROUND", true)
     local iconHost = CreateFrame("Frame", nil, top)
+    iconHost:EnableMouse(false)
     iconHost:SetSize(MODEL, MODEL)
     iconHost:SetPoint("CENTER")
     local icon = Skin:RoundTexture(iconHost, "ARTWORK")
@@ -100,16 +106,15 @@ function Wheel:CreateNode(index, entry)
     -- The ring above the model: an opaque dark band over its square edges,
     -- fel lines on both its edges (brighter on hover and when active).
     local ringFrame = CreateFrame("Frame", nil, top)
-    ringFrame:SetAllPoints(button)
+    ringFrame:SetAllPoints(visual)
     ringFrame:SetFrameLevel(iconHost:GetFrameLevel() + 5)
     ringFrame:EnableMouse(false)
     local ring = ringFrame:CreateTexture(nil, "ARTWORK")
     ring:SetAllPoints()
-    ring:SetTexture(ns.Media.BEAD_RING)
-    ring:SetVertexColor(0.05, 0.10, 0.04, 1)
+    ring:SetTexture(ns.Media.WHEEL_NODE)
     local edge = ringFrame:CreateTexture(nil, "OVERLAY")
     edge:SetAllPoints()
-    edge:SetTexture(ns.Media.BEAD_EDGE)
+    edge:SetTexture(ns.Media.WHEEL_NODE_LIGHT)
     edge:SetBlendMode("ADD")
     edge:SetVertexColor(FEL[1], FEL[2], FEL[3], 0.5)
     local count = Skin:Font(ringFrame, 12, "RIGHT")
@@ -117,28 +122,32 @@ function Wheel:CreateNode(index, entry)
 
     -- The name plate under the bead, as in the mockup, above the ring.
     local plate = CreateFrame("Frame", nil, top)
+    plate:EnableMouse(false)
     plate:SetFrameLevel(ringFrame:GetFrameLevel() + 1)
     plate:SetSize(BEAD + 30, 20)
-    plate:SetPoint("TOP", button, "BOTTOM", 0, 6)
-    local plateGlass = Skin:Pill(plate, FEL)
-    local label = Skin:Font(plateGlass.top or plate, 12, "CENTER")
+    plate:SetPoint("TOP", visual, "BOTTOM", 0, 6)
+    FX.Plate(plate)
+    local label = Skin:Font(plate, 12, "CENTER")
     label:SetPoint("CENTER")
     local sub = Skin:Font(top, 10, "CENTER")
     sub:SetPoint("TOP", plate, "BOTTOM", 0, -1)
-    sub:SetTextColor(1, 1, 1, 0.6)
+    sub:SetTextColor(0.78, 0.80, 0.74, 1)
+    local subPlate = FX.Texture(top, "WHEEL_PLATE", BEAD + 24, 15, "BACKGROUND")
+    subPlate:ClearAllPoints()
+    subPlate:SetPoint("TOP", plate, "BOTTOM", 0, 1)
+    subPlate:SetAlpha(0.90)
 
     local node = { index = index, entry = entry, spellID = entry.spell, major = entry.major,
-        button = button, glass = glass, icon = icon, portrait = portrait, label = label, sub = sub,
-        count = count, edge = edge }
+        button = button, visual = visual, icon = icon, portrait = portrait, label = label, sub = sub,
+        count = count, edge = edge, ring = ring, halo = halo, subPlate = subPlate }
     button:SetScript("OnEnter", function()
-        node.hovered = true
-        Wheel:PaintEdge(node)
+        if not Wheel.open then return end
+        node.hovered = true -- the effects clock eases the light in
         Wheel:Hint(Wheel:NodeHint(node))
         Wheel:Voice(node.spellID)
     end)
     button:SetScript("OnLeave", function()
         node.hovered = false
-        Wheel:PaintEdge(node)
         Wheel:Hint()
     end)
     -- Insecure PostClick, after the secure action: the active demon's bead
@@ -146,6 +155,9 @@ function Wheel:CreateNode(index, entry)
     -- something counts: a bead arms the left button, and shift only with
     -- Fel Domination (a secure button never falls back from shift-type1 to
     -- type1), so a right click or a bare shift-click does nothing.
+    -- No "is the wheel open" guard: a click that reached a secure button
+    -- has cast, and its bookkeeping (voice, the remembered demon) follows;
+    -- Close itself does nothing when the wheel is not open.
     button:SetScript("PostClick", function(_, mouseButton, down)
         if down or not node.known or mouseButton ~= "LeftButton" then return end
         if IsShiftKeyDown() and not node.shiftArmed and not node.held then return end
@@ -154,9 +166,9 @@ function Wheel:CreateNode(index, entry)
         -- demon never is).
         if not node.major then ns.char.demon = node.spellID end
         if node.held then
-            ns.Resummon:Show(button, node.spellID, function() Wheel:Close() end, Wheel.root)
+            ns.Resummon:Show(button, node.spellID, function() Wheel:Close(node.index) end, Wheel.root)
         else
-            Wheel:Close()
+            Wheel:Close(node.index)
         end
     end)
     return node
@@ -173,9 +185,8 @@ function Wheel:CreateCenter()
     center:SetSize(CENTER, CENTER)
     center:SetPoint("CENTER")
     center:EnableMouse(false)
-    local glass = Skin:Disc(center, "disc", FEL)
-    Skin:SetRimColor(glass, FEL[1], FEL[2], FEL[3], 0.9)
-    local top = glass.top or center
+    local top = center
+    self.centerVisual = center
     -- The model in the upper part of the centre, the three lines under it
     -- (in game the name sat on the model's feet).
     local modelHost = CreateFrame("Frame", nil, top)
@@ -183,6 +194,7 @@ function Wheel:CreateCenter()
     modelHost:SetPoint("CENTER", 0, 26)
     modelHost:EnableMouse(false)
     local iconHost = CreateFrame("Frame", nil, modelHost)
+    iconHost:EnableMouse(false)
     iconHost:SetSize(72, 72)
     iconHost:SetPoint("CENTER")
     self.centerIcon = Skin:RoundTexture(iconHost, "ARTWORK")
@@ -210,14 +222,24 @@ function Wheel:CreateHeader()
     local header = CreateFrame("Frame", nil, self.stage)
     header:SetSize(220, 56)
     header:SetPoint("BOTTOM", self.disc, "TOP", 0, 2)
-    local title = Skin:Font(header, 34, "CENTER")
+    header:EnableMouse(false)
+    local backing = FX.Texture(header, "WHEEL_GLOW", 238, 90, "BACKGROUND")
+    backing:SetVertexColor(0.02, 0.025, 0.02, 0.95)
+    local crest = FX.Texture(header, "WHEEL_CREST", 244, 122, "ARTWORK")
+    crest:SetPoint("CENTER", header, "CENTER", 0, 10)
+    -- The client's serif face, already used by Blizzard headings, on a plain
+    -- font string: a Skin:Font one is restyled by LibGlass's font changes.
+    local title = header:CreateFontString(nil, "OVERLAY")
+    title:SetFont("Fonts\\FRIZQT__.TTF", 38, "")
+    title:SetShadowOffset(1, -1)
+    title:SetShadowColor(0, 0, 0, 0.8)
     title:SetPoint("TOP", 0, 0)
     title:SetText("123")
     title:SetTextColor(0.92, 0.95, 0.88)
     local subtitle = Skin:Font(header, 12, "CENTER")
     subtitle:SetPoint("TOP", title, "BOTTOM", 0, -2)
     subtitle:SetText("DEMON SUMMONING")
-    subtitle:SetTextColor(FEL[1], FEL[2], FEL[3])
+    subtitle:SetTextColor(0.80, 0.82, 0.75)
     self.header = header
 
     -- A plain (insecure) close button, right of the title.
@@ -225,12 +247,21 @@ function Wheel:CreateHeader()
     close:SetSize(30, 30)
     close:SetPoint("LEFT", header, "RIGHT", 20, -6)
     close:SetFrameLevel(self.root:GetFrameLevel() + 20)
-    local closeGlass = Skin:Disc(close, "disc_small", FEL)
-    local x = Skin:Font(closeGlass.top or close, 15, "CENTER")
+    local visual = CreateFrame("Frame", nil, close)
+    visual:SetAllPoints()
+    visual:EnableMouse(false)
+    local face = Skin:RoundTexture(visual, "BACKGROUND")
+    face:SetTexture(ns.Media.WHITE)
+    face:SetVertexColor(0.03, 0.04, 0.025, 0.95)
+    FX.Texture(visual, "WHEEL_NODE", 30, 30)
+    local x = Skin:Font(visual, 15, "CENTER")
     x:SetPoint("CENTER", 0, 1)
     x:SetText("x")
     close:SetScript("OnClick", function() Wheel:Close() end)
+    close:SetScript("OnEnter", function() x:SetTextColor(0.65, 1, 0.25) end)
+    close:SetScript("OnLeave", function() x:SetTextColor(1, 1, 1) end)
     self.closeButton = close
+    self.closeVisual = visual
 end
 
 -- The strip under the ring: soul shards | what the hovered bead does.
@@ -238,8 +269,9 @@ function Wheel:CreateStrip()
     local strip = CreateFrame("Frame", nil, self.stage)
     strip:SetSize(380, 44)
     strip:SetPoint("TOP", self.disc, "BOTTOM", 0, -6)
-    local glass = Skin:Pill(strip, FEL)
-    local top = glass.top or strip
+    strip:EnableMouse(false)
+    FX.Plate(strip)
+    local top = strip
     local shard = top:CreateTexture(nil, "ARTWORK")
     shard:SetSize(22, 22)
     shard:SetPoint("LEFT", 16, 0)
@@ -282,8 +314,6 @@ function Wheel:Create()
     disc:SetSize(DISC, DISC)
     disc:SetPoint("CENTER", root, "CENTER", 0, 4)
     disc:EnableMouse(false)
-    local ring = Skin:Disc(disc, "disc", FEL)
-    Skin:SetRimColor(ring, FEL[1], FEL[2], FEL[3], 0.85)
     self.disc = disc
 
     self:CreateHeader()
@@ -292,6 +322,7 @@ function Wheel:Create()
     for index, entry in ipairs(Data.WHEEL) do
         self.nodes[index] = self:CreateNode(index, entry)
     end
+    self.effects = FX.Create(self)
 
     -- Escape: a proxy in UISpecialFrames whose OnHide closes the wheel. No
     -- parent, so hiding the game UI does not hide it.
@@ -445,8 +476,8 @@ function Wheel:Paint()
     if not self.root then return end
     for _, node in ipairs(self.nodes) do
         node.label:SetText(node.entry.label or demonName(node.spellID))
-        self:PaintEdge(node)
         self:PaintReagent(node)
+        self:PaintEdge(node)
     end
     if self.petOut then
         self.centerName:SetText(self.active and demonName(self.active) or self:PetFamily())
@@ -461,9 +492,9 @@ function Wheel:Paint()
     self.strip.shards:SetText(API.ItemCount(Data.SOUL_SHARD) or "")
 end
 
--- The ring's fel lines: bright when active or hovered.
+-- Frame states and eased hover light are painted by the effects layer.
 function Wheel:PaintEdge(node)
-    node.edge:SetVertexColor(FEL[1], FEL[2], FEL[3], (node.isActive or node.hovered) and 1 or 0.5)
+    FX.PaintNode(node, self.effects and self.effects.time or 0)
 end
 
 -- The reagent a summon consumes, or nil: vendor reagents are free with the
@@ -482,6 +513,7 @@ end
 function Wheel:PaintReagent(node)
     local itemID = reagentOf(node.spellID)
     local have = itemID and API.ItemCount(itemID)
+    node.missingReagent = node.known and itemID ~= nil and have == 0
     node.count:SetText(node.major and itemID and have or "")
     if not node.known then
         node.sub:SetText("Not learned")
@@ -492,6 +524,7 @@ function Wheel:PaintReagent(node)
     else
         node.sub:SetText("")
     end
+    node.subPlate:SetShown(node.sub:GetText() ~= "")
 end
 
 function Wheel:ItemName(itemID)
@@ -585,6 +618,8 @@ function Wheel:Open()
     end
     self:Create()
     if self.open then return end
+    if self:IsClosing() then self:FinishClose() end
+    self.pendingHide = false
     self.open = true
     self:Resolve()
     SA.RunSyncs() -- out of combat: attributes are current before the first click
@@ -592,8 +627,9 @@ function Wheel:Open()
     self:PaintPortraits()
     self:Hint()
     self:ApplyPosition()
-    self.stage:SetAlpha(1)
+    self:SetMouseEnabled(false) -- on once the beads have faded in (OnOpened)
     self.root:Show()
+    FX.Start(self.effects)
     ns.Presentation:Enter(self.root)
     self:SyncEscape()
     -- Re-hide the game UI once a dialog that kept it up has cleared.
@@ -609,28 +645,62 @@ function Wheel:StopTicker()
     end
 end
 
--- Everything closing shares: the prompt, the ticker, Escape, the models,
--- the root. Under lockdown the root can't hide: it fades and hides at
--- PLAYER_REGEN_ENABLED (pendingHide).
-function Wheel:Teardown()
+function Wheel:SetMouseEnabled(enabled)
+    for _, node in ipairs(self.nodes) do node.button:EnableMouse(enabled) end
+    self.center:EnableMouse(enabled)
+    self.closeButton:EnableMouse(enabled)
+end
+
+-- The opening has finished: every bead is visible, so it takes clicks.
+function Wheel:OnOpened()
+    if self.open and not InCombatLockdown() then self:SetMouseEnabled(true) end
+end
+
+-- The closing animation runs (one source of truth: the effects' phase).
+function Wheel:IsClosing()
+    return self.effects ~= nil and self.effects.phase == "closing"
+end
+
+-- Stop accepting input immediately. Visual children can finish a normal
+-- close, but combat/forced cleanup always bypasses that animation.
+function Wheel:BeginClose()
     self.open = false
     self:StopTicker()
     self.syncingEscape = true
     self.escape:Hide()
     self.syncingEscape = false
-    self.portrait:Hide()
     ns.Resummon:Hide()
+    if not InCombatLockdown() then self:SetMouseEnabled(false) end
+end
+
+function Wheel:FinishClose()
+    FX.Stop(self.effects, InCombatLockdown())
     if InCombatLockdown() then
-        self.stage:SetAlpha(0)
+        -- Its buttons still cast until combat ends: shown with their
+        -- portraits (hidden at OnCombatEnd), and said so.
         self.pendingHide = true
+        ns.Print("the demon wheel closes when combat ends.")
     else
+        self.pendingHide = false
+        self:HidePortraits()
         self.root:Hide()
     end
 end
 
-function Wheel:Close()
+function Wheel:HidePortraits()
+    self.portrait:Hide()
+    for _, node in ipairs(self.nodes) do node.portrait:Hide() end
+end
+
+function Wheel:Teardown()
+    self:BeginClose()
+    self:FinishClose()
+end
+
+function Wheel:Close(selected)
     if not self.open or InCombatLockdown() then return end
-    self:Teardown()
+    self:BeginClose()
+    FX.Close(self.effects, selected)
     ns.Presentation:Exit("close")
 end
 
@@ -641,7 +711,7 @@ end
 -- Combat entry: still unlocked inside PLAYER_REGEN_DISABLED (measured), so
 -- the wheel closes at once and no invisible targets are left in combat.
 function Wheel:OnCombatStart()
-    if not self.open then return end
+    if not self.open and not self:IsClosing() then return end
     self:Teardown()
     ns.Presentation:ForceExit("combat")
 end
@@ -649,15 +719,20 @@ end
 function Wheel:OnCombatEnd()
     if self.pendingHide and not self.open then
         self.pendingHide = false
+        self:HidePortraits()
         self.root:Hide()
-        self.stage:SetAlpha(1)
+        self:SetMouseEnabled(false) -- FX.Start restores every alpha on the next open
     end
 end
 
 -- Escape or Alt+Z through LibShowcase, or another forced restore.
-function Wheel:OnForcedExit()
+function Wheel:OnForcedExit(reason)
     ns.Presentation:MarkClosed()
-    if self.open then self:Teardown() end
+    if reason == "ui-shown" and self.open and not InCombatLockdown() then
+        self:Close()
+    elseif self.open or self:IsClosing() then
+        self:Teardown()
+    end
 end
 
 function Wheel:Initialize()

@@ -27,7 +27,7 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
   Doom), Imp, Succubus, Incubus. Each bead is the demon's live, idling face (a PlayerModel through the
   creature's own portrait camera: GlassUnitFrames' recipe, `UI/Portrait.lua`), else the icon. A
   model can't be masked, so it sits in the square inscribed in the bead, under an opaque ring
-  (`Media/Bead_*.tga`, `Tools/make_bead_ring.py`) whose hole is that square's inscribed circle.
+  (`Media/Wheel_Node_256.tga`, `Tools/make_wheel_art.py`) whose hole is that square's inscribed circle.
   Not learned yet: greyed, "Not learned", no action.
 - It opens two thirds of the way across the screen, not centred.
 - Hovering or clicking a demon plays one of its lines (`Data.VOICE`, file IDs on the Dialog
@@ -53,7 +53,26 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
 - Opening hides the game UI and runs the cinematic camera through LibShowcase-1.0
   (`UI/Presentation.lua`, from Portal Roulette); `/123 camera` turns both off. Escape, the close
   button, a cast or combat closes it.
-- Art (title crest, rune ring, demon portraits) and animation layers: the Codex handoff, #13.
+- Wheel art and motion (#13): a horned metal crest, charcoal field, etched rune band, slow fel
+  smoke and falling embers, opaque carved portrait rims, dark name plates and hint strip. The
+  central model stands over a flattened summoning sigil; its own fire remains the game's effect.
+  `UI/WheelEffects.lua` owns the decorative layers and one WorldFrame clock (so UI hiding does
+  not freeze it). Opening ignites the field and then the nodes clockwise over 0.58 s; hover
+  eases in/out over 0.16/0.24 s and grows the visual by 12% (inspired by Portal Roulette's Hearthstone);
+  the active rim breathes over 2.8 s. The outer runes sway four degrees out and back,
+  two seconds each way with eased reversals, matching Portal Roulette. Closing extinguishes over
+  0.30 s, with a final pulse on a clicked summon. Input stops immediately; combat, loading and
+  logout bypass animation. Secure positions, sizes and spells are unchanged.
+  Art regenerates with `python Tools/make_wheel_art.py`; `python Tools/preview_wheel.py` builds
+  an approximate offline study in `.release/`, with placeholders for the live models. The
+  sacrificed-demon frame colour is ready for #20's measured `node.sacrificed` state; no buff
+  detection is inferred here. Options/gear wiring belongs to #15.
+  The first in-game art review added a sculpted crest (`Tools/Art/Crest/crest-fel-v2.png`),
+  cloudy smoke, stronger metal bevels, a darker centre and backed status lines for crowds.
+  Capture tuning strengthened hover growth and reduced smoke layer opacity by about 38%,
+  keeping the runes, active rim and central fire distinct.
+  LibShowcase r4 hides world names while the cinematic presentation is up and restores
+  the player's CVar values when it ends. Nameplates are unaffected.
 
 ## Soulstone target
 Assign a group member (GUID), then cast explicitly. The secure `unitN` is rebuilt on roster

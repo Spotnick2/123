@@ -72,7 +72,7 @@ function Skin:ClassColor()
 end
 
 -- Every LibGlass surface of 123 wears the Warlock colour, or `color`
--- ({ r, g, b }: the wheel's fel green).
+-- ({ r, g, b }) when a caller asks for another.
 function Skin:ClassTint(g, color)
     local glass = self:Glass()
     if not (glass and glass.SetSurfaceTint and g) then return false end
@@ -80,45 +80,6 @@ function Skin:ClassTint(g, color)
     if color then r, gg, b = color[1], color[2], color[3] end
     local ok, done = pcall(glass.SetSurfaceTint, g, r * CLASS_SHADE, gg * CLASS_SHADE, b * CLASS_SHADE)
     return ok and done ~= false
-end
-
--- A round glass surface on a square host (the wheel). Returns g with g.top,
--- the frame to parent content above the glass to, and g.rim when there is
--- one. size: "disc" (128 px and up) or "disc_small".
-function Skin:Disc(host, size, color)
-    local glass = self:Glass()
-    if glass and glass.Disc then
-        local ok, g = pcall(glass.Disc, host, size)
-        if ok and g then
-            self:ClassTint(g, color)
-            return g
-        end
-    end
-    -- Fallback: a light edge circle under a dark translucent fill.
-    local g = {}
-    local rim = self:RoundTexture(host, "BACKGROUND", -7)
-    rim:SetTexture(WHITE)
-    rim:SetVertexColor(0.85, 0.8, 1, 0.45)
-    local fillHost = CreateFrame("Frame", nil, host)
-    fillHost:SetPoint("TOPLEFT", 2, -2)
-    fillHost:SetPoint("BOTTOMRIGHT", -2, 2)
-    fillHost:SetFrameLevel(host:GetFrameLevel())
-    local fill = self:RoundTexture(fillHost, "BACKGROUND", -6)
-    fill:SetTexture(WHITE)
-    fill:SetVertexColor(0.08, 0.06, 0.12, 0.72)
-    local top = CreateFrame("Frame", nil, host)
-    top:SetAllPoints()
-    top:SetFrameLevel(host:GetFrameLevel() + 10)
-    g.top, g.rim, g.fill = top, rim, fill
-    return g
-end
-
--- Tint a surface's rim toward an accent colour.
-function Skin:SetRimColor(g, r, gg, b, a)
-    local rim = g and g.rim
-    if rim and rim.SetVertexColor then
-        rim:SetVertexColor(r, gg, b, a or 1)
-    end
 end
 
 -- A rounded-rect glass pill. Returns g with g.top, the frame to parent

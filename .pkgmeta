@@ -14,7 +14,7 @@ externals:
     tag: r5
   Libs/LibShowcase-1.0:
     url: https://github.com/Spotnick2/LibShowcase
-    tag: r3
+    tag: r4
 
 # YAML list. Each pattern matches the whole path from the package root.
 # The library's own ignore list is not honoured by CurseForge's packager,

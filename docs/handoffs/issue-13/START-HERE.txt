@@ -1,0 +1,72 @@
+123 — ISSUE 13 WHEEL ART AND ANIMATION
+2026-10-10, branch feature/13-fel-wheel
+
+Reference: docs/mockups/wheel-fel.png and the owner's current in-game screenshot.
+Scope of this milestone: wheel, portrait frames, title crest, footer, and motion.
+Existing live portraits, central demon/fire, sounds, secure actions and layout stay.
+Source API check: C:\Projects\References\forever-api-1.60.1.70338.md.
+
+IMPLEMENTATION
+UI/WheelEffects.lua owns the decorative textures, state colours and clock.
+UI/Wheel.lua owns input and opening/closing. Normal close stops mouse input before
+the visual tail; combat entry interrupts both opening and closing synchronously.
+Reopening cancels the current close without a delayed callback. All portrait
+loads are cancelled on final cleanup. No protected frame moves or scales.
+
+Art: python Tools/make_wheel_art.py (existing Pillow/numpy environment).
+The sculpted crest source is Tools/Art/Crest/crest-fel-v2.png, created with the
+built-in image_gen tool; its exact prompt is beside it in prompt.txt. The
+generator preserves alpha and converts it to TGA. Other layers are procedural.
+12 deterministic, uncompressed bottom-origin RGBA TGAs, 6.39 MiB total.
+The opaque node band covers radius 0.70 through 0.98 to hide model corners.
+Never hand-edit a generated TGA. The old Bead_ assets/generator remain available
+but are no longer the wheel's material. No LibGlass changes or new dependencies.
+
+TUNING
+Open: 0.58 s; clockwise node delays 0.035 s; hover 0.16 s in / 0.24 s out.
+Hover grows each visual by 12%, inspired by PortalRoulette's HearthOrb. The
+portrait, opaque masking band and labels scale together; the button stays put.
+Close: 0.30 s; active pulse: 2.8 s. Three smoke/flame layers: 47/-39/61 s turns.
+Smoke/flame base alphas: 0.30/0.40/0.26; runes and node lighting stay distinct.
+Outer runes: Portal Roulette's four-degree sway, 2 s out / 2 s back, eased
+at both ends. Only the rune texture turns; the outer rim and nodes stay fixed.
+14 staggered falling embers on a 2.6 s cycle, each with a small impact glow.
+Frame states: normal green; active bright fel; unlearned grey; missing reagent
+red; sacrificed violet (rendering only, awaiting #20's measured state).
+
+VALIDATION
+pwsh tests/run.ps1: syntax + existing behavior + tests/test_wheel_effects.lua.
+The latter covers reopens, early closes, cinematic Escape, combat interruptions,
+deferred lockdown cleanup, stopping work when closed, and fixed secure geometry.
+python Tools/preview_wheel.py: .release/wheel-preview.png, wheel-preview-light.png
+and wheel-preview.gif. These are approximate art studies, NOT game captures;
+the seven face portraits and central demon are explicitly placeholders.
+
+IN-GAME REVIEW
+Owner screenshots confirmed the first deployed layout, floor
+alignment and opaque portrait masks. Crowded world names remained distracting.
+Second pass: sculpted crest, cloudy smoke instead of contour lines, stronger
+bevels, darker central backing, backed status lines and requested hover growth.
+Latest capture tuning: hover 8.5% -> 12%; smoke layer opacity reduced about 38%
+from 0.48/0.64/0.42. Runes, active rim, central fire and motion timings unchanged.
+LibShowcase r4 (https://github.com/Spotnick2/LibShowcase/issues/14) now owns
+world-name hiding and restoration for the cinematic wheel. Nameplates stay
+visible. The owner accepted this wheel milestone for a PR on 2026-10-10 after
+the brightness/hover tuning and rune sway.
+Portrait cameras are unchanged; keeping the Voidwalker and Succubus faces in
+view throughout their idle animation is a possible later refinement.
+
+IN-GAME SMOKE CHECKS (beyond the accepted visual review)
+/console scriptErrors 1, /reload, /123 wheel.
+Check ignition/closing on dark terrain and bright snow; hover all seven nodes;
+verify portraits have no square corners and the central imp's fire is intact.
+Test missing shards, active re-summon confirm/cancel, a learned summon, centre
+right-click, Escape/close, rapid reopen, and combat during opening/closing.
+With /123 camera toggled, repeat opening/closing: effects should keep moving
+while the game UI is hidden. Check the floor is beneath the model's feet.
+
+FOLLOW-UP BOUNDARIES
+Bar art is outside this wheel milestone. Gear/options integration remains #15.
+Sacrifice buff detection and its warning semantics remain #20; this pass exposes
+node.sacrificed for that measured implementation, without reading new aura APIs.
+Keep #13 open for its remaining bar art scope; this PR completes the wheel milestone.
