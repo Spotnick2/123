@@ -138,7 +138,9 @@ before = #WoW.sounds
 click(imp.button)
 H.eq(ns.char.demon, 688, "the Imp picked on the wheel is the Demon button's now")
 H.eq(#WoW.sounds, before + 1, "clicking the Imp speaks")
-H.check(not Wheel.open and not Wheel.root:IsShown(), "summoning closes the wheel")
+H.check(not Wheel.open and not imp.button:IsMouseEnabled(), "summoning closes input immediately")
+WoW.tick(0.31)
+H.check(not Wheel.root:IsShown(), "the visual close finishes")
 
 -- Fel Domination, Demonic Sacrifice and Inferno, once learned.
 WoW.spells[18708].known = true
