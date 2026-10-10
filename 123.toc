@@ -4,6 +4,7 @@
 ## Author: Spotnick
 ## Version: @project-version@
 ## SavedVariables: OneTwoThreeDB
+## X-Curse-Project-ID: 1735903
 
 Libs\LibStub\LibStub.lua
 Libs\LibGlass-1.0\LibGlass-1.0.xml
