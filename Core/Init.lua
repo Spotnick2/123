@@ -27,6 +27,11 @@ local function printDebugState()
     printMessage("build " .. valueToText(ns.API.ClientBuild()) .. ", combat=" .. valueToText(InCombatLockdown())
         .. ", loads=" .. valueToText(ns.db.loadCount)
         .. ", glass=" .. (ns.Skin:Glass() and "LibGlass" or "fallback"))
+    for _, button in ipairs(ns.Bar.buttons or {}) do
+        local action = button.action
+        printMessage(button.key .. ": " .. (action and (action.type .. " " .. (action.itemID or action.spellID)) or "nothing armed")
+            .. (ns.SecureAction.HasAction(button) and "" or " (no attributes)"))
+    end
     if #ns.API.eventFailures > 0 then
         printMessage("events refused: " .. table.concat(ns.API.eventFailures, ", "))
     end
@@ -61,6 +66,7 @@ ns.Events:Register("PLAYER_LOGIN", function()
         return
     end
 
+    ns.SecureAction.Initialize()
     ns.Bar:Initialize()
     registerSlashCommands()
 end)

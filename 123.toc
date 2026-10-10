@@ -10,8 +10,10 @@ Libs\LibGlass-1.0\LibGlass-1.0.xml
 
 Core\Constants.lua
 Core\Compat.lua
+Core\Data.lua
 Core\DB.lua
 Core\Events.lua
+Core\SecureAction.lua
 UI\Skin.lua
 UI\Bar.lua
 Core\Init.lua
