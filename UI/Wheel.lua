@@ -675,16 +675,21 @@ end
 
 function Wheel:FinishClose()
     FX.Stop(self.effects, InCombatLockdown())
-    self.portrait:Hide()
-    for _, node in ipairs(self.nodes) do node.portrait:Hide() end
     if InCombatLockdown() then
-        -- Its buttons still cast until combat ends: shown, and said so.
+        -- Its buttons still cast until combat ends: shown with their
+        -- portraits (hidden at OnCombatEnd), and said so.
         self.pendingHide = true
         ns.Print("the demon wheel closes when combat ends.")
     else
         self.pendingHide = false
+        self:HidePortraits()
         self.root:Hide()
     end
+end
+
+function Wheel:HidePortraits()
+    self.portrait:Hide()
+    for _, node in ipairs(self.nodes) do node.portrait:Hide() end
 end
 
 function Wheel:Teardown()
@@ -714,6 +719,7 @@ end
 function Wheel:OnCombatEnd()
     if self.pendingHide and not self.open then
         self.pendingHide = false
+        self:HidePortraits()
         self.root:Hide()
         self:SetMouseEnabled(false) -- FX.Start restores every alpha on the next open
     end

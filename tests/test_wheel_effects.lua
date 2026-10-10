@@ -122,11 +122,13 @@ wheel:OnForcedExit("combat")
 H.check(wheel.pendingHide, "late lockdown defers the protected hide")
 H.eq(imp.visual:GetAlpha(), 1, "late lockdown keeps the armed beads visible")
 H.eq(wheel.centerVisual:GetAlpha(), 1, "and the armed centre")
+H.check(imp.portrait.model:IsShown(), "with their portraits (Codex, #23)")
 H.eq(wheel.stage:GetAlpha(), 0, "the decoration fades")
 H.check(H.messagesMatching("closes when combat ends") > 0, "and the player is told")
 H.eq(#WoW.blocked, 0, "late lockdown performs no protected operation")
 WoW.leaveCombat()
 H.check(not wheel.root:IsShown() and not wheel.pendingHide, "combat end finishes the deferred hide")
+H.check(not imp.portrait.model:IsShown(), "and hides the portraits then")
 
 -- The idle repaint writes nothing for an unhovered, inactive bead.
 WoW.leaveCombat()
