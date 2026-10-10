@@ -53,13 +53,26 @@ local function itemAction(itemID)
 end
 
 -- Use the best stone carried, else create the best rank known.
-local function stone(items, creates)
-    local itemID = API.FirstCarried(items)
-    if itemID then
-        return itemAction(itemID)
+-- A stone button (#6), from its tiers (strongest first):
+--   * left: use the best stone carried, else create the best rank known;
+--   * right: create the best rank known when it beats the stone carried
+--     (stones are unique per rank, so a better one can be made while a
+--     lesser one is carried), else the same as the left.
+-- Returns the left action and the right one.
+local function stone(tiers)
+    local carried, itemID, known
+    for i, tier in ipairs(tiers) do
+        if not carried then
+            local id = API.FirstCarried(tier.items)
+            if id then carried, itemID = i, id end
+        end
+        if not known and API.IsKnown(tier.create) then known = i end
     end
-    local spellID = API.FirstKnown(creates)
-    return spellID and spellAction(spellID) or nil
+    local use = itemID and itemAction(itemID)
+    local create = known and spellAction(tiers[known].create)
+    local left = use or create
+    local better = create and use and known < carried and create or nil
+    return left, better or left
 end
 
 local showTooltip
@@ -100,10 +113,10 @@ local RESOLVE = {
         return nil
     end,
     soulstone = function()
-        return stone(Data.SOULSTONES, Data.CREATE_SOULSTONE)
+        return stone(Data.SOULSTONE_TIERS)
     end,
     healthstone = function()
-        return stone(Data.HEALTHSTONES, Data.CREATE_HEALTHSTONE)
+        return stone(Data.HEALTHSTONE_TIERS)
     end,
     summoning = function()
         local spellID = Data.RITUAL_OF_SUMMONING
@@ -173,6 +186,7 @@ end
 
 function Bar:RefreshButton(button)
     local action = button.action
+    button.upgradeMark:SetShown(button.upgrade ~= nil)
     local dim = action == nil or short(action)
     button.short = action ~= nil and dim
     button.icon:SetTexture(actionIcon(action, button.key))
@@ -312,27 +326,36 @@ end
 
 -- What a button is armed with; the Demon button's also depends on combat
 -- and on Sacrifice.
-local function syncKey(key, action, held, sacrifice)
+local function keyOf(action)
+    return action and (action.type .. ":" .. tostring(action[action.type])) or "none"
+end
+
+-- `upgrade`: a stone button's right click, when it differs from the left.
+local function syncKey(key, action, held, sacrifice, upgrade)
     if not action then return "none" end
-    return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
+    return keyOf(action) .. (held and ":held" or "")
         .. ((key == "demon" and SA.inCombat) and ":combat" or "")
         .. (sacrifice and ":sacrifice" or "")
+        .. (upgrade and (":right=" .. keyOf(upgrade)) or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
 function Bar:Sync()
     self:RememberPet()
     for _, button in ipairs(self.buttons) do
-        local action = RESOLVE[button.key]()
+        local action, right = RESOLVE[button.key]()
+        -- A stone's right click, when it does something the left doesn't.
+        local upgrade = right ~= action and right or nil
         local isDemon = button.key == "demon"
         local sacrifice = isDemon and self:SacrificeAction() or nil
         -- Held whatever Sacrifice does: the left click (and its binding)
         -- still asks before re-summoning the demon that is out (Codex, #19).
         local held = isDemon and self:HoldsDemon(action)
-        local actions = isDemon and demonActions(action, held, sacrifice) or { action }
-        local key = syncKey(button.key, action, held, sacrifice)
+        local actions = isDemon and demonActions(action, held, sacrifice) or { action, right }
+        local key = syncKey(button.key, action, held, sacrifice, upgrade)
         if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
+            button.upgrade = upgrade
         end
     end
     self:Refresh()
@@ -362,6 +385,14 @@ function showTooltip(button)
         if button.short then
             GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.action.spellID]) or "a reagent"),
                 1, 0.45, 0.45)
+        end
+        if button.upgrade then
+            GameTooltip:AddLine("Right-click: " .. actionName(button.upgrade) .. " (a better rank)",
+                0.45, 1, 0.45)
+            if short(button.upgrade) then
+                GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.upgrade.spellID])
+                    or "a reagent"), 1, 0.45, 0.45)
+            end
         end
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
@@ -429,6 +460,13 @@ function Bar:CreateButton(index, spec, parent)
     local count = ns.Skin:Font(overlay, 13, "RIGHT")
     count:SetPoint("BOTTOMRIGHT", -1, 2)
     button.count = count
+    -- A better rank can be created (right click): a small green "+".
+    local mark = ns.Skin:Font(overlay, 14, "RIGHT")
+    mark:SetPoint("TOPRIGHT", -1, -1)
+    mark:SetText("+")
+    mark:SetTextColor(0.45, 1, 0.45)
+    mark:Hide()
+    button.upgradeMark = mark
 
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)
