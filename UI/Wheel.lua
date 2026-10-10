@@ -44,7 +44,11 @@ ns.Wheel = Wheel
 local FEL = ns.Colors.FEL
 local ROOT_W, ROOT_H = 480, 600
 local DISC = 440
-local BEAD = 70
+local BEAD = 76
+-- The portrait model's square: inscribed in the bead, its edges under the
+-- ring, whose hole is this square's inscribed circle (make_bead_ring.py's
+-- INNER = 0.70 of the radius). A 3D model can't be masked.
+local MODEL = math.floor(BEAD * 0.695)
 local RADIUS = 162
 local CENTER = 170
 local HINT = "Select a demon to summon"
@@ -83,20 +87,33 @@ function Wheel:CreateNode(index, entry)
     local glass = Skin:Disc(visual, "disc_small", FEL)
     local top = glass.top or visual
     local iconHost = CreateFrame("Frame", nil, top)
-    iconHost:SetPoint("TOPLEFT", 5, -5)
-    iconHost:SetPoint("BOTTOMRIGHT", -5, 5)
+    iconHost:SetSize(MODEL, MODEL)
+    iconHost:SetPoint("CENTER")
     local icon = Skin:RoundTexture(iconHost, "ARTWORK")
     icon:Hide()
-    local portrait = ns.Portrait.Head(iconHost, BEAD - 10)
-    local hover = Skin:RoundTexture(iconHost, "OVERLAY")
-    hover:SetTexture(ns.Media.WHITE)
-    hover:SetVertexColor(FEL[1], FEL[2], FEL[3], 0.18)
-    hover:Hide()
-    local count = Skin:Font(top, 12, "RIGHT")
-    count:SetPoint("BOTTOMRIGHT", -4, 3)
+    local portrait = ns.Portrait.Head(iconHost, MODEL)
 
-    -- The name plate under the bead, as in the mockup.
+    -- The ring above the model: an opaque dark band over its square edges,
+    -- fel lines on both its edges (brighter on hover and when active).
+    local ringFrame = CreateFrame("Frame", nil, top)
+    ringFrame:SetAllPoints(button)
+    ringFrame:SetFrameLevel(iconHost:GetFrameLevel() + 5)
+    ringFrame:EnableMouse(false)
+    local ring = ringFrame:CreateTexture(nil, "ARTWORK")
+    ring:SetAllPoints()
+    ring:SetTexture(ns.Media.BEAD_RING)
+    ring:SetVertexColor(0.05, 0.10, 0.04, 1)
+    local edge = ringFrame:CreateTexture(nil, "OVERLAY")
+    edge:SetAllPoints()
+    edge:SetTexture(ns.Media.BEAD_EDGE)
+    edge:SetBlendMode("ADD")
+    edge:SetVertexColor(FEL[1], FEL[2], FEL[3], 0.5)
+    local count = Skin:Font(ringFrame, 12, "RIGHT")
+    count:SetPoint("BOTTOMRIGHT", -6, 5)
+
+    -- The name plate under the bead, as in the mockup, above the ring.
     local plate = CreateFrame("Frame", nil, top)
+    plate:SetFrameLevel(ringFrame:GetFrameLevel() + 1)
     plate:SetSize(BEAD + 30, 20)
     plate:SetPoint("TOP", button, "BOTTOM", 0, 6)
     local plateGlass = Skin:Pill(plate, FEL)
@@ -108,14 +125,16 @@ function Wheel:CreateNode(index, entry)
 
     local node = { index = index, entry = entry, spellID = entry.spell, major = entry.major,
         button = button, glass = glass, icon = icon, portrait = portrait, label = label, sub = sub,
-        count = count }
+        count = count, edge = edge }
     button:SetScript("OnEnter", function()
-        hover:Show()
+        node.hovered = true
+        Wheel:PaintEdge(node)
         Wheel:Hint(Wheel:NodeHint(node))
         Wheel:Voice(node.spellID)
     end)
     button:SetScript("OnLeave", function()
-        hover:Hide()
+        node.hovered = false
+        Wheel:PaintEdge(node)
         Wheel:Hint()
     end)
     -- Insecure PostClick, after the secure action: the active demon's bead
@@ -392,7 +411,7 @@ function Wheel:Paint()
     if not self.root then return end
     for _, node in ipairs(self.nodes) do
         node.label:SetText(node.entry.label or demonName(node.spellID))
-        Skin:SetRimColor(node.glass, FEL[1], FEL[2], FEL[3], node.isActive and 1 or 0.45)
+        self:PaintEdge(node)
         self:PaintReagent(node)
     end
     if self.petOut then
@@ -412,6 +431,11 @@ function Wheel:Paint()
         self.centerState:SetText("")
     end
     self.strip.shards:SetText(API.ItemCount(Data.SOUL_SHARD) or "")
+end
+
+-- The ring's fel lines: bright when active or hovered.
+function Wheel:PaintEdge(node)
+    node.edge:SetVertexColor(FEL[1], FEL[2], FEL[3], (node.isActive or node.hovered) and 1 or 0.5)
 end
 
 -- The reagent a summon consumes, or nil: vendor reagents are free with the

@@ -28,6 +28,10 @@ ns.Constants = {
 }
 
 ns.Media = {
+    -- The wheel bead's ring (Tools/make_bead_ring.py): an opaque band that
+    -- hides the portrait model's square edges, and its two edge lines.
+    BEAD_RING = ns.MediaRoot .. "Bead_Ring_128.tga",
+    BEAD_EDGE = ns.MediaRoot .. "Bead_Edge_128.tga",
     WHITE = "Interface\\Buttons\\WHITE8X8",
 }
 

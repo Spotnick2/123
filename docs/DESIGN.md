@@ -19,7 +19,9 @@ green. Left-click on the Demon button (or `/123 wheel`, or its key binding) open
 re-summons the last demon. In combat the wheel can't open, so both clicks summon.
 - Seven beads on a ring, clockwise from 12: Voidwalker, Felhunter, Inferno, Doomguard (Ritual of
   Doom), Imp, Succubus, Incubus. Each bead is the demon's live, idling face (a PlayerModel through the
-  creature's own portrait camera: GlassUnitFrames' recipe, `UI/Portrait.lua`), else the icon.
+  creature's own portrait camera: GlassUnitFrames' recipe, `UI/Portrait.lua`), else the icon. A
+  model can't be masked, so it sits in the square inscribed in the bead, under an opaque ring
+  (`Media/Bead_*.tga`, `Tools/make_bead_ring.py`) whose hole is that square's inscribed circle.
   Not learned yet: greyed, "Not learned", no action.
 - It opens two thirds of the way across the screen, not centred.
 - Hovering or clicking a demon plays one of its lines (`Data.VOICE`, file IDs on the Dialog

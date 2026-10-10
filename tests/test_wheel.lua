@@ -149,6 +149,13 @@ local pt = Wheel.root._points[#Wheel.root._points]
 H.eq(pt[1], "CENTER", "anchored on its centre")
 H.check(math.abs(pt[4] - UIParent:GetWidth() / 6) < 1e-6, "a sixth of the screen right of centre: two thirds across")
 
+-- A model can't be masked: its square sits inside the bead, under the
+-- ring, and only the ring's hole (its inscribed circle) shows it.
+local bead, side = imp.button:GetWidth(), imp.portrait.model:GetWidth()
+local outer, hole = bead / 2 * 63 / 64, bead / 2 * 0.70 * 63 / 64
+H.check(side * math.sqrt(2) / 2 <= outer, "the model's corners stay inside the bead")
+H.check(side / 2 >= hole - 0.5, "and its square covers the ring's hole")
+
 -- Portraits: each bead's PlayerModel shows its creature through the
 -- portrait camera. The stub client loads no model file: the icon, in time.
 local m = imp.portrait.model
