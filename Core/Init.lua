@@ -9,6 +9,13 @@ end
 ns.Print = printMessage
 
 BINDING_NAME_ONETWOTHREE_TOGGLE = "Show or hide the 123 bar"
+BINDING_NAME_ONETWOTHREE_WHEEL = "Open or close the demon wheel"
+
+function OneTwoThree_Wheel()
+    if ns.Wheel and ns.isWarlock then
+        ns.Wheel:Toggle()
+    end
+end
 
 function OneTwoThree_Toggle()
     if ns.Bar then
@@ -50,6 +57,13 @@ local function registerSlashCommands()
             if not ok then
                 printMessage("debug failed: " .. tostring(err))
             end
+        elseif cmd == "wheel" then
+            ns.Wheel:Toggle()
+        elseif cmd == "camera" then
+            local on = not ns.db.cinematicCamera
+            ns.db.cinematicCamera, ns.db.hideGameUI = on, on
+            printMessage(on and "the demon wheel opens with the cinematic camera and hides the game UI."
+                or "the demon wheel opens over the game, no camera.")
         elseif cmd == "confirm" then
             ns.db.confirmResummon = not ns.db.confirmResummon
             printMessage(ns.db.confirmResummon and "will ask before re-summoning the demon that is out."
@@ -58,7 +72,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | confirm (ask before re-summoning) | debug")
+            printMessage("/123 | wheel | camera (cinematic opening) | confirm (ask before re-summoning) | debug")
         end
     end
 end
@@ -73,5 +87,6 @@ ns.Events:Register("PLAYER_LOGIN", function()
 
     ns.SecureAction.Initialize()
     ns.Bar:Initialize()
+    ns.Wheel:Initialize()
     registerSlashCommands()
 end)

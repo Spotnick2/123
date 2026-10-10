@@ -363,6 +363,13 @@ function GetBuildInfo() return "1.60.1", WoW.build, "Sep 22 2026", 16001 end
 function GetRealmName() return "ClassicBetaPvE" end
 function UnitName() return "Testcase Surname", nil end
 WoW.petGUID = nil
+-- Pet bar: WoW.petActions[slot] = { name =, spellID = }.
+WoW.petActions = {}
+function GetPetActionInfo(slot)
+    local a = WoW.petActions[slot]
+    if not a then return nil end
+    return a.name, 136235, false, false, false, false, a.spellID
+end
 WoW.playerGUID = "Player-4613-00ABCDEF"
 function UnitGUID(unit)
     if unit == "pet" then return WoW.petGUID end

@@ -40,6 +40,61 @@ function Skin:Glass()
     return self.glass or nil
 end
 
+local CIRCLE = "Interface\\CharacterFrame\\TempPortraitAlphaMask"
+
+local function circleMask(frame, region)
+    local mask = frame:CreateMaskTexture()
+    mask:SetTexture(CIRCLE, "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
+    mask:SetAllPoints(region or frame)
+    return mask
+end
+
+-- A texture clipped to a circle covering `frame`.
+function Skin:RoundTexture(frame, layer, sublevel)
+    local texture = frame:CreateTexture(nil, layer or "ARTWORK", nil, sublevel or 0)
+    texture:SetAllPoints()
+    texture:AddMaskTexture(circleMask(frame, texture))
+    return texture
+end
+
+-- A round glass surface on a square host (the wheel). Returns g with g.top,
+-- the frame to parent content above the glass to, and g.rim when there is
+-- one. size: "disc" (128 px and up) or "disc_small".
+function Skin:Disc(host, size)
+    local glass = self:Glass()
+    if glass and glass.Disc then
+        local ok, g = pcall(glass.Disc, host, size)
+        if ok and g then
+            return g
+        end
+    end
+    -- Fallback: a light edge circle under a dark translucent fill.
+    local g = {}
+    local rim = self:RoundTexture(host, "BACKGROUND", -7)
+    rim:SetTexture(WHITE)
+    rim:SetVertexColor(0.85, 0.8, 1, 0.45)
+    local fillHost = CreateFrame("Frame", nil, host)
+    fillHost:SetPoint("TOPLEFT", 2, -2)
+    fillHost:SetPoint("BOTTOMRIGHT", -2, 2)
+    fillHost:SetFrameLevel(host:GetFrameLevel())
+    local fill = self:RoundTexture(fillHost, "BACKGROUND", -6)
+    fill:SetTexture(WHITE)
+    fill:SetVertexColor(0.08, 0.06, 0.12, 0.72)
+    local top = CreateFrame("Frame", nil, host)
+    top:SetAllPoints()
+    top:SetFrameLevel(host:GetFrameLevel() + 10)
+    g.top, g.rim, g.fill = top, rim, fill
+    return g
+end
+
+-- Tint a surface's rim toward an accent colour.
+function Skin:SetRimColor(g, r, gg, b, a)
+    local rim = g and g.rim
+    if rim and rim.SetVertexColor then
+        rim:SetVertexColor(r, gg, b, a or 1)
+    end
+end
+
 -- A rounded-rect glass pill. Returns g with g.top, the frame to parent
 -- content above the glass to.
 function Skin:Pill(host)

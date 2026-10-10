@@ -232,6 +232,7 @@ local function petSummon()
     local npcID = API.UnitNpcID("pet")
     return npcID and Data.DEMON_NPC[npcID] or nil
 end
+Bar.PetSummon = petSummon
 
 -- Remember the demon that is out (per character), so the Demon button
 -- summons it again once it is gone.
@@ -242,18 +243,27 @@ function Bar:RememberPet()
     end
 end
 
--- Out of combat, a click on the Demon button while that demon is out asks
--- first (ns.Resummon) instead of casting: the button is left unarmed. In
--- combat there is no prompt, so the button is armed as combat starts (a
--- demon that dies mid-fight can be summoned again).
+-- Out of combat, a right-click on the Demon button while that demon is out
+-- asks first (ns.Resummon) instead of casting: the right button is left
+-- unarmed.
 function Bar:HoldsDemon(action)
     return action ~= nil and ns.db.confirmResummon and not SA.inCombat
         and petSummon() == action.spellID
 end
 
+-- The Demon button: out of combat, left opens the wheel (PostClick, nothing
+-- armed) and right re-summons the remembered demon. The wheel can't open in
+-- combat, so there both buttons summon it, armed as combat starts (a demon
+-- that dies mid-fight can come straight back).
+local function demonActions(action, held)
+    if SA.inCombat then return { action, action } end
+    return { nil, not held and action or nil }
+end
+
 local function syncKey(action, held)
     if not action then return "none" end
     return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
+        .. (SA.inCombat and ":combat" or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
@@ -262,8 +272,9 @@ function Bar:Sync()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
         local held = button.key == "demon" and self:HoldsDemon(action)
+        local actions = button.key == "demon" and demonActions(action, held) or { action }
         local key = syncKey(action, held)
-        if key == button.syncKey or SA.Apply(button, { not held and action or nil }) then
+        if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.syncKey = action, held, key
         end
     end
@@ -281,8 +292,12 @@ function showTooltip(button)
     if button.armorState == "missing" then
         GameTooltip:AddLine("Not on you", 1, 0.45, 0.45)
     end
-    if button.held then
-        GameTooltip:AddLine("Already out. Click to summon it again (asks first)", 0.75, 0.8, 0.9)
+    if button.key == "demon" and not SA.inCombat then
+        GameTooltip:AddLine("Click: demon wheel", 0.75, 0.8, 0.9)
+        if button.action then
+            GameTooltip:AddLine("Right-click: " .. actionName(button.action)
+                .. (button.held and " (already out: asks first)" or ""), 0.75, 0.8, 0.9)
+        end
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
     else
@@ -365,11 +380,18 @@ function Bar:CreateButton(index, spec, parent)
 
     button:SetScript("OnEnter", showTooltip)
     button:SetScript("OnLeave", hideTooltip)
-    -- Insecure PostClick: runs after the secure action (none while held).
-    button:SetScript("PostClick", function(b, _, down)
-        if down or not b.held or InCombatLockdown() then return end
-        ns.Resummon:Show(b, b.action.spellID)
-    end)
+    -- Insecure PostClick, after the secure action: the Demon button's left
+    -- click opens the wheel, and its right click asks before re-summoning.
+    if spec.key == "demon" then
+        button:SetScript("PostClick", function(b, mouseButton, down)
+            if down or InCombatLockdown() then return end
+            if mouseButton == "RightButton" then
+                if b.held then ns.Resummon:Show(b, b.action.spellID) end
+            else
+                ns.Wheel:Toggle()
+            end
+        end)
+    end
     return button
 end
 

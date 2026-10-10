@@ -156,6 +156,12 @@ function API.HasAura(unit, ids, names)
     return nil
 end
 
+function API.SpellDescription(spellID)
+    local ok, text = pcall(C_Spell.GetSpellDescription, spellID)
+    if ok and API.Readable(text) and type(text) == "string" and text ~= "" then return text end
+    return nil
+end
+
 -- A LuaDurationObject for a Cooldown widget, or nil. Safe with secrets.
 function API.SpellCooldownDuration(spellID)
     local ok, duration = pcall(C_Spell.GetSpellCooldownDuration, spellID)

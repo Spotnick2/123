@@ -2,4 +2,7 @@
     <Binding name="ONETWOTHREE_TOGGLE" category="123">
         OneTwoThree_Toggle()
     </Binding>
+    <Binding name="ONETWOTHREE_WHEEL" category="123">
+        OneTwoThree_Wheel()
+    </Binding>
 </Bindings>

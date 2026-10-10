@@ -41,6 +41,14 @@ ns.Data = {
         { 696, 687 },                           -- Demon Skin
     },
 
+    -- The wheel (#4). Fel Domination is cast before a summon on shift-click.
+    -- Demonic Sacrifice is a talent; Forever's effects differ from Vanilla's
+    -- (#4), so they are read from the spell's own description. The
+    -- Voidwalker's own Sacrifice is a pet action (run 2: pet bar slot 5).
+    FEL_DOMINATION = 18708,
+    DEMONIC_SACRIFICE = 18788,
+    VOIDWALKER_SACRIFICE = 7812,
+
     CREATE_HEALTHSTONE = { 11730, 11729, 5699, 6202, 6201 },
     CREATE_SOULSTONE = { 20757, 20756, 20755, 20752, 693 },
     RITUAL_OF_SUMMONING = 698,
