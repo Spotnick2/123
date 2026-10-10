@@ -30,12 +30,12 @@ WoW.petActions[5] = { name = "Sacrifice", spellID = 7812 }
 
 local ns = H.loadAddon(haveLib and { libs = { libFile } } or nil)
 local Wheel = ns.Wheel
-local demonButton = ns.Bar.buttons[1]
 local function click(button, mouse) button:GetScript("PostClick")(button, mouse or "LeftButton", false) end
 local function attr(node, k) return node.button:GetAttribute(k) end
+local function openWheel() ns.Bar.wheelButton:GetScript("OnClick")() end
 
-click(demonButton)
-H.check(Wheel.open and Wheel.root:IsShown(), "the Demon button's left click opens the wheel")
+openWheel()
+H.check(Wheel.open and Wheel.root:IsShown(), "the Demons button opens the wheel")
 
 -- Seven beads, clockwise from 12, as in the mockup.
 local n = Wheel.nodes
@@ -56,7 +56,7 @@ H.check(ns.Resummon:IsShown(), "the re-summon question")
 H.eq(ns.Resummon.summon:GetAttribute("spell1"), 697, "armed with the Voidwalker")
 ns.Resummon.summon:GetScript("PostClick")(ns.Resummon.summon, "LeftButton", false)
 H.check(not Wheel.open, "Summon there closes the wheel too")
-click(demonButton)
+openWheel()
 
 -- Learned and not.
 H.eq(attr(imp, "spell1"), 688, "the Imp is armed")
@@ -134,7 +134,7 @@ WoW.spells[18788].known = true
 WoW.spells[1122].known = true
 WoW.spellDescriptions[18788] = "When activated, sacrifices your summoned Demon.\n\n"
     .. "Imp: Increases your Shadow damage by 15%.\n\nVoidwalker: Restores 2% of your total Mana every 4 sec."
-click(demonButton)
+openWheel()
 H.eq(attr(imp, "shift-type1"), "macro", "shift-click: a macro")
 H.eq(attr(imp, "shift-macrotext1"), "/cast Fel Domination\n/cast Summon Imp", "Fel Domination, then the summon")
 H.eq(attr(imp, "spell1"), 688, "a plain click still just summons")
@@ -214,7 +214,7 @@ WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
 H.eq(writes, 0, "no attribute work while the wheel is closed")
 imp.button.SetAttribute = orig
-click(demonButton)
+openWheel()
 
 -- Escape (the proxy in UISpecialFrames) closes it.
 H.check(Wheel.escape:IsShown() or ns.Presentation:IsGameUIHidden(), "Escape is armed")
@@ -232,7 +232,7 @@ end
 WoW.petGUID = nil
 WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
-click(demonButton)
+openWheel()
 H.eq(Wheel.centerName:GetText(), "No demon", "an empty centre")
 H.eq(center:GetAttribute("type2"), nil, "no Sacrifice without a demon")
 H.eq(attr(void, "spell1"), 697, "the Voidwalker can be summoned again")

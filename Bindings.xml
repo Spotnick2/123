@@ -5,6 +5,7 @@
     <Binding name="ONETWOTHREE_WHEEL" category="123">
         OneTwoThree_Wheel()
     </Binding>
+    <Binding name="CLICK OneTwoThreeBarButton1:LeftButton" category="123"/>
     <Binding name="CLICK OneTwoThreeBarButton1:RightButton" category="123"/>
     <Binding name="CLICK OneTwoThreeBarButton2:LeftButton" category="123"/>
     <Binding name="CLICK OneTwoThreeBarButton3:LeftButton" category="123"/>

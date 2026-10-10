@@ -44,7 +44,14 @@ end
 
 local t, v = armed("demon", 2)
 H.eq(t, "spell", "Demon's right click casts a spell"); H.eq(v, 688, "the only demon known: Imp")
-t = armed("demon"); H.eq(t, nil, "its left click casts nothing: it opens the wheel")
+t, v = armed("demon"); H.eq(v, 688, "its left click summons too")
+-- The wheel has its own button, "Demons", first on the bar.
+local wheelButton = Bar.wheelButton
+H.check(wheelButton and wheelButton._template == nil, "Demons is a plain button: it casts nothing")
+H.eq(wheelButton.label:GetText(), "Demons", "labelled Demons")
+wheelButton:GetScript("OnClick")()
+H.check(ns.Wheel.open, "it opens the wheel")
+ns.Wheel:Close()
 t, v = armed("armor"); H.eq(v, 696, "Armor: Demon Skin's highest rank")
 t, v = armed("soulstone"); H.eq(v, 693, "no soulstone carried: create one")
 t, v = armed("healthstone"); H.eq(v, 6201, "no healthstone carried: create one")

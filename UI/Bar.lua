@@ -1,7 +1,10 @@
 -- ============================================================
 -- Bar: the compact bar (storyboard panel 01, issue #3).
 --
---   [123] Demon · Armor · Soulstone · Healthstone · Summoning | shard count
+--   [123] Demons · Demon · Armor · Soulstone · Healthstone · Summoning | shards
+--
+-- "Demons" opens the demon wheel (Retail's Summon Demon flyout, with Fel
+-- Domination's icon: owner); it casts nothing, so it is a plain button.
 --
 -- Each button is a stationary secure button and the only mouse-enabled
 -- frame in its footprint; the bar itself takes no mouse, and the "123"
@@ -29,7 +32,8 @@ local PAD = 8
 local HANDLE_W = 34
 local SHARD_W = 56
 local LABEL_H = 12
-local WIDTH = PAD + HANDLE_W + PITCH * 5 + 1 + SHARD_W + PAD
+local SLOTS = 6             -- the wheel's button, then the five secure ones
+local WIDTH = PAD + HANDLE_W + PITCH * SLOTS + 1 + SHARD_W + PAD
 local HEIGHT = PAD + ICON + 2 + LABEL_H + PAD
 
 ------------------------------------------------------------
@@ -261,17 +265,17 @@ function Bar:SacrificeAction()
     return nil
 end
 
--- The Demon button:
---   * Left: the wheel (PostClick, nothing armed).
---   * Right: Demonic Sacrifice while a demon is out and the talent is known;
---     otherwise re-summon the remembered demon (asking first when it is
---     already out).
--- The wheel can't open in combat, so there the left button summons, armed
--- as combat starts (a demon that dies mid-fight comes straight back), and
--- the right one keeps Sacrifice, else summons too.
+-- The Demon button (the wheel has its own button):
+--   * Left: summon the remembered demon, asking first when it is already
+--     out (held: nothing armed, PostClick asks).
+--   * Right: Demonic Sacrifice while a demon is out and the talent is known
+--     (a Demonology Warlock sacrifices from the bar: owner); otherwise the
+--     same summon as the left.
+-- In combat there is no question: the summon is armed as combat starts (a
+-- demon that dies mid-fight comes straight back).
 local function demonActions(action, held, sacrifice)
-    if SA.inCombat then return { action, sacrifice or action } end
-    return { nil, sacrifice or (not held and action or nil) }
+    local summon = (SA.inCombat or not held) and action or nil
+    return { summon, sacrifice or summon }
 end
 
 -- What a button is armed with; the Demon button's also depends on combat
@@ -311,15 +315,13 @@ function showTooltip(button)
     if button.armorState == "missing" then
         GameTooltip:AddLine("Not on you", 1, 0.45, 0.45)
     end
-    if button.key == "demon" and not SA.inCombat then
-        GameTooltip:AddLine("Click: demon wheel", 0.75, 0.8, 0.9)
+    if button.key == "demon" and button.action then
+        GameTooltip:AddLine("Click: " .. actionName(button.action)
+            .. (button.held and " (already out: asks first)" or ""), 0.75, 0.8, 0.9)
         if button.sacrifice then
             local effect = ns.Wheel.SacrificeEffect(ns.Wheel.DemonName(petSummon()))
             GameTooltip:AddLine("Right-click: " .. actionName(button.sacrifice), 0.75, 0.8, 0.9)
             if effect then GameTooltip:AddLine(effect, 1, 1, 1, true) end
-        elseif button.action then
-            GameTooltip:AddLine("Right-click: " .. actionName(button.action)
-                .. (button.held and " (already out: asks first)" or ""), 0.75, 0.8, 0.9)
         end
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
@@ -360,7 +362,7 @@ function Bar:CreateButton(index, spec, parent)
     local button = SA.Create(parent, "OneTwoThreeBarButton" .. index)
     button:SetSize(ICON, ICON)
     button:SetFrameLevel(self:ContentLevel())
-    local x = PAD + HANDLE_W + PITCH * (index - 1) + (PITCH - ICON) / 2
+    local x = PAD + HANDLE_W + PITCH * index + (PITCH - ICON) / 2
     button:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, -PAD)
     button.key = spec.key
 
@@ -403,19 +405,51 @@ function Bar:CreateButton(index, spec, parent)
 
     button:SetScript("OnEnter", showTooltip)
     button:SetScript("OnLeave", hideTooltip)
-    -- Insecure PostClick, after the secure action: the Demon button's left
-    -- click opens the wheel, and its right click asks before re-summoning.
+    -- Insecure PostClick, after the secure action: a click on the Demon
+    -- button that armed nothing because the demon is out asks first.
     if spec.key == "demon" then
         button:SetScript("PostClick", function(b, mouseButton, down)
-            if down or InCombatLockdown() then return end
-            if mouseButton == "RightButton" then
-                if b.held and not b.sacrifice then ns.Resummon:Show(b, b.action.spellID) end
-            else
-                ns.Wheel:Toggle()
-            end
+            if down or InCombatLockdown() or not b.held then return end
+            if mouseButton == "RightButton" and b.sacrifice then return end
+            ns.Resummon:Show(b, b.action.spellID)
         end)
     end
     return button
+end
+
+-- "Demons": opens the wheel. A plain button (it casts nothing), left of
+-- the secure ones, with Fel Domination's icon (owner: Retail's Summon Demon
+-- flyout shows it).
+function Bar:CreateWheelButton()
+    local button = CreateFrame("Button", "OneTwoThreeBarWheel", self.frame)
+    button:SetSize(ICON, ICON)
+    button:SetFrameLevel(self:ContentLevel())
+    button:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD + HANDLE_W + (PITCH - ICON) / 2, -PAD)
+    button:RegisterForClicks("AnyUp")
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints()
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon:SetTexture(API.SpellIcon(Data.FEL_DOMINATION))
+    button.icon = icon
+    local highlight = button:CreateTexture(nil, "HIGHLIGHT")
+    highlight:SetAllPoints()
+    highlight:SetTexture(ns.Media.WHITE)
+    highlight:SetVertexColor(1, 1, 1, 0.15)
+    local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
+    label:SetPoint("TOP", button, "BOTTOM", 0, -2)
+    label:SetText("Demons")
+    label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
+    button.label = label
+    button:SetScript("OnClick", function() ns.Wheel:Toggle() end)
+    button:SetScript("OnEnter", function(b)
+        GameTooltip:SetOwner(b, "ANCHOR_TOP")
+        GameTooltip:SetText("Demons", 1, 1, 1)
+        GameTooltip:AddLine(InCombatLockdown() and "The demon wheel can't open in combat"
+            or "Click: the demon wheel", 0.75, 0.8, 0.9)
+        GameTooltip:Show()
+    end)
+    button:SetScript("OnLeave", hideTooltip)
+    self.wheelButton = button
 end
 
 function Bar:CreateHandle()
@@ -460,7 +494,7 @@ function Bar:StopMoving()
 end
 
 function Bar:CreateShards()
-    local left = PAD + HANDLE_W + PITCH * 5
+    local left = PAD + HANDLE_W + PITCH * SLOTS
     local divider = (self.glass.top or self.frame):CreateTexture(nil, "ARTWORK")
     divider:SetTexture(ns.Media.WHITE)
     divider:SetVertexColor(1, 1, 1, 0.18)
@@ -496,6 +530,7 @@ function Bar:Initialize()
 
     self.glass = ns.Skin:Pill(frame)
     self:CreateHandle()
+    self:CreateWheelButton()
     self.buttons = {}
     for index, spec in ipairs(self.BUTTONS) do
         self.buttons[index] = self:CreateButton(index, spec, frame)

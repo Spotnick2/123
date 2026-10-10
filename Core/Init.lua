@@ -11,6 +11,7 @@ ns.Print = printMessage
 BINDING_NAME_ONETWOTHREE_TOGGLE = "Show or hide the 123 bar"
 BINDING_NAME_ONETWOTHREE_WHEEL = "Open or close the demon wheel"
 -- Keys that click the bar's secure buttons (they cast, in combat too).
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:LeftButton"] = "Summon the last demon"
 _G["BINDING_NAME_CLICK OneTwoThreeBarButton1:RightButton"] = "Demonic Sacrifice, or summon the last demon"
 _G["BINDING_NAME_CLICK OneTwoThreeBarButton2:LeftButton"] = "Armor"
 _G["BINDING_NAME_CLICK OneTwoThreeBarButton3:LeftButton"] = "Soulstone"

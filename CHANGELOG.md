@@ -17,6 +17,7 @@
   cinematic camera and hidden game UI (`/123 camera` to turn off); closes on Escape, a cast or
   combat.
 - The re-summon prompt grows with its text (it overflowed).
-- Demon button right-click: Demonic Sacrifice while a demon is out and the talent is known, else
-  re-summon. Key bindings for it and for Armor, Soulstone, Healthstone and Ritual of Summoning.
+- A "Demons" button opens the wheel; the Demon button summons (right-click: Demonic Sacrifice
+  while a demon is out and the talent is known). Key bindings for both clicks and for Armor,
+  Soulstone, Healthstone and Ritual of Summoning.
 - Scaffold: the Warlock-only glass bar loads, `/123` and `/123 debug`, key binding.
