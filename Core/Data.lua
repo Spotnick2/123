@@ -11,22 +11,31 @@ local _, ns = ...
 ns.Data = {
     -- Best known first is the Demon button's pick until a demon has been out
     -- (the wheel, #4, picks from all of them).
+    -- Forever's Incubus is its own demon, apart from the Succubus: Summon
+    -- Incubus 713, level 20 (Wowhead's Forever database; unmeasured in game).
     DEMONS = {
         688,    -- Summon Imp
         697,    -- Summon Voidwalker
         712,    -- Summon Succubus
+        713,    -- Summon Incubus (Forever)
         691,    -- Summon Felhunter
     },
+    VOIDWALKER = 697,
+
+    -- The wheel, left to right over its top arc: the Succubus and Incubus on
+    -- the left, the Imp at the top, the Voidwalker and Felhunter on the right.
+    WHEEL_ORDER = { 712, 713, 688, 697, 691 },
 
     -- The active pet's NPC id (from its GUID) -> its summon spell, so the
     -- Demon button follows the demon that is out. Imp 416 and Voidwalker 1860
-    -- measured on 70334 (#17); the others are Vanilla's NPC ids, and Forever's
-    -- Incubus is still unknown (#4).
+    -- measured on 70334 (#17); Succubus and Felhunter are Vanilla's NPC ids,
+    -- the Incubus Wowhead's Forever database's.
     DEMON_NPC = {
-        [416] = 688,    -- Imp
-        [1860] = 697,   -- Voidwalker
-        [1863] = 712,   -- Succubus
-        [417] = 691,    -- Felhunter
+        [416] = 688,     -- Imp
+        [1860] = 697,    -- Voidwalker
+        [1863] = 712,    -- Succubus
+        [185317] = 713,  -- Incubus (Forever)
+        [417] = 691,     -- Felhunter
     },
 
     -- Armor families, preferred first, each highest rank first. The button

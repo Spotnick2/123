@@ -140,7 +140,7 @@ end
 ------------------------------------------------------------
 
 local SPELLS = {
-    { 688, "Summon Imp" }, { 697, "Summon Voidwalker" }, { 712, "Summon Succubus" },
+    { 688, "Summon Imp" }, { 697, "Summon Voidwalker" }, { 712, "Summon Succubus" }, { 713, "Summon Incubus (Forever)" },
     { 691, "Summon Felhunter" }, { 1122, "Inferno" }, { 18540, "Ritual of Doom" },
     { 18708, "Fel Domination" }, { 18788, "Demonic Sacrifice" }, { 19028, "Soul Link" },
     { 698, "Ritual of Summoning" }, { 402265, "Grimoire: Portal of Summoning (learn)" },

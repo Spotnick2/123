@@ -16,8 +16,8 @@ Every button is a stationary secure button; visuals refresh in combat, attribute
 ## Demon wheel
 Left-click on the Demon button (or `/123 wheel`, or its key binding) opens it; right-click
 re-summons the last demon. In combat the wheel can't open, so both clicks summon.
-- The demons you can switch to sit at 12, 9 and 3, in bar order (Imp, Voidwalker, Succubus,
-  Felhunter), plus 6 when none is out. The active demon is the centre, a 3D portrait (AltStable's
+- The demons you can switch to spread evenly over the top arc, 9 to 3 (Succubus, Incubus, Imp,
+  Voidwalker, Felhunter, left to right); with none out, all five spread from 8 to 4. The active demon is the centre, a 3D portrait (AltStable's
   recipe: NPC id from the pet GUID, display ID through a PlayerModel, ModelScene actor), never
   offered again. Not learned yet: greyed out, no action.
 - Click summons and closes the wheel; shift-click casts Fel Domination first, once learned.
@@ -27,7 +27,9 @@ re-summons the last demon. In combat the wheel can't open, so both clicks summon
 - Opening hides the game UI and runs the cinematic camera through LibShowcase-1.0
   (`UI/Presentation.lua`, from Portal Roulette); `/123 camera` turns both off. Escape, the close
   button, a summon or combat closes it.
-- Incubus (Forever) is not on the wheel until its IDs are measured. Art and animation: #13.
+- Forever's Incubus is its own demon: Summon Incubus 713, NPC 185317 (Wowhead's Forever database,
+  unmeasured). A pet with an unknown NPC id is shown by its family and every demon stays on offer.
+  Art and animation: #13.
 
 ## Soulstone target
 Assign a group member (GUID), then cast explicitly. The secure `unitN` is rebuilt on roster

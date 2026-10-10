@@ -2,9 +2,10 @@
 -- Wheel: the demon wheel (storyboard top, issue #4). Opens from the Demon
 -- button.
 --
---   * The demons you can switch to sit at 12, 9 and 3 (and 6 when no demon
---     is out), in Data.DEMONS order; the active demon is the centre, a 3D
---     portrait (ns.Portrait), and is never offered again here.
+--   * The demons you can switch to spread evenly over the top arc, from 9
+--     to 3, in Data.WHEEL_ORDER (the Sacrifice pill takes 6 o'clock); with
+--     no demon out, all five spread from 8 to 4. The active demon is the
+--     centre, a 3D portrait (ns.Portrait), and is never offered again here.
 --   * Click a demon: summon it. Shift-click: Fel Domination first, once known.
 --   * The pill under the centre: Demonic Sacrifice when the talent is known,
 --     else the Voidwalker's own Sacrifice (a pet action). Hidden otherwise.
@@ -13,8 +14,9 @@
 --   * The root parents secure buttons, so it is protected: it opens and
 --     closes out of combat only. InCombatLockdown() is still false inside
 --     PLAYER_REGEN_DISABLED, so the wheel closes synchronously there.
---   * Secure buttons sit at fixed clock positions and never move; which
---     demon each one summons is written by the coalesced sync.
+--   * Secure buttons never move while the wheel is open: they are placed
+--     when it resolves, out of combat, and the coalesced sync writes which
+--     demon each one summons.
 --   * Escape: a plain proxy frame in UISpecialFrames (an insecure key handler
 --     taints the Escape binding), armed only while the game UI is visible;
 --     with the UI hidden, Escape goes through LibShowcase (onForcedExit).
@@ -36,11 +38,20 @@ local DISC = 380
 local NODE = 64
 local RADIUS = 132
 local CENTER = 124
-local CLOCKS = { 12, 9, 3, 6 }
+local SLOTS = 5
 
 local function clockOffset(clock, radius)
     local angle = math.rad(90 - (clock % 12) * 30)
     return math.cos(angle) * radius, math.sin(angle) * radius
+end
+
+-- The clock position of node `i` of `n`, spread evenly from `from` to `to`
+-- (clockwise): over the top arc (9 to 3) when the pill is under the centre,
+-- 8 to 4 when it is not and all five demons are out there.
+local function arcClock(i, n, from, to)
+    if n == 1 then return 12 end
+    local span = (to - from) % 12
+    return from + span * (i - 1) / (n - 1)
 end
 
 -- "Summon Imp" -> "Imp".
@@ -64,8 +75,6 @@ function Wheel:CreateNode(index)
     local button = SA.Create(root, "OneTwoThreeWheelNode" .. index)
     button:SetSize(NODE, NODE)
     button:SetFrameLevel(root:GetFrameLevel() + 20)
-    local x, y = clockOffset(CLOCKS[index], RADIUS)
-    button:SetPoint("CENTER", self.disc, "CENTER", x, y)
 
     -- Everything visible on a mouse-disabled child of the button.
     local visual = CreateFrame("Frame", nil, button)
@@ -186,7 +195,7 @@ function Wheel:Create()
 
     self:CreateHeader()
     self:CreateCenter()
-    for index = 1, #CLOCKS do
+    for index = 1, SLOTS do
         self.nodes[index] = self:CreateNode(index)
     end
     self:CreateSacrifice()
@@ -242,25 +251,31 @@ end
 -- What every slot shows and does, from the current state.
 function Wheel:Resolve()
     local active = ns.Bar.PetSummon()
+    -- A pet whose NPC id is not in Data.DEMON_NPC (unmeasured): shown in the
+    -- centre by its family, and every demon stays on offer.
+    self.petOut = API.UnitNpcID("pet") ~= nil
     local list = {}
-    for _, spellID in ipairs(Data.DEMONS) do
+    for _, spellID in ipairs(Data.WHEEL_ORDER) do
         if spellID ~= active then list[#list + 1] = spellID end
     end
+    local from, to = 9, 3
+    if not self.petOut and #list > 4 then from, to = 8, 4 end
     for index, node in ipairs(self.nodes) do
         node.spellID = list[index]
         node.known = node.spellID ~= nil and API.IsKnown(node.spellID)
+        node.clock = node.spellID and arcClock(index, #list, from, to) or nil
     end
     self.active = active
 
     local sac = self.sacrifice
     sac.action, sac.text, sac.effectText = nil, nil, nil
-    if active then
-        local demon = demonName(active)
+    if self.petOut then
+        local demon = active and demonName(active) or self:PetFamily()
         if API.IsKnown(Data.DEMONIC_SACRIFICE) then
             sac.action = { type = "spell", spell = Data.DEMONIC_SACRIFICE }
             sac.text = API.SpellName(Data.DEMONIC_SACRIFICE) or "Demonic Sacrifice"
             sac.effectText = sacrificeEffect(demon)
-        elseif active == Data.DEMONS[2] then
+        elseif active == Data.VOIDWALKER then
             local slot = sacrificeSlot()
             if slot then
                 sac.action = { type = "pet", action = slot }
@@ -270,9 +285,24 @@ function Wheel:Resolve()
     end
 end
 
--- The coalesced secure rebuild (registered with SecureAction).
+-- The pet's family name ("Voidwalker"), for a demon not in Data.DEMON_NPC.
+function Wheel:PetFamily()
+    local ok, family = pcall(UnitCreatureFamily, "pet")
+    if ok and API.Readable(family) and type(family) == "string" then return family end
+    return ""
+end
+
+-- The coalesced secure rebuild (registered with SecureAction). Out of
+-- combat only, so the buttons are placed here too.
 function Wheel:SyncSecure()
     if not self.root then return end
+    for _, node in ipairs(self.nodes) do
+        if node.clock then
+            local x, y = clockOffset(node.clock, RADIUS)
+            node.button:ClearAllPoints()
+            node.button:SetPoint("CENTER", self.disc, "CENTER", x, y)
+        end
+    end
     local felDom = API.IsKnown(Data.FEL_DOMINATION) and API.SpellName(Data.FEL_DOMINATION)
     for _, node in ipairs(self.nodes) do
         local actions = {}
@@ -303,12 +333,11 @@ function Wheel:Paint()
             node.sub:SetText(node.known and "" or "Not learned")
         end
     end
-    if self.active then
-        local demon = demonName(self.active)
-        self.centerName:SetText(demon)
+    if self.petOut then
+        self.centerName:SetText(self.active and demonName(self.active) or self:PetFamily())
         local petName = UnitName("pet")
         self.centerSub:SetText(API.Readable(petName) and petName or "Active demon")
-        self.centerIcon:SetTexture(API.SpellIcon(self.active))
+        self.centerIcon:SetTexture(self.active and API.SpellIcon(self.active) or nil)
         self.centerIcon:Hide()
         local npcID = API.UnitNpcID("pet")
         self.portrait:Show(npcID, function() self.centerIcon:Show() end)

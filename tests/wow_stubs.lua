@@ -364,6 +364,11 @@ function GetBuildInfo() return "1.60.1", WoW.build, "Sep 22 2026", 16001 end
 function GetRealmName() return "ClassicBetaPvE" end
 function UnitName() return "Testcase Surname", nil end
 WoW.petGUID = nil
+WoW.petFamily = nil
+function UnitCreatureFamily(unit)
+    if unit == "pet" and WoW.petFamily then return WoW.petFamily[1], WoW.petFamily[2] end
+    return nil
+end
 -- FrameXML's ClassColors.lua fills this at load.
 RAID_CLASS_COLORS = { WARLOCK = { r = 0.53, g = 0.53, b = 0.93 } }
 -- Pet bar: WoW.petActions[slot] = { name =, spellID = }.
