@@ -88,6 +88,23 @@ update()
 H.eq(arm(ss, 2), 20752, "soulstone right: create the Lesser Soulstone")
 H.check(ss.upgradeMark:IsShown(), "with the mark")
 
+-- A stone the player can't use yet (a traded higher-level one) is ignored.
+WoW.counts[16892] = 0
+WoW.counts[5510] = 1          -- a Greater Healthstone from a raid Warlock
+WoW.unusable[5510] = true     -- level 36: not usable yet
+update()
+H.eq(arm(hs, 1), "item:5512", "an unusable stone is not the one used")
+WoW.counts[5510], WoW.unusable[5510] = 0, nil
+
+-- Counts unreadable (secret as combat starts): keep what is armed.
+local before = arm(hs, 1)
+WoW.combatSecret = true
+WoW.fire("BAG_UPDATE_DELAYED")
+WoW.runTimers(0)
+H.eq(arm(hs, 1), before, "an unreadable count never turns use into create")
+WoW.combatSecret = false
+update()
+
 -- Every tier pairs a create spell with its items, strongest first.
 for _, tiers in ipairs({ ns.Data.HEALTHSTONE_TIERS, ns.Data.SOULSTONE_TIERS }) do
     H.eq(#tiers, 5, "five ranks")

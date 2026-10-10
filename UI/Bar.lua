@@ -52,19 +52,24 @@ local function itemAction(itemID)
     return { type = "item", item = "item:" .. itemID, itemID = itemID }
 end
 
--- Use the best stone carried, else create the best rank known.
 -- A stone button (#6), from its tiers (strongest first):
 --   * left: use the best stone carried, else create the best rank known;
 --   * right: create the best rank known when it beats the stone carried
 --     (stones are unique per rank, so a better one can be made while a
 --     lesser one is carried); otherwise unarmed, so a stray right click
 --     spends no stone and no shard (and #5 may still claim it).
--- Returns the left action and the right one (or nil).
+-- Only stones the player can use count (a traded higher-level stone
+-- doesn't). Returns the left action and the right one (or nil), or KEEP
+-- when a stone count can't be read (secret, as combat starts): the button
+-- keeps what it is armed with rather than turn "use" into "create".
+local KEEP = {}
+Bar.KEEP = KEEP
 local function stone(tiers)
     local carried, itemID, known
     for i, tier in ipairs(tiers) do
         if not carried then
-            local id = API.FirstCarried(tier.items)
+            local id, _, unreadable = API.FirstCarried(tier.items, true)
+            if unreadable then return KEEP end
             if id then carried, itemID = i, id end
         end
         if not known and API.IsKnown(tier.create) then known = i end
@@ -268,6 +273,8 @@ function Bar:Refresh()
     if not self.frame then return end
     for _, button in ipairs(self.buttons) do
         self:RefreshButton(button)
+        -- An open tooltip follows what the button now does.
+        if GameTooltip:IsOwned(button) then showTooltip(button) end
     end
     setCount(self.shardCount, API.ItemCountRaw(Data.SOUL_SHARD), true)
 end
@@ -336,17 +343,20 @@ local function demonActions(action, held, sacrifice)
     return { summon, sacrifice or summon }
 end
 
--- What a button is armed with; the Demon button's also depends on combat
--- and on Sacrifice.
+-- One armed slot, as written: type, payload and unit (a changed unit
+-- token must rewrite the attributes, #5).
 local function keyOf(action)
-    return action and (action.type .. ":" .. tostring(action[action.type])) or "none"
+    return action and (action.type .. ":" .. tostring(action[action.type]) .. "@" .. tostring(action.unit))
+        or "none"
 end
 
--- What a button is armed with, both buttons, plus the state its PostClick
--- reads (held): any change of either slot rewrites the attributes.
+-- What a button is armed with: both slots, their shift- variants, and, when
+-- the Demon button holds (asks first, nothing armed), what it would summon.
+-- Any change rewrites the attributes; nothing else does.
 local function syncKey(actions, held, action)
-    return keyOf(actions[1]) .. "|" .. keyOf(actions[2]) .. (held and "|held" or "")
-        .. "|" .. keyOf(action)
+    local shift = actions.shift or {}
+    return keyOf(actions[1]) .. "|" .. keyOf(actions[2]) .. "|" .. keyOf(shift[1]) .. "|" .. keyOf(shift[2])
+        .. (held and ("|held:" .. keyOf(action)) or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
@@ -355,6 +365,10 @@ function Bar:Sync()
     for _, button in ipairs(self.buttons) do
         -- A stone's right click is its upgrade (#6), nil when there is none.
         local action, upgrade = RESOLVE[button.key]()
+        if action == KEEP then
+            -- Unreadable counts: keep what it is armed with.
+            action, upgrade = button.action, button.upgrade
+        end
         local isDemon = button.key == "demon"
         local sacrifice = isDemon and self:SacrificeAction() or nil
         -- Held whatever Sacrifice does: the left click (and its binding)
