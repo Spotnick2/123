@@ -160,10 +160,40 @@ H.slash("ONETWOTHREE", "confirm")
 WoW.runTimers(0)
 t = armed("demon", 2); H.eq(t, nil, "/123 confirm asks again")
 
+-- Demonic Sacrifice known with a demon out: right-click sacrifices, from
+-- the bar (no reopening the wheel), in combat too.
+WoW.spells[18788] = { name = "Demonic Sacrifice", known = true }
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+t, v = armed("demon", 2); H.eq(v, 18788, "right-click: Demonic Sacrifice")
+demon:GetScript("PostClick")(demon, "RightButton", false)
+H.check(not ns.Resummon:IsShown(), "no re-summon question then")
+WoW.enterCombat()
+t, v = armed("demon", 2); H.eq(v, 18788, "in combat too")
+t, v = armed("demon"); H.eq(v, 697, "the left click summons in combat")
+WoW.leaveCombat()
+WoW.runTimers(0)
+WoW.spells[18788] = nil
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+
 -- The demon is gone: the button summons it, no question.
 WoW.petGUID = nil
 WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
 t, v = armed("demon", 2); H.eq(v, 697, "the Voidwalker after it is dismissed or dies")
+WoW.spells[18788] = { name = "Demonic Sacrifice", known = true }
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+t, v = armed("demon", 2); H.eq(v, 697, "no demon out: right-click summons, Sacrifice or not")
+
+-- Key bindings click the bar's secure buttons by name.
+local binds = assert(io.open("Bindings.xml")):read("*a")
+for i, b in ipairs({ "1:RightButton", "2:LeftButton", "3:LeftButton", "4:LeftButton", "5:LeftButton" }) do
+    local name = "CLICK OneTwoThreeBarButton" .. b
+    H.check(binds:find(name, 1, true), "binding " .. name)
+    H.check(type(_G["BINDING_NAME_" .. name]) == "string", "and its label")
+    H.check(_G["OneTwoThreeBarButton" .. b:match("^%d")] ~= nil, "on a button that exists")
+end
 
 H.done("test_bar")

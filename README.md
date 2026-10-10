@@ -12,6 +12,9 @@ summoning help, and a summon queue of everyone who typed **123**.
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)
 - `/123 wheel`: open the demon wheel (also a left-click on Demon, and a key binding)
+- Right-click Demon: Demonic Sacrifice (once learned, with a demon out), else summon your last demon
+- Key bindings (Key Bindings > 123): the wheel, Sacrifice-or-summon, Armor, Soulstone, Healthstone,
+  Ritual of Summoning
 - `/123 camera`: open the wheel with or without the cinematic camera and hidden UI
 - `/123 confirm`: ask (or stop asking) before re-summoning the demon that is out
 - `/123 debug`: client build, load state and what each bar button is armed with

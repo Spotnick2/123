@@ -251,20 +251,36 @@ function Bar:HoldsDemon(action)
         and petSummon() == action.spellID
 end
 
--- The Demon button: out of combat, left opens the wheel (PostClick, nothing
--- armed) and right re-summons the remembered demon. The wheel can't open in
--- combat, so there both buttons summon it, armed as combat starts (a demon
--- that dies mid-fight can come straight back).
-local function demonActions(action, held)
-    if SA.inCombat then return { action, action } end
-    return { nil, not held and action or nil }
+-- Demonic Sacrifice, when it is known and a demon it takes is out (a
+-- Demonology Warlock sacrifices from the bar, without reopening the wheel:
+-- owner). 18788 measured on Forever (the wheel's centre, #19).
+function Bar:SacrificeAction()
+    if petSummon() and API.IsKnown(Data.DEMONIC_SACRIFICE) then
+        return { type = "spell", spell = Data.DEMONIC_SACRIFICE, spellID = Data.DEMONIC_SACRIFICE }
+    end
+    return nil
 end
 
--- What a button is armed with; the Demon button's also depends on combat.
-local function syncKey(key, action, held)
+-- The Demon button:
+--   * Left: the wheel (PostClick, nothing armed).
+--   * Right: Demonic Sacrifice while a demon is out and the talent is known;
+--     otherwise re-summon the remembered demon (asking first when it is
+--     already out).
+-- The wheel can't open in combat, so there the left button summons, armed
+-- as combat starts (a demon that dies mid-fight comes straight back), and
+-- the right one keeps Sacrifice, else summons too.
+local function demonActions(action, held, sacrifice)
+    if SA.inCombat then return { action, sacrifice or action } end
+    return { nil, sacrifice or (not held and action or nil) }
+end
+
+-- What a button is armed with; the Demon button's also depends on combat
+-- and on Sacrifice.
+local function syncKey(key, action, held, sacrifice)
     if not action then return "none" end
     return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
         .. ((key == "demon" and SA.inCombat) and ":combat" or "")
+        .. (sacrifice and ":sacrifice" or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
@@ -272,11 +288,13 @@ function Bar:Sync()
     self:RememberPet()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
-        local held = button.key == "demon" and self:HoldsDemon(action)
-        local actions = button.key == "demon" and demonActions(action, held) or { action }
-        local key = syncKey(button.key, action, held)
+        local isDemon = button.key == "demon"
+        local sacrifice = isDemon and self:SacrificeAction() or nil
+        local held = isDemon and not sacrifice and self:HoldsDemon(action)
+        local actions = isDemon and demonActions(action, held, sacrifice) or { action }
+        local key = syncKey(button.key, action, held, sacrifice)
         if key == button.syncKey or SA.Apply(button, actions) then
-            button.action, button.held, button.syncKey = action, held, key
+            button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
         end
     end
     self:Refresh()
@@ -295,7 +313,11 @@ function showTooltip(button)
     end
     if button.key == "demon" and not SA.inCombat then
         GameTooltip:AddLine("Click: demon wheel", 0.75, 0.8, 0.9)
-        if button.action then
+        if button.sacrifice then
+            local effect = ns.Wheel.SacrificeEffect(ns.Wheel.DemonName(petSummon()))
+            GameTooltip:AddLine("Right-click: " .. actionName(button.sacrifice), 0.75, 0.8, 0.9)
+            if effect then GameTooltip:AddLine(effect, 1, 1, 1, true) end
+        elseif button.action then
             GameTooltip:AddLine("Right-click: " .. actionName(button.action)
                 .. (button.held and " (already out: asks first)" or ""), 0.75, 0.8, 0.9)
         end
@@ -387,7 +409,7 @@ function Bar:CreateButton(index, spec, parent)
         button:SetScript("PostClick", function(b, mouseButton, down)
             if down or InCombatLockdown() then return end
             if mouseButton == "RightButton" then
-                if b.held then ns.Resummon:Show(b, b.action.spellID) end
+                if b.held and not b.sacrifice then ns.Resummon:Show(b, b.action.spellID) end
             else
                 ns.Wheel:Toggle()
             end

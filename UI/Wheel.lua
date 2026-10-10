@@ -67,6 +67,7 @@ local function demonName(spellID)
     local name = API.SpellName(spellID) or ""
     return (name:gsub("^Summon ", ""))
 end
+Wheel.DemonName = demonName
 
 ------------------------------------------------------------
 -- Construction (lazy, out of combat)
@@ -341,6 +342,7 @@ local function sacrificeEffect(demon)
     end
     return nil
 end
+Wheel.SacrificeEffect = sacrificeEffect
 
 -- What every bead and the centre do, from the current state.
 function Wheel:Resolve()

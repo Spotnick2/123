@@ -15,8 +15,11 @@ Every button is a stationary secure button; visuals refresh in combat, attribute
 
 ## Demon wheel
 The owner's "Fel concept" mockup (`docs/mockups/wheel-fel.png`): very close to Portal Roulette, fel
-green. Left-click on the Demon button (or `/123 wheel`, or its key binding) opens it; right-click
-re-summons the last demon. In combat the wheel can't open, so both clicks summon.
+green. Left-click on the Demon button (or `/123 wheel`, or its key binding) opens it. Right-click is
+Demonic Sacrifice while a demon is out and the talent is known (no reopening the wheel to
+sacrifice), otherwise it re-summons the last demon. In combat the wheel can't open, so the left
+click summons. Key bindings click the bar's buttons: Sacrifice-or-summon, Armor, Soulstone,
+Healthstone, Ritual of Summoning.
 - Seven beads on a ring, clockwise from 12: Voidwalker, Felhunter, Inferno, Doomguard (Ritual of
   Doom), Imp, Succubus, Incubus. Each bead is the demon's live, idling face (a PlayerModel through the
   creature's own portrait camera: GlassUnitFrames' recipe, `UI/Portrait.lua`), else the icon. A
