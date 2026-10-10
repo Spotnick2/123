@@ -27,14 +27,16 @@ ns.Data = {
     -- switch to, never the Demon button's "last demon", no Fel Domination.
     -- Inferno (level 50) drops an Infernal where you click; Ritual of Doom
     -- (60) is a group ritual for a Doomguard. Both exist on Forever (run 2).
+    -- `npc` is what each bead's live portrait shows: the DEMON_NPC ids, plus
+    -- the Infernal (89) and the Doomguard (11859), Vanilla's.
     WHEEL = {
-        { spell = 697 },                                -- Voidwalker
-        { spell = 691 },                                -- Felhunter
-        { spell = 1122, major = true },                 -- Inferno
-        { spell = 18540, major = true, label = "Doomguard" },
-        { spell = 688 },                                -- Imp
-        { spell = 712 },                                -- Succubus
-        { spell = 713 },                                -- Incubus
+        { spell = 697, npc = 1860 },                    -- Voidwalker
+        { spell = 691, npc = 417 },                     -- Felhunter
+        { spell = 1122, npc = 89, major = true },       -- Inferno
+        { spell = 18540, npc = 11859, major = true, label = "Doomguard" },
+        { spell = 688, npc = 416 },                     -- Imp
+        { spell = 712, npc = 1863 },                    -- Succubus
+        { spell = 713, npc = 185317 },                  -- Incubus
     },
 
     -- What each summon consumes (Wowhead's Forever database): a Soul Shard

@@ -120,6 +120,31 @@ H.eq(inferno.count:GetText(), "", "no Infernal Stone count with Reagent Economy"
 H.eq(inferno.sub:GetText(), "", "and nothing missing")
 WoW.spells[1262650] = nil
 
+-- Two thirds of the way across the screen.
+local pt = Wheel.root._points[#Wheel.root._points]
+H.eq(pt[1], "CENTER", "anchored on its centre")
+H.check(math.abs(pt[4] - UIParent:GetWidth() / 6) < 1e-6, "a sixth of the screen right of centre: two thirds across")
+
+-- Portraits. The stub client renders no model: no display, so the icon.
+H.check(imp.icon:IsShown(), "no display: the bead falls back to its icon")
+-- With a display but no box in time: the client's round 2D portrait.
+local Portrait = ns.Portrait
+local realDisplay = Portrait.DisplayID
+Portrait.DisplayID = function(npc) return npc + 100000 end
+Wheel:Close()
+click(demonButton)
+WoW.runTimers(0.1)
+for _ = 1, 20 do WoW.runTimers(0.1) end
+H.eq(imp.portrait.flat._portrait, 100416, "no model in time: the Imp's 2D portrait (npc 416)")
+H.check(imp.portrait.flat:IsShown() and not imp.icon:IsShown(), "shown instead of the icon")
+H.check(succubus.portrait.flat:IsDesaturated(), "a demon not learned is greyed")
+Portrait.DisplayID = realDisplay
+-- The head crop: the top 40% of the model fills the frame with headroom.
+local scale, z = Portrait.Framing(2, Portrait.HEAD)
+local span = 2 * 40 * math.tan(0.15 / 2)
+H.check(math.abs(scale - span / (2 * 0.40 * Portrait.HEAD.margin)) < 1e-9, "head crop scale")
+H.check(math.abs(z - (-(1 - 0.40) / 2 * 2)) < 1e-9, "the model lowered so its head is centred")
+
 -- Escape (the proxy in UISpecialFrames) closes it.
 H.check(Wheel.escape:IsShown() or ns.Presentation:IsGameUIHidden(), "Escape is armed")
 local found = false

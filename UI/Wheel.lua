@@ -24,8 +24,11 @@
 --   * Escape: a plain proxy frame in UISpecialFrames (an insecure key handler
 --     taints the Escape binding), armed only while the game UI is visible;
 --     with the UI hidden, Escape goes through LibShowcase (onForcedExit).
---   * Art (title crest, rune ring, demon portraits) and animation are the
---     Codex handoff (#13); this is the structure and the fel colours.
+--   * Each bead is the demon's live, idling portrait (ns.Portrait's head crop,
+--     TimeIsMoney's recipe), falling back to the 2D portrait, then the icon.
+--   * It opens two thirds of the way across the screen (owner), not centred.
+--   * Art (title crest, rune ring) and animation layers are the Codex
+--     handoff (#13); this is the structure and the fel colours.
 -- ============================================================
 
 local _, ns = ...
@@ -83,6 +86,8 @@ function Wheel:CreateNode(index, entry)
     iconHost:SetPoint("TOPLEFT", 5, -5)
     iconHost:SetPoint("BOTTOMRIGHT", -5, 5)
     local icon = Skin:RoundTexture(iconHost, "ARTWORK")
+    icon:Hide()
+    local portrait = ns.Portrait.Create(iconHost, BEAD - 10, ns.Portrait.HEAD)
     local hover = Skin:RoundTexture(iconHost, "OVERLAY")
     hover:SetTexture(ns.Media.WHITE)
     hover:SetVertexColor(FEL[1], FEL[2], FEL[3], 0.18)
@@ -102,7 +107,8 @@ function Wheel:CreateNode(index, entry)
     sub:SetTextColor(1, 1, 1, 0.6)
 
     local node = { index = index, entry = entry, spellID = entry.spell, major = entry.major,
-        button = button, glass = glass, icon = icon, label = label, sub = sub, count = count }
+        button = button, glass = glass, icon = icon, portrait = portrait, label = label, sub = sub,
+        count = count }
     button:SetScript("OnEnter", function()
         hover:Show()
         Wheel:Hint(Wheel:NodeHint(node))
@@ -137,21 +143,23 @@ function Wheel:CreateCenter()
     local glass = Skin:Disc(center, "disc", FEL)
     Skin:SetRimColor(glass, FEL[1], FEL[2], FEL[3], 0.9)
     local top = glass.top or center
-    local iconHost = CreateFrame("Frame", nil, top)
-    iconHost:SetSize(80, 80)
-    iconHost:SetPoint("CENTER", 0, 20)
+    -- The model in the upper part of the centre, the three lines under it
+    -- (in game the name sat on the model's feet).
+    local modelHost = CreateFrame("Frame", nil, top)
+    modelHost:SetSize(104, 104)
+    modelHost:SetPoint("CENTER", 0, 26)
+    modelHost:EnableMouse(false)
+    local iconHost = CreateFrame("Frame", nil, modelHost)
+    iconHost:SetSize(72, 72)
+    iconHost:SetPoint("CENTER")
     self.centerIcon = Skin:RoundTexture(iconHost, "ARTWORK")
-    self.portrait = ns.Portrait.Create(top, 120)
-    if self.portrait.scene then
-        self.portrait.scene:ClearAllPoints()
-        self.portrait.scene:SetPoint("CENTER", 0, 18)
-    end
-    self.centerName = Skin:Font(top, 15, "CENTER")
-    self.centerName:SetPoint("BOTTOM", center, "BOTTOM", 0, 46)
-    self.centerSub = Skin:Font(top, 12, "CENTER")
+    self.portrait = ns.Portrait.Create(modelHost, 104)
+    self.centerName = Skin:Font(top, 14, "CENTER")
+    self.centerName:SetPoint("TOP", modelHost, "BOTTOM", 0, -2)
+    self.centerSub = Skin:Font(top, 11, "CENTER")
     self.centerSub:SetPoint("TOP", self.centerName, "BOTTOM", 0, -1)
     self.centerSub:SetTextColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
-    self.centerState = Skin:Font(top, 12, "CENTER")
+    self.centerState = Skin:Font(top, 11, "CENTER")
     self.centerState:SetPoint("TOP", self.centerSub, "BOTTOM", 0, -1)
 
     button:SetScript("OnEnter", function() Wheel:Hint(Wheel:SacrificeHint()) end)
@@ -224,7 +232,6 @@ function Wheel:Create()
     if self.root then return self.root end
     local root = CreateFrame("Frame", "OneTwoThreeWheel", UIParent)
     root:SetSize(ROOT_W, ROOT_H)
-    root:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
     root:SetFrameStrata("HIGH")
     root:SetClampedToScreen(true)
     root:EnableMouse(false)
@@ -357,13 +364,31 @@ function Wheel:SyncSecure()
     SA.Apply(self.center, { nil, self.sacrifice.action })
 end
 
--- Repaint everything non-secure. Safe in combat.
-function Wheel:Paint()
-    if not self.root then return end
+-- Two thirds of the way across the screen (owner), placed on each opening
+-- (out of combat: the root is protected) so a resized window is followed.
+function Wheel:ApplyPosition()
+    local w = tonumber(UIParent:GetWidth()) or 0
+    self.root:ClearAllPoints()
+    self.root:SetPoint("CENTER", UIParent, "CENTER", w / 6, 20)
+end
+
+-- The beads' live portraits: on opening and on a new state only (a model
+-- load is not a per-bag-update job). The icon shows if no portrait can.
+function Wheel:PaintPortraits()
     for _, node in ipairs(self.nodes) do
         node.icon:SetTexture(API.SpellIcon(node.spellID))
         node.icon:SetDesaturated(not node.known)
         node.icon:SetAlpha(node.known and 1 or 0.45)
+        node.icon:Hide()
+        node.portrait:Show(node.entry.npc, function() node.icon:Show() end)
+        node.portrait:SetDesaturated(not node.known)
+    end
+end
+
+-- Repaint everything non-secure. Safe in combat.
+function Wheel:Paint()
+    if not self.root then return end
+    for _, node in ipairs(self.nodes) do
         node.label:SetText(node.entry.label or demonName(node.spellID))
         Skin:SetRimColor(node.glass, FEL[1], FEL[2], FEL[3], node.isActive and 1 or 0.45)
         self:PaintReagent(node)
@@ -459,6 +484,7 @@ function Wheel:Refresh()
     self:Resolve()
     SA.MarkDirty()
     self:Paint()
+    self:PaintPortraits()
 end
 
 ------------------------------------------------------------
@@ -491,7 +517,9 @@ function Wheel:Open()
     self:Resolve()
     SA.RunSyncs() -- out of combat: attributes are current before the first click
     self:Paint()
+    self:PaintPortraits()
     self:Hint()
+    self:ApplyPosition()
     self.root:Show()
     ns.Presentation:Enter(self.root)
     self:SyncEscape()

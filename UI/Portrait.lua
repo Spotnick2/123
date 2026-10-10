@@ -1,17 +1,24 @@
 -- ============================================================
--- Portrait: the active demon's 3D model in the wheel's centre.
+-- Portrait: a demon's live, idling 3D model, for the wheel's centre (whole
+-- body) and its beads (a head crop).
 --
--- The recipe measured by AltStable (Scanner.lua, #75 there) and Gnomesweeper
--- (Models.lua, docs/MODELS.md):
---   * A demon's GUID carries its real NPC id, and a PlayerModel resolves that
---     to its single display ID on the spot (Voidwalker 1860 -> 1132).
---     SetCreature alone is not used to draw: for other creatures it picks a
---     random skin.
---   * A plain ModelScene with one actor, SetModelByCreatureDisplayID, a far
---     camera with a narrow lens, the actor scaled from its bounding box once
---     the model has streamed in (polled, then given up on).
--- Anything missing (no ModelScene, a refused display, no box in time): the
--- portrait reports failure and the wheel shows the summon icon instead.
+-- The recipe measured by AltStable (Scanner.lua, #75 there), Gnomesweeper
+-- (Models.lua) and TimeIsMoney (UI/Director.lua, docs/MODELS.md):
+--   * A creature's display ID from a hidden PlayerModel: SetCreature(npc) ->
+--     GetDisplayInfo() (Voidwalker 1860 -> 1132). A single-look creature, as
+--     demons are, answers one display; a multi-look one may answer any.
+--   * A plain ModelScene with one actor, SetModelByCreatureDisplayID, a camera
+--     at +40 on X facing back, field of view 0.15, clip 0.1-100, the actor's
+--     origin centred, the box polled until the model is in (a token drops a
+--     late answer). The idle animation runs by itself.
+--   * Head crop (TimeIsMoney): the top 0.40 of the model's height fills the
+--     frame with headroom; the client scales the actor's position, so the
+--     offset is divided by the scale. Particles off: they escape the frame.
+--   * Fallbacks: the client's round 2D portrait from the same display
+--     (SetPortraitTextureFromCreatureDisplayID, TimeIsMoney's verified one),
+--     then the caller's icon.
+-- No measured heights for demons yet: the framing reads the live box, which
+-- follows the idle pose (TimeIsMoney pins measured heights instead).
 -- ============================================================
 
 local _, ns = ...
@@ -20,16 +27,19 @@ local Portrait = {}
 ns.Portrait = Portrait
 
 local FOV, CAMERA = 0.15, 40
-local WAIT, POLL = 0.6, 0.1
--- How tall the model is drawn, as a share of the portrait. In game at 0.8
--- the Imp overflowed the disc and its flames were sliced at the scene's
--- edge: a creature's effects reach past its box (Gnomesweeper measured the
--- same), and the disc is round where the scene is square.
+local WAIT, POLL = 1.5, 0.1
+-- Whole body: the model is drawn this share of the frame tall. In game at
+-- 0.8 the Imp overflowed the disc and its flames were cut at the scene's
+-- edge (a creature's effects reach past its box; Gnomesweeper measured it).
 local FILL = 0.6
+-- Head crop (TimeIsMoney's measured 0.40 / 1.15, with more headroom here: a
+-- round bead hides the scene's corners).
+Portrait.HEAD = { fraction = 0.40, margin = 1.35 }
 
 local resolver
--- The display ID of a creature NPC (single-skinned, as demons are), or nil.
+-- The display ID of a creature NPC, or nil.
 function Portrait.DisplayID(npcID)
+    if not npcID then return nil end
     if not resolver then
         local ok, model = pcall(CreateFrame, "PlayerModel", nil, UIParent)
         if not ok or not model then return nil end
@@ -60,66 +70,108 @@ local function readHeight(actor)
     return z1 - z0
 end
 
--- A portrait `size` px square on `parent`. p:Show(npcID, onFail), p:Hide().
-function Portrait.Create(parent, size)
-    local p = { size = size, token = 0 }
+-- Actor scale and vertical position for `height` in a square frame: the
+-- whole body at FILL, or the top `crop.fraction` with `crop.margin`.
+function Portrait.Framing(height, crop)
+    local span = 2 * CAMERA * math.tan(FOV / 2)
+    if not crop then
+        return span * FILL / height, 0
+    end
+    local scale = span / (height * crop.fraction * crop.margin)
+    local offset = -(1 - crop.fraction) / 2 * height * scale
+    return scale, offset / scale
+end
+
+-- A portrait `size` px square on `parent`, centred on it. `crop`: nil for
+-- the whole body, Portrait.HEAD for a head crop. The fallbacks: p.flat (the
+-- 2D portrait), then onFail (the caller's icon).
+--   p:Show(npcID, onFail), p:Hide(), p:SetDesaturated(bool)
+function Portrait.Create(parent, size, crop)
+    local p = { token = 0 }
+    local flatHost = CreateFrame("Frame", nil, parent)
+    flatHost:SetSize(size, size)
+    flatHost:SetPoint("CENTER")
+    flatHost:EnableMouse(false)
+    p.flatHost = flatHost
+    local flat = ns.Skin:RoundTexture(flatHost, "ARTWORK")
+    flat:Hide()
+    p.flat = flat
+
     local ok, scene = pcall(CreateFrame, "ModelScene", nil, parent)
     local okA, actor
     if ok and scene then okA, actor = pcall(scene.CreateActor, scene) end
-    if not (okA and actor) then
-        function p:Show(_, onFail) onFail() end
-        function p:Hide() end
-        return p
+    if okA and actor then
+        scene:SetSize(size, size)
+        scene:SetPoint("CENTER")
+        scene:EnableMouse(false)
+        pcall(scene.SetCameraFieldOfView, scene, FOV)
+        pcall(scene.SetCameraNearClip, scene, 0.1)
+        pcall(scene.SetCameraFarClip, scene, 100)
+        pcall(scene.SetCameraPosition, scene, CAMERA, 0, 0)
+        pcall(scene.SetCameraOrientationByYawPitchRoll, scene, math.pi, 0, 0)
+        pcall(actor.SetUseCenterForOrigin, actor, true, true, true)
+        pcall(actor.SetPosition, actor, 0, 0, 0)
+        if crop then pcall(actor.SetParticleOverrideScale, actor, 0) end
+        scene:Hide()
+        p.scene, p.actor = scene, actor
     end
-    scene:SetSize(size, size)
-    scene:SetPoint("CENTER")
-    scene:EnableMouse(false)
-    pcall(scene.SetCameraFieldOfView, scene, FOV)
-    pcall(scene.SetCameraNearClip, scene, 0.1)
-    pcall(scene.SetCameraFarClip, scene, 100)
-    pcall(scene.SetCameraPosition, scene, CAMERA, 0, 0)
-    pcall(scene.SetCameraOrientationByYawPitchRoll, scene, math.pi, 0, 0)
-    pcall(actor.SetUseCenterForOrigin, actor, true, true, true)
-    pcall(actor.SetPosition, actor, 0, 0, 0)
-    scene:Hide()
-    p.scene, p.actor = scene, actor
+
+    -- The 2D portrait, else the caller's fallback.
+    local function flatOrFail(display, onFail)
+        if display and pcall(SetPortraitTextureFromCreatureDisplayID, flat, display) then
+            flat:Show()
+        else
+            onFail()
+        end
+    end
 
     function p:Show(npcID, onFail)
         self.token = self.token + 1
         local mine = self.token
-        scene:Hide()
-        local display = npcID and Portrait.DisplayID(npcID)
-        if not display then return onFail() end
+        if self.scene then self.scene:Hide() end
+        flat:Hide()
+        local display = Portrait.DisplayID(npcID)
+        if not (display and self.scene) then return flatOrFail(display, onFail) end
         if self.display == display and self.height then
-            scene:Show()
+            self.scene:Show()
             return
         end
         pcall(actor.ClearModel, actor)
         local okSet, set = pcall(actor.SetModelByCreatureDisplayID, actor, display)
-        if not okSet or set == false then return onFail() end
+        if not okSet or set == false then return flatOrFail(display, onFail) end
         self.display, self.height = display, nil
+        -- The first box can be the previous model's (TimeIsMoney measured):
+        -- read it a poll step after loading, never at once.
         local function poll(left)
             if self.token ~= mine then return end
             local height = readHeight(actor)
             if height then
-                -- The view spans `span` scene units over `size` px: the model
-                -- comes out FILL of the portrait tall.
-                local span = 2 * CAMERA * math.tan(FOV / 2)
-                pcall(actor.SetScale, actor, span * FILL / height)
+                local scale, z = Portrait.Framing(height, crop)
+                pcall(actor.SetScale, actor, scale)
+                pcall(actor.SetPosition, actor, 0, 0, z)
                 self.height = height
-                scene:Show()
+                self.scene:Show()
             elseif left > 0 then
                 C_Timer.After(POLL, function() poll(left - 1) end)
             else
-                onFail()
+                flatOrFail(display, onFail)
             end
         end
-        poll(math.floor(WAIT / POLL + 0.5))
+        C_Timer.After(POLL, function() poll(math.floor(WAIT / POLL + 0.5)) end)
     end
 
     function p:Hide()
         self.token = self.token + 1
-        scene:Hide()
+        if self.scene then self.scene:Hide() end
+        flat:Hide()
+    end
+
+    -- Not learned yet: greyed, like an icon.
+    function p:SetDesaturated(on)
+        if self.actor then pcall(self.actor.SetDesaturation, self.actor, on and 1 or 0) end
+        flat:SetDesaturated(on)
+        if self.scene then self.scene:SetAlpha(on and 0.55 or 1) end
+        flat:SetAlpha(on and 0.55 or 1)
     end
 
     return p

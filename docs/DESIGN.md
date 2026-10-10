@@ -18,7 +18,10 @@ The owner's "Fel concept" mockup (`docs/mockups/wheel-fel.png`): very close to P
 green. Left-click on the Demon button (or `/123 wheel`, or its key binding) opens it; right-click
 re-summons the last demon. In combat the wheel can't open, so both clicks summon.
 - Seven beads on a ring, clockwise from 12: Voidwalker, Felhunter, Inferno, Doomguard (Ritual of
-  Doom), Imp, Succubus, Incubus. Not learned yet: greyed, "Not learned", no action.
+  Doom), Imp, Succubus, Incubus. Each bead is the demon's live, idling portrait (a head crop:
+  TimeIsMoney's recipe, `UI/Portrait.lua`), falling back to the round 2D portrait, then the icon.
+  Not learned yet: greyed, "Not learned", no action.
+- It opens two thirds of the way across the screen, not centred.
 - The centre: the active demon in 3D (AltStable's recipe: NPC id from the pet GUID, display ID
   through a PlayerModel, ModelScene actor), its name, the pet's name, "Active". Its bead stays on
   the ring, marked active; clicking it asks first (the re-summon prompt).
