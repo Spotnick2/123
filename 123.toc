@@ -15,5 +15,6 @@ Core\DB.lua
 Core\Events.lua
 Core\SecureAction.lua
 UI\Skin.lua
+UI\Resummon.lua
 UI\Bar.lua
 Core\Init.lua

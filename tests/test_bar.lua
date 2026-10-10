@@ -59,6 +59,21 @@ WoW.runTimers(0)
 t, v = armed("healthstone")
 H.eq(t, "item", "a carried healthstone is used"); H.eq(v, "item:5512", "the Minor Healthstone")
 
+-- An unchanged rebuild writes no attribute.
+local writes = 0
+for _, b in ipairs(Bar.buttons) do
+    local orig = b.SetAttribute
+    b.SetAttribute = function(self, k, val) writes = writes + 1 return orig(self, k, val) end
+end
+WoW.fire("BAG_UPDATE_DELAYED")
+WoW.runTimers(0)
+H.eq(writes, 0, "nothing changed, nothing rewritten")
+
+-- The stack count draws above the cooldown swipe.
+local hs = byKey.healthstone
+H.check(hs.count._parent ~= hs and hs.count._parent:GetFrameLevel() > hs.cooldown:GetFrameLevel(),
+    "the count sits above the cooldown")
+
 -- The Demon button follows the demon that is out (GUID as measured in run 2).
 WoW.spells[697].known = true
 WoW.petGUID = "Pet-0-4613-0-1234-1860-0000ABCDEF"
@@ -67,25 +82,48 @@ WoW.runTimers(0)
 t, v = armed("demon"); H.eq(v, 688, "another unit's pet is ignored")
 WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
-t, v = armed("demon"); H.eq(v, 697, "Voidwalker once it is out")
+local demon = byKey.demon
+H.eq(demon.action and demon.action.spellID, 697, "Voidwalker once it is out")
+t = armed("demon"); H.eq(t, nil, "but a click asks first: the button is not armed")
+H.check(not demon.icon:IsDesaturated(), "it still looks available")
+H.eq(ns.char.demon, 697, "remembered for this character")
+H.eq(OneTwoThreeDB.characters[WoW.playerGUID].demon, 697, "keyed on the player's GUID")
+H.eq(OneTwoThreeDB.demon, nil, "not account-wide")
+
 -- A demon already out at login (no UNIT_PET) is picked up by any rebuild.
-ns.db.demon = nil
-WoW.fire("BAG_UPDATE_DELAYED")
+ns.char.demon = nil
+WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
-t, v = armed("demon"); H.eq(v, 697, "the demon out at login")
-H.eq(ns.db.demon, 697, "remembered across sessions")
-WoW.petGUID = nil
-WoW.fire("UNIT_PET", "player")
-WoW.runTimers(0)
-t, v = armed("demon"); H.eq(v, 697, "still the Voidwalker after it is dismissed or dies")
+H.eq(demon.action and demon.action.spellID, 697, "the demon out at login")
+
+-- The click opens our prompt, whose Summon button casts.
+demon:GetScript("PostClick")(demon, "LeftButton", true)
+H.check(not ns.Resummon:IsShown(), "not on the down edge")
+demon:GetScript("PostClick")(demon, "LeftButton", false)
+H.check(ns.Resummon:IsShown(), "the prompt opens")
+H.check(ns.Resummon.text:GetText():find("Voidwalker"), "and names the demon")
+H.eq(ns.Resummon.summon:GetAttribute("type1"), "spell", "Summon is a secure spell button")
+H.eq(ns.Resummon.summon:GetAttribute("spell1"), 697, "armed with the demon")
+ns.Resummon.cancel:GetScript("OnClick")()
+H.check(not ns.Resummon:IsShown(), "Cancel closes it")
+H.eq(ns.Resummon.summon:GetAttribute("type1"), nil, "and disarms Summon")
+
+-- Combat: no prompt, so the button is armed while combat starts.
+demon:GetScript("PostClick")(demon, "LeftButton", false)
+Bar.moving = true
+WoW.enterCombat()
+t, v = armed("demon"); H.eq(v, 697, "armed in combat, to re-summon a demon that died")
+H.check(not ns.Resummon:IsShown(), "the prompt closes as combat starts")
+H.check(not Bar.moving, "a drag in progress is stopped as combat starts")
 
 -- In combat nothing is written; the rebuild waits for the end of combat.
-WoW.enterCombat()
 WoW.spells[698].known = true
 WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
 H.eq(#WoW.blocked, 0, "no attribute write attempted in combat")
 t = armed("summoning"); H.eq(t, nil, "still unarmed in combat")
+demon:GetScript("PostClick")(demon, "LeftButton", false)
+H.check(not ns.Resummon:IsShown(), "no prompt in combat")
 
 -- Counts are secret in combat: they reach the FontString untouched.
 WoW.combatSecret = true
@@ -101,8 +139,28 @@ H.check(Bar.frame:IsShown(), "the bar is not hidden in combat")
 H.check(H.messagesMatching("in combat") > 0, "and says why")
 
 WoW.leaveCombat()
+WoW.runTimers(0)
 t, v = armed("summoning"); H.eq(v, 698, "Ritual armed once combat ends")
 H.check(not byKey.summoning.icon:IsDesaturated(), "and looks available")
+t = armed("demon"); H.eq(t, nil, "the Demon button asks again out of combat")
 H.check(neverUnnumbered(), "still only numbered attributes")
+
+-- "Don't ask again": Summon casts, and the button stays armed from then on.
+demon:GetScript("PostClick")(demon, "LeftButton", false)
+ns.Resummon.dontAsk:SetChecked(true)
+ns.Resummon.summon:GetScript("PostClick")(ns.Resummon.summon, "LeftButton", false)
+WoW.runTimers(0)
+H.check(not ns.Resummon:IsShown(), "the prompt closes after Summon")
+H.eq(ns.db.confirmResummon, false, "the question is turned off")
+t, v = armed("demon"); H.eq(v, 697, "the button re-summons without asking")
+H.slash("ONETWOTHREE", "confirm")
+WoW.runTimers(0)
+t = armed("demon"); H.eq(t, nil, "/123 confirm asks again")
+
+-- The demon is gone: the button summons it, no question.
+WoW.petGUID = nil
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
+t, v = armed("demon"); H.eq(v, 697, "the Voidwalker after it is dismissed or dies")
 
 H.done("test_bar")

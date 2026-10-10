@@ -57,7 +57,7 @@ end
 
 local RESOLVE = {
     demon = function()
-        local last = ns.db.demon
+        local last = ns.char.demon
         local spellID = (last and API.IsKnown(last)) and last or API.FirstKnown(Data.DEMONS)
         return spellID and spellAction(spellID) or nil
     end,
@@ -116,11 +116,12 @@ end
 ------------------------------------------------------------
 
 -- A count may be secret in combat: the FontString takes it untouched.
+-- The Readable check comes first: even `raw == nil` throws on a secret.
 local function setCount(fontString, raw, showOne)
-    if raw == nil then
-        fontString:SetText("")
-    elseif not API.Readable(raw) then
+    if not API.Readable(raw) then
         fontString:SetText(raw)
+    elseif raw == nil then
+        fontString:SetText("")
     elseif type(raw) == "number" and (raw > 1 or (showOne and raw >= 0)) then
         fontString:SetText(raw)
     else
@@ -157,24 +158,44 @@ end
 -- Secure attributes (out of combat only, through SecureAction)
 ------------------------------------------------------------
 
--- Remember the demon that is out, so the Demon button summons it again.
--- Returns true when that changed.
-function Bar:RememberPet()
+-- The summon spell of the demon that is out, or nil.
+local function petSummon()
     local npcID = API.UnitNpcID("pet")
-    local spellID = npcID and Data.DEMON_NPC[npcID]
-    if spellID and spellID ~= ns.db.demon then
-        ns.db.demon = spellID
-        return true
-    end
-    return false
+    return npcID and Data.DEMON_NPC[npcID] or nil
 end
 
+-- Remember the demon that is out (per character), so the Demon button
+-- summons it again once it is gone.
+function Bar:RememberPet()
+    local spellID = petSummon()
+    if spellID then
+        ns.char.demon = spellID
+    end
+end
+
+-- Out of combat, a click on the Demon button while that demon is out asks
+-- first (ns.Resummon) instead of casting: the button is left unarmed. In
+-- combat there is no prompt, so the button is armed as combat starts (a
+-- demon that dies mid-fight can be summoned again).
+function Bar:HoldsDemon(action)
+    return action ~= nil and ns.db.confirmResummon and not self.inCombat
+        and petSummon() == action.spellID
+end
+
+local function syncKey(action, held)
+    if not action then return "none" end
+    return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
+end
+
+-- Rewrites a button's attributes only when what it does changed.
 function Bar:Sync()
     self:RememberPet()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
-        if SA.Apply(button, { action }) then
-            button.action = action
+        local held = button.key == "demon" and self:HoldsDemon(action)
+        local key = syncKey(action, held)
+        if key == button.syncKey or SA.Apply(button, { not held and action or nil }) then
+            button.action, button.held, button.syncKey = action, held, key
         end
     end
     self:Refresh()
@@ -187,7 +208,9 @@ end
 local function showTooltip(button)
     GameTooltip:SetOwner(button, "ANCHOR_TOP")
     GameTooltip:SetText(button.label:GetText(), 1, 1, 1)
-    if button.action then
+    if button.held then
+        GameTooltip:AddLine("Already out. Click to summon it again (asks first)", 0.75, 0.8, 0.9)
+    elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
@@ -228,7 +251,13 @@ function Bar:CreateButton(index, spec, parent)
     cooldown:EnableMouse(false)
     button.cooldown = cooldown
 
-    local count = ns.Skin:Font(button, 13, "RIGHT")
+    -- The count goes above the cooldown swipe, which draws over the
+    -- button's own regions.
+    local overlay = CreateFrame("Frame", nil, button)
+    overlay:SetAllPoints()
+    overlay:SetFrameLevel(cooldown:GetFrameLevel() + 1)
+    overlay:EnableMouse(false)
+    local count = ns.Skin:Font(overlay, 13, "RIGHT")
     count:SetPoint("BOTTOMRIGHT", -1, 2)
     button.count = count
 
@@ -240,6 +269,11 @@ function Bar:CreateButton(index, spec, parent)
 
     button:SetScript("OnEnter", showTooltip)
     button:SetScript("OnLeave", hideTooltip)
+    -- Insecure PostClick: runs after the secure action (none while held).
+    button:SetScript("PostClick", function(b, _, down)
+        if down or not b.held or InCombatLockdown() then return end
+        ns.Resummon:Show(b, b.action.spellID)
+    end)
     return button
 end
 
@@ -258,13 +292,7 @@ function Bar:CreateHandle()
             self.moving = true
         end
     end)
-    handle:SetScript("OnDragStop", function()
-        if not self.moving then return end
-        self.moving = false
-        self.frame:StopMovingOrSizing()
-        local point, _, _, x, y = self.frame:GetPoint()
-        ns.db.bar.point, ns.db.bar.x, ns.db.bar.y = point, x, y
-    end)
+    handle:SetScript("OnDragStop", function() self:StopMoving() end)
     handle:SetScript("OnEnter", function(f)
         GameTooltip:SetOwner(f, "ANCHOR_TOP")
         GameTooltip:SetText("123", ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
@@ -278,6 +306,16 @@ function Bar:CreateHandle()
     label:SetText("123")
     label:SetTextColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
     self.label = label
+end
+
+-- Also called as combat starts: InCombatLockdown() is still false inside
+-- PLAYER_REGEN_DISABLED, the last moment a drag can be stopped.
+function Bar:StopMoving()
+    if not self.moving then return end
+    self.moving = false
+    self.frame:StopMovingOrSizing()
+    local point, _, _, x, y = self.frame:GetPoint()
+    ns.db.bar.point, ns.db.bar.x, ns.db.bar.y = point, x, y
 end
 
 function Bar:CreateShards()
@@ -328,14 +366,29 @@ function Bar:Initialize()
     SA.RegisterSync(function() self:Sync() end)
     local function rebuild() SA.MarkDirty() end
     local function refresh() self:Refresh() end
+    -- A rebuild ends in a refresh; in combat only the visuals can change.
+    local function bagsChanged()
+        if InCombatLockdown() then refresh() else rebuild() end
+    end
     ns.Events:Register("SPELLS_CHANGED", rebuild)
-    ns.Events:Register("BAG_UPDATE_DELAYED", rebuild)
-    ns.Events:Register("BAG_UPDATE_DELAYED", refresh)
+    ns.Events:Register("BAG_UPDATE_DELAYED", bagsChanged)
     ns.Events:Register("BAG_UPDATE_COOLDOWN", refresh)
     ns.Events:Register("SPELL_UPDATE_COOLDOWN", refresh)
     -- The Demon button follows the demon that is out, however it came.
     ns.Events:Register("UNIT_PET", function(_, unit)
-        if unit == "player" and self:RememberPet() then rebuild() end
+        if unit == "player" then rebuild() end
+    end)
+    -- Last unlocked moment before combat: stop a drag, close the prompt and
+    -- arm the Demon button without asking.
+    ns.Events:Register("PLAYER_REGEN_DISABLED", function()
+        self.inCombat = true
+        self:StopMoving()
+        ns.Resummon:Hide()
+        SA.RunSyncs()
+    end)
+    ns.Events:Register("PLAYER_REGEN_ENABLED", function()
+        self.inCombat = false
+        rebuild()
     end)
     SA.MarkDirty()
 end

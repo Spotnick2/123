@@ -154,6 +154,10 @@ end
 
 function SA.ApplySpellCooldown(cooldown, spellID)
     local duration = API.SpellCooldownDuration(spellID)
+    if not API.Readable(duration) then
+        pcall(cooldown.SetCooldownFromDurationObject, cooldown, duration)
+        return
+    end
     if duration == nil then
         cooldown:Clear()
         return

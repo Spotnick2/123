@@ -9,6 +9,8 @@ ns.Constants = {
     CLASS_WARLOCK = "WARLOCK",
     DEFAULTS = {
         version = 1,
+        -- Ask before re-summoning the demon that is already out.
+        confirmResummon = true,
         bar = {
             point = "CENTER",
             x = 0,

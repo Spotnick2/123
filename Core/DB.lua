@@ -32,6 +32,19 @@ local function mergeDefaults(defaults, current)
     return result
 end
 
+-- This character's own table (the demon last out differs per Warlock),
+-- keyed on the player's GUID inside the account-wide saved table.
+function DB:Character(saved)
+    local key = ns.API.UnitGUID("player") or "unknown"
+    saved.characters = type(saved.characters) == "table" and saved.characters or {}
+    local char = saved.characters[key]
+    if type(char) ~= "table" then
+        char = {}
+        saved.characters[key] = char
+    end
+    return char
+end
+
 -- Called at PLAYER_LOGIN: SavedVariables load after the addon's files, so
 -- OneTwoThreeDB is not readable at file scope.
 function DB:Initialize()
@@ -48,5 +61,6 @@ function DB:Initialize()
     OneTwoThreeDB = saved
     self.data = saved
     ns.db = saved
+    ns.char = self:Character(saved)
     return saved
 end

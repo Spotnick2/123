@@ -75,10 +75,15 @@ function API.PlayerClass()
 end
 
 -- The NPC id in a creature's or pet's GUID ("Pet-0-...-1860-..."), or nil.
-function API.UnitNpcID(unit)
+function API.UnitGUID(unit)
     local ok, guid = pcall(UnitGUID, unit)
-    if not ok or not API.Readable(guid) or type(guid) ~= "string" then return nil end
-    return tonumber(guid:match("^%a+%-%d+%-%d+%-%d+%-%d+%-(%d+)%-"))
+    if ok and API.Readable(guid) and type(guid) == "string" then return guid end
+    return nil
+end
+
+function API.UnitNpcID(unit)
+    local guid = API.UnitGUID(unit)
+    return guid and tonumber(guid:match("^%a+%-%d+%-%d+%-%d+%-%d+%-(%d+)%-"))
 end
 
 ------------------------------------------------------------
@@ -93,7 +98,7 @@ end
 
 function API.SpellIcon(spellID)
     local ok, icon = pcall(C_Spell.GetSpellTexture, spellID)
-    if ok and icon and API.Readable(icon) then return icon end
+    if ok and API.Readable(icon) and icon then return icon end
     return nil
 end
 
@@ -101,9 +106,9 @@ end
 function API.IsKnown(spellID)
     if not spellID then return false end
     local ok, known = pcall(C_SpellBook.IsSpellKnown, spellID)
-    if ok and known == true then return true end
+    if ok and API.Readable(known) and known == true then return true end
     local okP, has = pcall(IsPlayerSpell, spellID)
-    return okP and has == true
+    return okP and API.Readable(has) and has == true
 end
 
 -- The first known spell of a list ordered best first.
@@ -128,7 +133,7 @@ end
 -- Answers without the item cache.
 function API.ItemIcon(itemID)
     local ok, icon = pcall(C_Item.GetItemIconByID, itemID)
-    if ok and icon and API.Readable(icon) then return icon end
+    if ok and API.Readable(icon) and icon then return icon end
     return nil
 end
 

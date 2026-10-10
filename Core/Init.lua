@@ -50,10 +50,15 @@ local function registerSlashCommands()
             if not ok then
                 printMessage("debug failed: " .. tostring(err))
             end
+        elseif cmd == "confirm" then
+            ns.db.confirmResummon = not ns.db.confirmResummon
+            printMessage(ns.db.confirmResummon and "will ask before re-summoning the demon that is out."
+                or "won't ask before re-summoning the demon that is out.")
+            ns.SecureAction.MarkDirty()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | debug")
+            printMessage("/123 | confirm (ask before re-summoning) | debug")
         end
     end
 end

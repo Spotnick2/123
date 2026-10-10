@@ -42,8 +42,10 @@ ns.Data = {
 
     SOUL_SHARD = 6265,
 
-    -- Strongest first; the improved variants (talent) next to their rank.
-    -- All ranks share one cooldown (Apotheca; to be confirmed in #1).
+    -- By tier, strongest tier first; within a tier the base stone comes
+    -- before the Improved Healthstone variants, as Apotheca lists them. Which
+    -- heals more within a tier is unmeasured on Forever (#6). All ranks share
+    -- one cooldown (Apotheca; to be confirmed in #1).
     HEALTHSTONES = {
         9421, 19013, 19012,     -- Major
         5510, 19011, 19010,     -- Greater
