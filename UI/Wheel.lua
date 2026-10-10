@@ -464,15 +464,21 @@ function Wheel:SetPreview(on)
         -- Start from the demon that is out, else the Voidwalker.
         self.previewDemon = ns.Bar.PetSummon() or Data.VOIDWALKER
     end
+    if self.preview and not self.open then
+        self:Open() -- resolves and syncs before anything shows
+    elseif self.open then
+        -- Disarm (or re-arm) every cast path NOW, not on the coalesced
+        -- tick: the re-summon question's own Summon button too (Codex, #26).
+        ns.Resummon:Hide()
+        self:Resolve()
+        SA.RunSyncs()
+        self:Paint()
+        self:PaintPortraits()
+        self:Hint()
+    end
     ns.Print(self.preview and "preview on: every demon is shown, nothing is cast. "
         .. "Click a demon to put it in the centre; /123 preview again to stop."
         or "preview off.")
-    if self.preview and not self.open then
-        self:Open()
-    elseif self.open then
-        self:Refresh()
-        self:Hint()
-    end
 end
 
 -- A click on a bead in preview: that demon goes to the centre.
