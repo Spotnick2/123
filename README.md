@@ -11,7 +11,8 @@ summoning help, and a summon queue of everyone who typed **123**.
 
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)
-- `/123 debug`: client build and load state
+- `/123 confirm`: ask (or stop asking) before re-summoning the demon that is out
+- `/123 debug`: client build, load state and what each bar button is armed with
 
 ## Requirements
 WoW: Forever (1.60.1). Uses [LibGlass-1.0](https://github.com/Spotnick2/LibGlass), embedded.

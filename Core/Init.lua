@@ -27,6 +27,11 @@ local function printDebugState()
     printMessage("build " .. valueToText(ns.API.ClientBuild()) .. ", combat=" .. valueToText(InCombatLockdown())
         .. ", loads=" .. valueToText(ns.db.loadCount)
         .. ", glass=" .. (ns.Skin:Glass() and "LibGlass" or "fallback"))
+    for _, button in ipairs(ns.Bar.buttons or {}) do
+        local action = button.action
+        printMessage(button.key .. ": " .. (action and (action.type .. " " .. (action.itemID or action.spellID)) or "nothing armed")
+            .. (ns.SecureAction.HasAction(button) and "" or " (no attributes)"))
+    end
     if #ns.API.eventFailures > 0 then
         printMessage("events refused: " .. table.concat(ns.API.eventFailures, ", "))
     end
@@ -45,10 +50,15 @@ local function registerSlashCommands()
             if not ok then
                 printMessage("debug failed: " .. tostring(err))
             end
+        elseif cmd == "confirm" then
+            ns.db.confirmResummon = not ns.db.confirmResummon
+            printMessage(ns.db.confirmResummon and "will ask before re-summoning the demon that is out."
+                or "won't ask before re-summoning the demon that is out.")
+            ns.SecureAction.MarkDirty()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | debug")
+            printMessage("/123 | confirm (ask before re-summoning) | debug")
         end
     end
 end
@@ -61,6 +71,7 @@ ns.Events:Register("PLAYER_LOGIN", function()
         return
     end
 
+    ns.SecureAction.Initialize()
     ns.Bar:Initialize()
     registerSlashCommands()
 end)

@@ -352,6 +352,13 @@ function IsAltKeyDown() return WoW.altDown end
 function GetBuildInfo() return "1.60.1", WoW.build, "Sep 22 2026", 16001 end
 function GetRealmName() return "ClassicBetaPvE" end
 function UnitName() return "Testcase Surname", nil end
+WoW.petGUID = nil
+WoW.playerGUID = "Player-4613-00ABCDEF"
+function UnitGUID(unit)
+    if unit == "pet" then return WoW.petGUID end
+    if unit == "player" then return WoW.playerGUID end
+    return nil
+end
 function UnitClass() return WoW.class:sub(1, 1) .. WoW.class:sub(2):lower(), WoW.class, 5 end
 -- Outdoors this client returns the CONTINENT, not an empty name.
 function GetInstanceInfo() return WoW.instanceName, WoW.instanceType, 0, "", 0, 0, false, WoW.instanceMap end
