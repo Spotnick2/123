@@ -30,6 +30,8 @@ re-summons the last demon. In combat the wheel can't open, so both clicks summon
   the active demon's line of its description: Forever's effects differ from Vanilla's).
 - Reagents: a learned bead whose reagent is missing says so ("No Soul Shard": every summon but
   the Imp); Inferno and Ritual of Doom show their count (Infernal Stone, Demonic Figurine).
+- With the "Reagent Economy" perk (any class's spell ID, as Portal Roulette detects it), vendor
+  reagents are free: no Infernal Stone or Demonic Figurine count. Soul Shards still count.
 - Forever's Incubus is its own demon: Summon Incubus 713, NPC 185317 (Wowhead's Forever database;
   713 confirmed in game). A pet with an unknown NPC id (an Infernal, a Doomguard) is shown by its
   family, never becomes the Demon button's demon, and gets no Sacrifice.

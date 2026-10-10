@@ -142,6 +142,9 @@ end
 local SPELLS = {
     { 688, "Summon Imp" }, { 697, "Summon Voidwalker" }, { 712, "Summon Succubus" }, { 713, "Summon Incubus (Forever)" },
     { 691, "Summon Felhunter" }, { 1122, "Inferno" }, { 18540, "Ritual of Doom" },
+    { 1225503, "Reagent Economy?" }, { 1262636, "Reagent Economy?" }, { 1262638, "Reagent Economy?" },
+    { 1262643, "Reagent Economy?" }, { 1262647, "Reagent Economy?" }, { 1262650, "Reagent Economy?" },
+    { 1262654, "Reagent Economy?" }, { 1262662, "Reagent Economy?" },
     { 18708, "Fel Domination" }, { 18788, "Demonic Sacrifice" }, { 19028, "Soul Link" },
     { 698, "Ritual of Summoning" }, { 402265, "Grimoire: Portal of Summoning (learn)" },
     { 687, "Demon Skin 1" }, { 696, "Demon Skin 2" },

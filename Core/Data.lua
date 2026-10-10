@@ -46,6 +46,15 @@ ns.Data = {
         [18540] = 16583,    -- Demonic Figurine
     },
 
+    -- The "Reagent Economy" perk (Resourcefulness legacy tree): "Your class
+    -- abilities no longer require reagents purchasable from vendors". Its
+    -- spell IDs, one per class, from Portal Roulette's probe; which one is
+    -- the Warlock's is unmeasured, so any of them counts. Only vendor
+    -- reagents go: the Infernal Stone and the Demonic Figurine, not Soul
+    -- Shards (they come from Drain Soul).
+    REAGENT_ECONOMY_SPELLS = { 1225503, 1262636, 1262638, 1262643, 1262647, 1262650, 1262654, 1262662 },
+    VENDOR_REAGENTS = { [5565] = true, [16583] = true },
+
     -- The active pet's NPC id (from its GUID) -> its summon spell, so the
     -- Demon button follows the demon that is out. Imp 416 and Voidwalker 1860
     -- measured on 70334 (#17); Succubus and Felhunter are Vanilla's NPC ids,

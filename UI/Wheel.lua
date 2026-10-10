@@ -387,11 +387,21 @@ function Wheel:Paint()
     self.strip.shards:SetText(API.ItemCount(Data.SOUL_SHARD) or "")
 end
 
+-- The reagent a summon consumes, or nil: vendor reagents are free with the
+-- Reagent Economy perk.
+local function reagentOf(spellID)
+    local itemID = Data.REAGENT[spellID]
+    if itemID and Data.VENDOR_REAGENTS[itemID] and API.FirstKnown(Data.REAGENT_ECONOMY_SPELLS) then
+        return nil
+    end
+    return itemID
+end
+
 -- The reagent a summon consumes: "No <reagent>" under a learned bead that
 -- can't be cast for want of it, and how many are carried on the major
 -- demons' beads (their reagents are rare; shards are in the strip).
 function Wheel:PaintReagent(node)
-    local itemID = Data.REAGENT[node.spellID]
+    local itemID = reagentOf(node.spellID)
     local have = itemID and API.ItemCount(itemID)
     node.count:SetText(node.major and itemID and have or "")
     if not node.known then
@@ -427,7 +437,7 @@ function Wheel:NodeHint(node)
     if node.isActive then
         return name .. " again (already out)"
     end
-    local itemID = Data.REAGENT[node.spellID]
+    local itemID = reagentOf(node.spellID)
     if itemID and API.ItemCount(itemID) == 0 then
         return name .. ": needs " .. self:ItemName(itemID)
     end

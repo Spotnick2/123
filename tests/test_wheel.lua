@@ -112,6 +112,14 @@ H.eq(inferno.count:GetText(), 2, "the count follows the bags")
 H.eq(inferno.sub:GetText(), "", "nothing missing")
 H.eq(imp.count:GetText(), "", "no count on a pet's bead (shards are in the strip)")
 
+-- Reagent Economy: vendor reagents are free; Soul Shards are not.
+WoW.counts[5565] = 0
+WoW.spells[1262650] = { name = "Reagent Economy", known = true }
+WoW.fire("BAG_UPDATE_DELAYED")
+H.eq(inferno.count:GetText(), "", "no Infernal Stone count with Reagent Economy")
+H.eq(inferno.sub:GetText(), "", "and nothing missing")
+WoW.spells[1262650] = nil
+
 -- Escape (the proxy in UISpecialFrames) closes it.
 H.check(Wheel.escape:IsShown() or ns.Presentation:IsGameUIHidden(), "Escape is armed")
 local found = false
