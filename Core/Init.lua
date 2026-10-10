@@ -64,6 +64,8 @@ local function registerSlashCommands()
             if not ok then
                 printMessage("debug failed: " .. tostring(err))
             end
+        elseif cmd == "preview" then
+            ns.Wheel:SetPreview(not ns.Wheel.preview)
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
         elseif cmd == "labels" then
@@ -89,7 +91,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | wheel | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
+            printMessage("/123 | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
         end
     end
 end

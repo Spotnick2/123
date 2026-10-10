@@ -15,6 +15,8 @@ summoning help, and a summon queue of everyone who typed **123**.
 - Demon: summon your last demon; right-click: Demonic Sacrifice (once learned, with a demon out)
 - Key bindings (Key Bindings > 123): the wheel, summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone,
   Ritual of Summoning
+- `/123 preview`: the wheel with every demon shown and nothing cast; click a demon to put it in
+  the centre (screenshots, any level)
 - `/123 camera`: open the wheel with or without the cinematic camera and hidden UI
 - `/123 labels`: show the names under the bar's icons (off: the tooltips say it)
 - `/123 confirm`: ask (or stop asking) before re-summoning the demon that is out

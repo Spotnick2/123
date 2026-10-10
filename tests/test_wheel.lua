@@ -291,6 +291,32 @@ H.check(H.messagesMatching("can't open in combat") > 0, "and says why")
 WoW.leaveCombat()
 WoW.runTimers(1)
 
+-- Preview: every demon lit, nothing armed; a click puts a demon in the centre.
+H.slash("ONETWOTHREE", "preview")
+H.check(Wheel.open and Wheel.preview, "/123 preview opens the wheel in preview")
+H.check(Wheel.previewMark:IsShown(), "marked PREVIEW")
+for _, node in ipairs(n) do
+    H.eq(attr(node, "type1"), nil, "nothing armed in preview: " .. node.spellID)
+    H.check(not node.icon:IsDesaturated() and node.known, "every demon lit: " .. node.spellID)
+end
+H.eq(center:GetAttribute("type2"), nil, "no Sacrifice in preview")
+local doomguard = n[4]
+local before = #WoW.sounds
+click(doomguard.button)
+H.eq(Wheel.centerName:GetText(), "Doomguard", "a click puts the Doomguard in the centre")
+H.check(doomguard.isActive and not imp.isActive, "and marks its bead active")
+H.eq(#WoW.sounds, before + 1, "with its voice")
+H.check(Wheel.open, "the wheel stays open")
+H.eq(ns.char.demon, 713, "and the Demon button's demon is untouched")
+H.eq(Wheel.strip.hint:GetText(), "Preview: click a demon to put it in the centre", "the strip says how")
+H.slash("ONETWOTHREE", "preview")
+H.check(not Wheel.preview and not Wheel.previewMark:IsShown(), "/123 preview again stops it")
+WoW.runTimers(0) -- the coalesced rebuild
+H.eq(attr(imp, "spell1"), 688, "the beads are armed again")
+Wheel:Close()
+WoW.runTimers(1)
+for _ = 1, 10 do WoW.tick(0.1) end
+
 -- With the real LibShowcase: opening hides the game UI and lifts the root.
 if haveLib then
     H.check(ns.Presentation:Lib() ~= nil, "LibShowcase r4+ is picked up")

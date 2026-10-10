@@ -27,6 +27,8 @@
 --   * Each bead is the demon's live, idling face (ns.Portrait.Head: the
 --     creature's portrait camera, GlassUnitFrames' recipe), else the icon.
 --   * It opens two thirds of the way across the screen (owner), not centred.
+--   * /123 preview (Portal Roulette's /pr preview): every demon lit, nothing
+--     cast; a click puts that demon in the centre, for screenshots.
 --   * Fel art and animation live in WheelEffects (#13). Secure buttons
 --     stay fixed; a normal close disarms mouse input before its short fade.
 -- ============================================================
@@ -159,7 +161,13 @@ function Wheel:CreateNode(index, entry)
     -- has cast, and its bookkeeping (voice, the remembered demon) follows;
     -- Close itself does nothing when the wheel is not open.
     button:SetScript("PostClick", function(_, mouseButton, down)
-        if down or not node.known or mouseButton ~= "LeftButton" then return end
+        if down then return end
+        -- Preview: nothing was armed; the demon goes to the centre.
+        if Wheel.preview then
+            if Wheel.open and mouseButton == "LeftButton" then Wheel:PreviewSelect(node) end
+            return
+        end
+        if not node.known or mouseButton ~= "LeftButton" then return end
         if IsShiftKeyDown() and not node.shiftArmed and not node.held then return end
         Wheel:Voice(node.spellID)
         -- A demon picked here is the Demon button's from now on (a major
@@ -210,7 +218,7 @@ function Wheel:CreateCenter()
     button:SetScript("OnEnter", function() Wheel:Hint(Wheel:SacrificeHint()) end)
     button:SetScript("OnLeave", function() Wheel:Hint() end)
     button:SetScript("PostClick", function(_, mouseButton, down)
-        if down or mouseButton ~= "RightButton" or not Wheel.sacrifice.action then return end
+        if down or Wheel.preview or mouseButton ~= "RightButton" or not Wheel.sacrifice.action then return end
         if IsShiftKeyDown() then return end -- no shift- attributes: nothing cast
         Wheel:Close()
     end)
@@ -239,6 +247,12 @@ function Wheel:CreateHeader()
     local subtitle = Skin:Font(header, 12, "CENTER")
     subtitle:SetPoint("TOP", title, "BOTTOM", 0, -2)
     subtitle:SetText("DEMON SUMMONING")
+    local mark = Skin:Font(header, 11, "CENTER")
+    mark:SetPoint("TOP", subtitle, "BOTTOM", 0, -2)
+    mark:SetText("PREVIEW")
+    mark:SetTextColor(1, 0.82, 0.2)
+    mark:Hide()
+    self.previewMark = mark
     subtitle:SetTextColor(0.80, 0.82, 0.75)
     self.header = header
 
@@ -380,6 +394,7 @@ Wheel.SacrificeEffect = sacrificeEffect
 
 -- What every bead and the centre do, from the current state.
 function Wheel:Resolve()
+    if self.preview then return self:ResolvePreview() end
     local active = ns.Bar.PetSummon()
     -- A pet whose NPC id is not in Data.DEMON_NPC (an Infernal, a Doomguard,
     -- an unmeasured demon) is shown by its family; no bead is active then.
@@ -410,6 +425,65 @@ function Wheel:Resolve()
     end
 end
 
+------------------------------------------------------------
+-- Preview (/123 preview): every demon lit, nothing armed, and the centre
+-- shows whichever demon was last clicked (for screenshots on any level).
+------------------------------------------------------------
+
+local function entryOf(spellID)
+    for _, entry in ipairs(Data.WHEEL) do
+        if entry.spell == spellID then return entry end
+    end
+    return nil
+end
+
+function Wheel:ResolvePreview()
+    self.petOut = true
+    self.active = self.previewDemon
+    for _, node in ipairs(self.nodes) do
+        node.known, node.held = true, false
+        node.isActive = node.spellID == self.previewDemon
+    end
+    local sac = self.sacrifice
+    sac.action, sac.text, sac.effectText = nil, nil, nil
+end
+
+-- The centre's name in preview: a bead's label (the Doomguard) or demon name.
+function Wheel:ActiveName()
+    local entry = self.active and entryOf(self.active)
+    return entry and (entry.label or demonName(entry.spell)) or self:PetFamily()
+end
+
+function Wheel:SetPreview(on)
+    if InCombatLockdown() then
+        ns.Print("preview can't change in combat.")
+        return
+    end
+    self.preview = on and true or false
+    if self.preview then
+        -- Start from the demon that is out, else the Voidwalker.
+        self.previewDemon = ns.Bar.PetSummon() or Data.VOIDWALKER
+    end
+    ns.Print(self.preview and "preview on: every demon is shown, nothing is cast. "
+        .. "Click a demon to put it in the centre; /123 preview again to stop."
+        or "preview off.")
+    if self.preview and not self.open then
+        self:Open()
+    elseif self.open then
+        self:Refresh()
+        self:Hint()
+    end
+end
+
+-- A click on a bead in preview: that demon goes to the centre.
+function Wheel:PreviewSelect(node)
+    self.previewDemon = node.spellID
+    self:Voice(node.spellID)
+    self:Resolve()
+    self:Paint()
+    self:PaintPortraits()
+end
+
 -- The pet's family name ("Infernal"), for a demon not in Data.DEMON_NPC.
 function Wheel:PetFamily()
     local ok, family = pcall(UnitCreatureFamily, "pet")
@@ -429,7 +503,7 @@ function Wheel:SyncSecure()
     for _, node in ipairs(self.nodes) do
         local actions = {}
         node.shiftArmed = false
-        if node.known and not node.held then
+        if node.known and not node.held and not self.preview then
             actions[1] = { type = "spell", spell = node.spellID }
             local name = API.SpellName(node.spellID)
             if felDom and name and not node.major then
@@ -465,7 +539,9 @@ function Wheel:PaintPortraits()
     self.centerIcon:Hide()
     if self.petOut then
         self.centerIcon:SetTexture(self.active and API.SpellIcon(self.active) or nil)
-        self.portrait:Show(API.UnitNpcID("pet"), function() self.centerIcon:Show() end)
+        local entry = self.preview and entryOf(self.active)
+        local npcID = entry and entry.npc or API.UnitNpcID("pet")
+        self.portrait:Show(npcID, function() self.centerIcon:Show() end)
     else
         self.portrait:Hide()
     end
@@ -479,7 +555,12 @@ function Wheel:Paint()
         self:PaintReagent(node)
         self:PaintEdge(node)
     end
-    if self.petOut then
+    self.previewMark:SetShown(self.preview == true)
+    if self.preview then
+        self.centerName:SetText(self:ActiveName())
+        self.centerSub:SetText("")
+        self.centerState:SetText(hex(FEL) .. "\226\151\143 Active|r")
+    elseif self.petOut then
         self.centerName:SetText(self.active and demonName(self.active) or self:PetFamily())
         local petName = UnitName("pet")
         self.centerSub:SetText(API.Readable(petName) and petName or "")
@@ -511,6 +592,13 @@ end
 -- can't be cast for want of it, and how many are carried on the major
 -- demons' beads (their reagents are rare; shards are in the strip).
 function Wheel:PaintReagent(node)
+    if self.preview then
+        node.missingReagent = false
+        node.count:SetText("")
+        node.sub:SetText(node.isActive and (hex(FEL) .. "Active|r") or "")
+        node.subPlate:SetShown(node.isActive)
+        return
+    end
     local itemID = reagentOf(node.spellID)
     local have = itemID and API.ItemCount(itemID)
     node.missingReagent = node.known and itemID ~= nil and have == 0
@@ -556,10 +644,15 @@ end
 ------------------------------------------------------------
 
 function Wheel:Hint(text)
-    if self.strip then self.strip.hint:SetText(text or HINT) end
+    if self.strip then
+        self.strip.hint:SetText(text or (self.preview and "Preview: click a demon to put it in the centre" or HINT))
+    end
 end
 
 function Wheel:NodeHint(node)
+    if self.preview then
+        return "Preview: put the " .. (node.entry.label or demonName(node.spellID)) .. " in the centre"
+    end
     if not node.known then
         return (node.entry.label or demonName(node.spellID)) .. ": not learned yet"
     end
@@ -578,6 +671,7 @@ function Wheel:NodeHint(node)
 end
 
 function Wheel:SacrificeHint()
+    if self.preview then return "Preview: nothing is cast" end
     local sac = self.sacrifice
     if not sac.action then return nil end
     return "Right-click: " .. sac.text .. (sac.effectText and (" - " .. sac.effectText) or "")
