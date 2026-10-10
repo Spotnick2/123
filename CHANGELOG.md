@@ -20,4 +20,5 @@
 - A "Demons" button opens the wheel; the Demon button summons (right-click: Demonic Sacrifice
   while a demon is out and the talent is known). Key bindings for both clicks and for Armor,
   Soulstone, Healthstone and Ritual of Summoning.
+- The names under the bar's icons are off by default (the tooltips say it); `/123 labels` shows them.
 - Scaffold: the Warlock-only glass bar loads, `/123` and `/123 debug`, key binding.

@@ -68,6 +68,16 @@ WoW.runTimers(0)
 t, v = armed("healthstone")
 H.eq(t, "item", "a carried healthstone is used"); H.eq(v, "item:5512", "the Minor Healthstone")
 
+-- The names under the icons: off by default, /123 labels shows them.
+H.check(not byKey.armor.label:IsShown(), "no names under the icons by default")
+H.check(not Bar.wheelButton.label:IsShown(), "Demons' neither")
+local bare = Bar.frame:GetHeight()
+H.slash("ONETWOTHREE", "labels")
+H.check(byKey.armor.label:IsShown(), "/123 labels shows them")
+H.check(Bar.frame:GetHeight() > bare, "and the bar grows a row")
+H.slash("ONETWOTHREE", "labels")
+H.check(not byKey.armor.label:IsShown() and Bar.frame:GetHeight() == bare, "and back")
+
 -- An unchanged rebuild writes no attribute.
 local writes = 0
 for _, b in ipairs(Bar.buttons) do

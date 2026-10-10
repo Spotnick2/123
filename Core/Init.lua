@@ -66,6 +66,13 @@ local function registerSlashCommands()
             end
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
+        elseif cmd == "labels" then
+            if InCombatLockdown() then
+                printMessage("the bar can't change in combat.")
+            else
+                ns.db.barLabels = not ns.db.barLabels
+                ns.Bar:ApplyLabels()
+            end
         elseif cmd == "sounds" then
             ns.db.sounds = not ns.db.sounds
             printMessage(ns.db.sounds and "demon voices on." or "demon voices off.")
@@ -82,7 +89,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | wheel | camera (cinematic opening) | sounds (demon voices) | confirm (ask before re-summoning) | debug")
+            printMessage("/123 | wheel | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
         end
     end
 end

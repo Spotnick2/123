@@ -6,6 +6,7 @@ Target: `docs/mockups/storyboard.png`. Spell availability is still to be measure
 ## Compact bar
 One small glass bar, Apotheca-style: **Demons** (the wheel), **Demon**, **Armor**, **Soulstone** (assigned target under the
 icon), **Healthstone** (count), **Summoning**, then the soul shard count. Shift-drag moves it.
+No names under the icons unless `/123 labels` (the tooltips say it).
 Every button is a stationary secure button; visuals refresh in combat, attributes only out of it.
 
 - **Armor**: the highest learned rank of the preferred armor spell (Demon Armor over Demon Skin;

@@ -34,7 +34,10 @@ local SHARD_W = 56
 local LABEL_H = 12
 local SLOTS = 6             -- the wheel's button, then the five secure ones
 local WIDTH = PAD + HANDLE_W + PITCH * SLOTS + 1 + SHARD_W + PAD
+-- The names under the icons are a setting, off by default (owner: the
+-- tooltips are enough); without them the bar loses that row.
 local HEIGHT = PAD + ICON + 2 + LABEL_H + PAD
+local HEIGHT_BARE = PAD + ICON + PAD
 
 ------------------------------------------------------------
 -- What each button does: an action for SecureAction.Apply (nil when nothing
@@ -455,6 +458,7 @@ end
 function Bar:CreateHandle()
     local handle = CreateFrame("Frame", nil, self.frame)
     handle:SetSize(HANDLE_W, HEIGHT)
+    self.handle = handle
     handle:SetFrameLevel(self:ContentLevel())
     handle:SetPoint("LEFT", self.frame, "LEFT", PAD, 0)
     handle:EnableMouse(true)
@@ -499,6 +503,7 @@ function Bar:CreateShards()
     divider:SetTexture(ns.Media.WHITE)
     divider:SetVertexColor(1, 1, 1, 0.18)
     divider:SetSize(1, HEIGHT - PAD * 2)
+    self.divider = divider
     divider:SetPoint("LEFT", self.frame, "LEFT", left, 0)
 
     local icon = (self.glass.top or self.frame):CreateTexture(nil, "ARTWORK")
@@ -536,6 +541,7 @@ function Bar:Initialize()
         self.buttons[index] = self:CreateButton(index, spec, frame)
     end
     self:CreateShards()
+    self:ApplyLabels()
     self:ApplyPosition()
     frame:Show()
 
@@ -567,6 +573,20 @@ function Bar:Initialize()
         SA.RunSyncs()
     end)
     SA.MarkDirty()
+end
+
+-- The names under the icons, and the bar's height with or without them.
+-- The bar holds secure buttons, so it can't be resized in combat.
+function Bar:ApplyLabels()
+    if not self.frame or InCombatLockdown() then return false end
+    local on = ns.db.barLabels == true
+    local h = on and HEIGHT or HEIGHT_BARE
+    for _, button in ipairs(self.buttons) do button.label:SetShown(on) end
+    self.wheelButton.label:SetShown(on)
+    self.frame:SetHeight(h)
+    self.handle:SetHeight(h)
+    self.divider:SetHeight(h - PAD * 2)
+    return true
 end
 
 -- Showing or hiding a frame that holds secure buttons is refused in combat.

@@ -16,6 +16,7 @@ summoning help, and a summon queue of everyone who typed **123**.
 - Key bindings (Key Bindings > 123): the wheel, summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone,
   Ritual of Summoning
 - `/123 camera`: open the wheel with or without the cinematic camera and hidden UI
+- `/123 labels`: show the names under the bar's icons (off: the tooltips say it)
 - `/123 confirm`: ask (or stop asking) before re-summoning the demon that is out
 - `/123 debug`: client build, load state and what each bar button is armed with
 
