@@ -3,9 +3,20 @@
 Crops the demon wheel and the bar, and blurs every player and pet name in the
 full-UI shot: nameplates (found by their blue/green text colour, then
 dilated), plus the chat box and the unit and party frames by rectangle.
-Run from the repo root:  python Tools/make_screenshots.py
+Run from the repo root:  python Tools/make_screenshots.py [VIDEO.mp4]
 Writes docs/screenshots/*.jpg (not packaged: docs/ is ignored by .pkgmeta).
+
+With a recording (1080p, the wheel opened in preview), also writes, through
+ffmpeg:
+  * <video>-youtube.mp4 next to it: 3.6-23.4 s, while the cinematic view
+    hides every world name, with the two corners that still show names
+    blurred (a portrait toast bottom-left, tooltips bottom-right);
+  * docs/screenshots/wheel.gif: the wheel only, 14.5-20.5 s (a hover and
+    the Imp put in the centre), 8 fps, 300 px, 64 colours, under 2 MB.
+The times are the 2026-10-10 recording's; a new one needs its own.
 """
+import subprocess
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -83,5 +94,30 @@ def main():
     save(ui, "ui", 1920)
 
 
+def video(path):
+    src = Path(path)
+    out = src.with_name(src.stem + "-youtube.mp4")
+    blur = ("[0:v]split=3[base][a][b];[a]crop=420:300:0:780,boxblur=24:3[ta];"
+            "[b]crop=300:200:1620:860,boxblur=24:3[tb];"
+            "[base][ta]overlay=0:780[o1];[o1][tb]overlay=1620:860[out]")
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-ss", "3.6", "-to", "23.4", "-i", str(src),
+                    "-filter_complex", blur, "-map", "[out]", "-map", "0:a?", "-c:v", "libx264",
+                    "-crf", "20", "-preset", "slow", "-pix_fmt", "yuv420p", "-c:a", "aac",
+                    "-b:a", "160k", "-movflags", "+faststart", str(out)], check=True)
+    print(out.name, out.stat().st_size)
+    gif = OUT / "wheel.gif"
+    pal = OUT / "_palette.png"
+    f = "crop=460:560:1060:240,fps=8,scale=300:-1:flags=lanczos"
+    cut = ["-ss", "14.5", "-to", "20.5", "-i", str(src)]
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *cut, "-vf",
+                    f + ",palettegen=max_colors=64:stats_mode=diff", str(pal)], check=True)
+    subprocess.run(["ffmpeg", "-v", "error", "-y", *cut, "-i", str(pal), "-lavfi",
+                    f + " [x]; [x][1:v] paletteuse=dither=none:diff_mode=rectangle", str(gif)], check=True)
+    pal.unlink()
+    print(gif.name, gif.stat().st_size)
+
+
 if __name__ == "__main__":
     main()
+    if len(sys.argv) > 1:
+        video(sys.argv[1])

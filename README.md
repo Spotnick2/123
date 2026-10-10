@@ -25,6 +25,10 @@ soulstone, healthstones and summoning, one click away.
 ![In the game](docs/screenshots/ui.jpg)
 
 ## The demon wheel
+![Hover, click: the Imp takes the centre](docs/screenshots/wheel.gif)
+
+[The demon wheel in action, with sound](https://www.curseforge.com/wow/addons/forever-123) (video on the CurseForge page).
+
 ![Three demons in the centre](docs/screenshots/wheels.jpg)
 
 - Seven demons on a fel ring: Voidwalker, Felhunter, Inferno, Doomguard, Imp, Succubus and
