@@ -7,11 +7,12 @@ for the bar, `C:\Projects\Apotheca`.
 
 Read before changing code:
 - `C:\Projects\References\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
-- `C:\Projects\References\forever-api-1.60.1.70291.md`: the client's API (grep it; it is huge).
+- `C:\Projects\References\forever-api-1.60.1.70338.md`: the client's API (grep it; it is huge). Always the
+  newest `forever-api-*.md`: a new client build gets a new dump.
 - `C:\Projects\References\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
 - `C:\Projects\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
 - `C:\Projects\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
-- `C:\Projects\wow-ui-source`: FrameXML (build 70291).
+- `C:\Projects\wow-ui-source`: FrameXML (build 70338, `version.txt`).
 - `docs/DESIGN.md`: what 123 does. `docs/FOREVER-PROBE.md`: what has been measured for it.
 - Sibling addons have already answered a lot (secure buttons, roster, range, sounds, models):
   look there before writing a probe. `docs/DESIGN.md` lists where.

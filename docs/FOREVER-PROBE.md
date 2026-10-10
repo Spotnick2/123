@@ -7,6 +7,10 @@ session under `runs` (earlier sessions are kept).
 
 Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
+API reference: `forever-api-1.60.1.70338.md` (2026-10-10). Against 70291 its documented API is
+identical (6604 functions); the `_G` walks differ only by Blizzard UI and addons loaded at dump
+time. Every global 123 uses is unchanged.
+
 | # | Question | Probe | Issue | Status |
 |---|---|---|---|---|
 | 1 | Warlock spell IDs: learned ranks vs. existing IDs for demons, Fel Domination, Demonic Sacrifice, Soul Link, armors, Create Healthstone / Soulstone, Ritual of Summoning, Portal of Summoning (spell ID unknown; 402265 is only the Grimoire's "Learning" teach spell) | `book` | #1 | PARTIAL (run 2: low level) |
