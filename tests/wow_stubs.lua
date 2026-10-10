@@ -201,7 +201,12 @@ function Frame:RegisterEvent(event)
     WoW.events[self][event] = true
     return true
 end
-function Frame:RegisterUnitEvent(event) return Frame.RegisterEvent(self, event) end
+-- A unit event reaches the frame only for the units it registered.
+function Frame:RegisterUnitEvent(event, ...)
+    self._units = self._units or {}
+    self._units[event] = { ... }
+    return Frame.RegisterEvent(self, event)
+end
 function Frame:UnregisterEvent(event)
     if WoW.events[self] then WoW.events[self][event] = nil end
 end
@@ -306,7 +311,12 @@ GameFontNormal, GameFontHighlight = {}, {}
 
 function WoW.fire(event, ...)
     for frame, evs in pairs(WoW.events) do
-        if evs[event] then
+        local units = frame._units and frame._units[event]
+        local wanted = not units
+        for _, u in ipairs(units or {}) do
+            if u == (...) then wanted = true end
+        end
+        if evs[event] and wanted then
             local h = frame._scripts.OnEvent
             if h then h(frame, event, ...) end
         end

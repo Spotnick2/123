@@ -8,5 +8,5 @@
   `/123 confirm` turns the question back on. No question in combat.
 - Armor (#7): glows while the armor it casts is not on you (any rank of that armor counts; Demon
   Skin doesn't count once Demon Armor is learned). No glow in combat, where buffs can't be read.
-  Forever's Fel Armor (403619) is preferred if it is ever learned.
+  Fel Armor 403619 (in Forever's database) waits until it is measured.
 - Scaffold: the Warlock-only glass bar loads, `/123` and `/123 debug`, key binding.

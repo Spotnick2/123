@@ -55,6 +55,20 @@ local function stone(items, creates)
     return spellID and spellAction(spellID) or nil
 end
 
+local showTooltip
+
+-- The spell IDs and names of an armor family: any of them on the player
+-- counts as wearing it. Built once per rebuild, not per UNIT_AURA.
+local function wornBy(family)
+    local ids, names = {}, {}
+    for _, spellID in ipairs(family) do
+        ids[spellID] = true
+        local name = API.SpellName(spellID)
+        if name then names[name] = true end
+    end
+    return ids, names
+end
+
 local RESOLVE = {
     demon = function()
         local last = ns.char.demon
@@ -66,7 +80,7 @@ local RESOLVE = {
             local spellID = API.FirstKnown(family)
             if spellID then
                 local action = spellAction(spellID)
-                action.family = family
+                action.ids, action.names = wornBy(family)
                 return action
             end
         end
@@ -159,16 +173,12 @@ end
 -- "unknown" there and the glow goes out rather than guess.
 ------------------------------------------------------------
 
+local ARMOR_RETRIES, ARMOR_RETRY_SECONDS = 5, 1
+
 function Bar:ReadArmor(button)
     local action = button.action
-    if not action or self.inCombat then return "unknown" end
-    local ids, names = {}, {}
-    for _, spellID in ipairs(action.family) do
-        ids[spellID] = true
-        local name = API.SpellName(spellID)
-        if name then names[name] = true end
-    end
-    local found = API.HasAura("player", ids, names)
+    if not action or SA.inCombat then return "unknown" end
+    local found = API.HasAura("player", action.ids, action.names)
     if found == nil then return "unknown" end
     return found and "on" or "missing"
 end
@@ -176,10 +186,33 @@ end
 function Bar:UpdateArmor()
     local button = self.armorButton
     if not button then return end
-    button.armorState = self:ReadArmor(button)
-    local missing = button.armorState == "missing"
+    local state = self:ReadArmor(button)
+    button.armorState = state
+    local missing = state == "missing"
     button.glow:SetShown(missing)
-    if missing then button.pulse:Play() else button.pulse:Stop() end
+    if not missing then
+        button.pulse:Stop()
+    elseif not button.pulse:IsPlaying() then
+        button.pulse:Play()
+    end
+    if GameTooltip:IsOwned(button) then showTooltip(button) end
+    -- Unreadable out of combat (auras may stay secret a moment after it
+    -- ends): look again shortly, since no UNIT_AURA may come.
+    if state == "unknown" and button.action and not SA.inCombat then
+        self:RetryArmor()
+    else
+        self.armorRetries = 0
+    end
+end
+
+function Bar:RetryArmor()
+    if self.armorRetryPending or (self.armorRetries or 0) >= ARMOR_RETRIES then return end
+    self.armorRetries = (self.armorRetries or 0) + 1
+    self.armorRetryPending = true
+    C_Timer.After(ARMOR_RETRY_SECONDS, function()
+        self.armorRetryPending = false
+        self:UpdateArmor()
+    end)
 end
 
 function Bar:Refresh()
@@ -214,7 +247,7 @@ end
 -- combat there is no prompt, so the button is armed as combat starts (a
 -- demon that dies mid-fight can be summoned again).
 function Bar:HoldsDemon(action)
-    return action ~= nil and ns.db.confirmResummon and not self.inCombat
+    return action ~= nil and ns.db.confirmResummon and not SA.inCombat
         and petSummon() == action.spellID
 end
 
@@ -242,7 +275,7 @@ end
 -- Frames
 ------------------------------------------------------------
 
-local function showTooltip(button)
+function showTooltip(button)
     GameTooltip:SetOwner(button, "ANCHOR_TOP")
     GameTooltip:SetText(button.label:GetText(), 1, 1, 1)
     if button.armorState == "missing" then
@@ -438,25 +471,20 @@ function Bar:Initialize()
     ns.Events:Register("BAG_UPDATE_COOLDOWN", refresh)
     ns.Events:Register("SPELL_UPDATE_COOLDOWN", refresh)
     -- The Demon button follows the demon that is out, however it came.
-    -- The UNIT_AURA payload is secret in combat: only the unit token is read.
-    ns.Events:Register("UNIT_AURA", function(_, unit)
-        if unit == "player" then self:UpdateArmor() end
-    end)
+    -- The player's auras only; the payload is secret in combat and unread.
+    local auras = CreateFrame("Frame")
+    API.RegisterUnitEvent(auras, "UNIT_AURA", "player")
+    auras:SetScript("OnEvent", function() self:UpdateArmor() end)
     ns.Events:Register("UNIT_PET", function(_, unit)
         if unit == "player" then rebuild() end
     end)
-    -- Last unlocked moment before combat: stop a drag, close the prompt and
-    -- arm the Demon button without asking.
+    -- Last unlocked moment before combat (SA.inCombat is already set): stop
+    -- a drag, close the prompt, arm the Demon button without asking and put
+    -- the armor glow out. Leaving combat, SecureAction runs the sync.
     ns.Events:Register("PLAYER_REGEN_DISABLED", function()
-        self.inCombat = true
-        self:UpdateArmor()
         self:StopMoving()
         ns.Resummon:Hide()
         SA.RunSyncs()
-    end)
-    ns.Events:Register("PLAYER_REGEN_ENABLED", function()
-        self.inCombat = false
-        rebuild()
     end)
     SA.MarkDirty()
 end

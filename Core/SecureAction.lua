@@ -122,11 +122,17 @@ function SA.MarkDirty()
     end)
 end
 
+-- SA owns the combat flag, so every sync sees one consistent answer. Its
+-- handlers are registered before any module's, so the flag is set before
+-- they run. Leaving combat always runs one sync: what a button does can
+-- depend on being in combat (Bar:HoldsDemon), and auras are readable again.
 function SA.Initialize()
+    ns.Events:Register("PLAYER_REGEN_DISABLED", function()
+        SA.inCombat = true
+    end)
     ns.Events:Register("PLAYER_REGEN_ENABLED", function()
-        if SA.dirty then
-            SA.RunSyncs()
-        end
+        SA.inCombat = false
+        SA.RunSyncs()
     end)
 end
 

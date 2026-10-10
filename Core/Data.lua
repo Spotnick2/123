@@ -34,10 +34,9 @@ ns.Data = {
     -- family on the player counts as wearing it (#7). Rank numbers do not
     -- compare across families. TBC's Fel Armor (28176) does not exist on
     -- Forever. Fel Armor 403619 is in Forever's database, probably a Season of
-    -- Discovery leftover (like the Grimoire's 402265); learned-only, so it
-    -- changes nothing unless it ships.
+    -- Discovery leftover (like the Grimoire's 402265): it joins this list only
+    -- once `/123probe book` shows it known and castable.
     ARMOR = {
-        { 403619 },                             -- Fel Armor (Forever)
         { 11735, 11734, 11733, 1086, 706 },     -- Demon Armor
         { 696, 687 },                           -- Demon Skin
     },

@@ -19,6 +19,7 @@ local function auras(...)
     WoW.fire("UNIT_AURA", "player", { isFullUpdate = true })
 end
 local function glowing() return armor.glow:IsShown() and armor.pulse:IsPlaying() end
+local SA = ns.SecureAction
 
 H.eq(armor:GetAttribute("spell1"), 696, "Demon Skin's highest rank")
 H.eq(armor.armorState, "missing", "no armor on at login")
@@ -31,8 +32,25 @@ H.check(not glowing(), "no glow")
 auras({ "Demon Skin", 687 })
 H.eq(armor.armorState, "on", "a lower rank of the same armor counts")
 
+local reads = 0
+local orig = ns.API.HasAura
+ns.API.HasAura = function(...) reads = reads + 1 return orig(...) end
 WoW.fire("UNIT_AURA", "target")
-H.eq(armor.armorState, "on", "another unit's auras are not read")
+H.eq(reads, 0, "another unit's UNIT_AURA never arrives")
+WoW.fire("UNIT_AURA", "player")
+H.eq(reads, 1, "the player's does")
+ns.API.HasAura = orig
+
+-- The pulse is not restarted by every aura change while missing.
+auras()
+local plays = 0
+local play = armor.pulse.Play
+armor.pulse.Play = function(self) plays = plays + 1 return play(self) end
+auras()
+auras()
+H.eq(plays, 0, "the pulse keeps running")
+armor.pulse.Play = play
+auras({ "Demon Skin", 696 })
 
 -- Demon Armor learned: Demon Skin no longer counts.
 WoW.spells[706].known = true
@@ -55,20 +73,27 @@ H.check(not glowing(), "no glow in combat")
 local ok, err = pcall(WoW.fire, "UNIT_AURA", "player", { isFullUpdate = WoW.Secret(true) })
 H.check(ok, "a UNIT_AURA in combat raises nothing: " .. tostring(err))
 H.eq(armor.armorState, "unknown", "still unknown")
--- Even if read in combat, the throwing index read gives "unknown", not "missing".
-Bar.inCombat = false
-Bar:UpdateArmor()
-H.eq(armor.armorState, "unknown", "a throwing aura read is unknown")
-Bar.inCombat = true
-WoW.leaveCombat()
+-- Combat ends while auras are still secret: unknown, then read again shortly.
+WoW.inCombat = false
+WoW.fire("PLAYER_REGEN_ENABLED")
 WoW.runTimers(0)
-H.eq(armor.armorState, "missing", "read again once combat ends")
+H.eq(armor.armorState, "unknown", "a throwing aura read is unknown, not missing")
+WoW.aurasThrow = false
+WoW.runTimers(1)
+H.eq(armor.armorState, "missing", "re-read a moment later, with no UNIT_AURA")
+H.check(glowing(), "and the glow is back")
 
--- Forever's Fel Armor, if it ever ships, is preferred.
+-- A secret field gives unknown, never a confident "missing".
+auras({ "Demon Armor", WoW.Secret(706) })
+H.eq(armor.armorState, "unknown", "a secret aura field is unknown")
+WoW.auras.HELPFUL = {}
+WoW.runTimers(1)
+H.eq(armor.armorState, "missing", "readable again")
+
+-- Fel Armor 403619 is unmeasured: never armed, even if reported known.
 WoW.spells[403619].known = true
 WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
-H.eq(armor:GetAttribute("spell1"), 403619, "Fel Armor once learned")
-H.eq(armor.armorState, "missing", "Demon Armor no longer counts")
+H.eq(armor:GetAttribute("spell1"), 706, "Demon Armor stays until Fel Armor is measured")
 
 H.done("test_armor")
