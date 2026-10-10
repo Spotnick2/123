@@ -29,11 +29,16 @@ ns.Data = {
         [417] = 691,    -- Felhunter
     },
 
-    -- Demon Armor over Demon Skin, each highest rank first. Fel Armor (28176)
-    -- does not exist on Forever.
+    -- Armor families, preferred first, each highest rank first. The button
+    -- casts the best known rank of the first family known; any rank of THAT
+    -- family on the player counts as wearing it (#7). Rank numbers do not
+    -- compare across families. TBC's Fel Armor (28176) does not exist on
+    -- Forever. Fel Armor 403619 is in Forever's database, probably a Season of
+    -- Discovery leftover (like the Grimoire's 402265): it joins this list only
+    -- once `/123probe book` shows it known and castable.
     ARMOR = {
-        11735, 11734, 11733, 1086, 706,     -- Demon Armor
-        696, 687,                           -- Demon Skin
+        { 11735, 11734, 11733, 1086, 706 },     -- Demon Armor
+        { 696, 687 },                           -- Demon Skin
     },
 
     CREATE_HEALTHSTONE = { 11730, 11729, 5699, 6202, 6201 },

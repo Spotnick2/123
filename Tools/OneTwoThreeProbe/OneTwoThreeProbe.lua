@@ -146,7 +146,7 @@ local SPELLS = {
     { 698, "Ritual of Summoning" }, { 402265, "Grimoire: Portal of Summoning (learn)" },
     { 687, "Demon Skin 1" }, { 696, "Demon Skin 2" },
     { 706, "Demon Armor 1" }, { 1086, "Demon Armor 2" }, { 11733, "Demon Armor 3" },
-    { 11734, "Demon Armor 4" }, { 11735, "Demon Armor 5" }, { 28176, "Fel Armor (TBC)" },
+    { 11734, "Demon Armor 4" }, { 11735, "Demon Armor 5" }, { 28176, "Fel Armor (TBC)" }, { 403619, "Fel Armor (Forever DB)" },
     { 6201, "Create Healthstone (Minor)" }, { 6202, "Create Healthstone (Lesser)" },
     { 5699, "Create Healthstone" }, { 11729, "Create Healthstone (Greater)" },
     { 11730, "Create Healthstone (Major)" },

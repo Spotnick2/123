@@ -56,6 +56,15 @@ function API.RegisterEvent(frame, event)
     return false
 end
 
+-- One unit's events only (UNIT_AURA would otherwise arrive for every raid
+-- member and nameplate).
+function API.RegisterUnitEvent(frame, event, unit)
+    local ok, result = pcall(frame.RegisterUnitEvent, frame, event, unit)
+    if ok and result ~= false then return true end
+    API.eventFailures[#API.eventFailures + 1] = event .. (ok and " (refused)" or (": " .. tostring(result)))
+    return false
+end
+
 function API.RegisterEvents(frame, ...)
     local all = true
     for i = 1, select("#", ...) do
@@ -116,6 +125,34 @@ function API.FirstKnown(spellIDs)
     for _, spellID in ipairs(spellIDs) do
         if API.IsKnown(spellID) then return spellID end
     end
+    return nil
+end
+
+------------------------------------------------------------
+-- Auras. Measured (PORTING-TBC-TO-FOREVER.md "Auras go dark"): in combat an
+-- index read THROWS, the by-name lookup quietly returns nil, and comparing a
+-- secret field throws. So: an index walk with every touch inside one pcall,
+-- and a third answer, nil, for "can't tell".
+------------------------------------------------------------
+
+-- A secret anywhere raises, so the pcall below answers "can't tell" instead
+-- of a lookup silently missing and reporting the aura absent.
+local function walkAuras(unit, ids, names)
+    for i = 1, 40 do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+        if not API.Readable(aura) then error("secret aura") end
+        if not aura then return false end
+        local spellId, name = aura.spellId, aura.name
+        if not API.Readable(spellId) or not API.Readable(name) then error("secret aura field") end
+        if ids[spellId] or names[name] then return true end
+    end
+    return false
+end
+
+-- true / false, or nil when the auras can't be read (combat).
+function API.HasAura(unit, ids, names)
+    local ok, found = pcall(walkAuras, unit, ids, names)
+    if ok then return found end
     return nil
 end
 
