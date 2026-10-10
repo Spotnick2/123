@@ -59,15 +59,25 @@ WoW.runTimers(0)
 t, v = armed("healthstone")
 H.eq(t, "item", "a carried healthstone is used"); H.eq(v, "item:5512", "the Minor Healthstone")
 
--- The Demon button follows the last demon summoned.
+-- The Demon button follows the demon that is out (GUID as measured in run 2).
 WoW.spells[697].known = true
-WoW.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "cast-1", 697)
+WoW.petGUID = "Pet-0-4613-0-1234-1860-0000ABCDEF"
+WoW.fire("UNIT_PET", "party1")
 WoW.runTimers(0)
-t, v = armed("demon"); H.eq(v, 697, "Voidwalker after summoning it")
+t, v = armed("demon"); H.eq(v, 688, "another unit's pet is ignored")
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
+t, v = armed("demon"); H.eq(v, 697, "Voidwalker once it is out")
+-- A demon already out at login (no UNIT_PET) is picked up by any rebuild.
+ns.db.demon = nil
+WoW.fire("BAG_UPDATE_DELAYED")
+WoW.runTimers(0)
+t, v = armed("demon"); H.eq(v, 697, "the demon out at login")
 H.eq(ns.db.demon, 697, "remembered across sessions")
-WoW.fire("UNIT_SPELLCAST_SUCCEEDED", "party1", "cast-2", 688)
+WoW.petGUID = nil
+WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
-t, v = armed("demon"); H.eq(v, 697, "another unit's casts are ignored")
+t, v = armed("demon"); H.eq(v, 697, "still the Voidwalker after it is dismissed or dies")
 
 -- In combat nothing is written; the rebuild waits for the end of combat.
 WoW.enterCombat()

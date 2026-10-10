@@ -74,6 +74,13 @@ function API.PlayerClass()
     return nil
 end
 
+-- The NPC id in a creature's or pet's GUID ("Pet-0-...-1860-..."), or nil.
+function API.UnitNpcID(unit)
+    local ok, guid = pcall(UnitGUID, unit)
+    if not ok or not API.Readable(guid) or type(guid) ~= "string" then return nil end
+    return tonumber(guid:match("^%a+%-%d+%-%d+%-%d+%-%d+%-(%d+)%-"))
+end
+
 ------------------------------------------------------------
 -- Spells (Portal Roulette's helpers; IDs measured in FOREVER-PROBE.md run 2)
 ------------------------------------------------------------

@@ -157,7 +157,20 @@ end
 -- Secure attributes (out of combat only, through SecureAction)
 ------------------------------------------------------------
 
+-- Remember the demon that is out, so the Demon button summons it again.
+-- Returns true when that changed.
+function Bar:RememberPet()
+    local npcID = API.UnitNpcID("pet")
+    local spellID = npcID and Data.DEMON_NPC[npcID]
+    if spellID and spellID ~= ns.db.demon then
+        ns.db.demon = spellID
+        return true
+    end
+    return false
+end
+
 function Bar:Sync()
+    self:RememberPet()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
         if SA.Apply(button, { action }) then
@@ -320,18 +333,9 @@ function Bar:Initialize()
     ns.Events:Register("BAG_UPDATE_DELAYED", refresh)
     ns.Events:Register("BAG_UPDATE_COOLDOWN", refresh)
     ns.Events:Register("SPELL_UPDATE_COOLDOWN", refresh)
-    -- The Demon button summons the last demon summoned, by any means.
-    ns.Events:Register("UNIT_SPELLCAST_SUCCEEDED", function(_, unit, _, spellID)
-        if unit ~= "player" then return end
-        spellID = API.Number(spellID)
-        if not spellID or spellID == ns.db.demon then return end
-        for _, demon in ipairs(Data.DEMONS) do
-            if demon == spellID then
-                ns.db.demon = spellID
-                rebuild()
-                return
-            end
-        end
+    -- The Demon button follows the demon that is out, however it came.
+    ns.Events:Register("UNIT_PET", function(_, unit)
+        if unit == "player" and self:RememberPet() then rebuild() end
     end)
     SA.MarkDirty()
 end

@@ -9,13 +9,23 @@
 local _, ns = ...
 
 ns.Data = {
-    -- Bar order; the Demon button summons the last one used (the wheel, #4,
-    -- picks from all of them).
+    -- Best known first is the Demon button's pick until a demon has been out
+    -- (the wheel, #4, picks from all of them).
     DEMONS = {
         688,    -- Summon Imp
         697,    -- Summon Voidwalker
         712,    -- Summon Succubus
         691,    -- Summon Felhunter
+    },
+
+    -- The active pet's NPC id (from its GUID) -> its summon spell, so the
+    -- Demon button follows the demon that is out. 1860 measured (run 2); the
+    -- others are Vanilla's NPC ids.
+    DEMON_NPC = {
+        [416] = 688,    -- Imp
+        [1860] = 697,   -- Voidwalker
+        [1863] = 712,   -- Succubus
+        [417] = 691,    -- Felhunter
     },
 
     -- Demon Armor over Demon Skin, each highest rank first. Fel Armor (28176)
