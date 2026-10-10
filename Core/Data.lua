@@ -19,8 +19,9 @@ ns.Data = {
     },
 
     -- The active pet's NPC id (from its GUID) -> its summon spell, so the
-    -- Demon button follows the demon that is out. 1860 measured (run 2); the
-    -- others are Vanilla's NPC ids.
+    -- Demon button follows the demon that is out. Imp 416 and Voidwalker 1860
+    -- measured on 70334 (#17); the others are Vanilla's NPC ids, and Forever's
+    -- Incubus is still unknown (#4).
     DEMON_NPC = {
         [416] = 688,    -- Imp
         [1860] = 697,   -- Voidwalker
