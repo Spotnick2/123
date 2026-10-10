@@ -291,6 +291,54 @@ H.check(H.messagesMatching("can't open in combat") > 0, "and says why")
 WoW.leaveCombat()
 WoW.runTimers(1)
 
+-- Entering preview from an open, armed wheel with the re-summon question up
+-- disarms every cast path at once, not on the next tick (Codex, #26).
+WoW.petGUID = "Pet-0-4613-0-1234-1860-0000ABCDEF"
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
+openWheel()
+H.eq(attr(imp, "spell1"), 688, "armed before preview")
+click(void.button) -- the active Voidwalker: the question, Summon armed
+H.check(ns.Resummon:IsShown() and ns.Resummon.summon:GetAttribute("type1") == "spell", "the question is up and armed")
+ns.Wheel:SetPreview(true)
+H.eq(attr(imp, "type1"), nil, "preview disarms the beads immediately")
+H.eq(center:GetAttribute("type2"), nil, "and the centre")
+H.check(not ns.Resummon:IsShown(), "the question closes")
+H.eq(ns.Resummon.summon:GetAttribute("type1"), nil, "and its Summon button is disarmed")
+WoW.runTimers(0)
+H.eq(attr(imp, "type1"), nil, "still disarmed after the queued tick")
+ns.Wheel:SetPreview(false)
+H.eq(attr(imp, "spell1"), 688, "preview off re-arms immediately")
+Wheel:Close()
+for _ = 1, 10 do WoW.tick(0.1) end
+
+-- Preview: every demon lit, nothing armed; a click puts a demon in the centre.
+H.slash("ONETWOTHREE", "preview")
+H.check(Wheel.open and Wheel.preview, "/123 preview opens the wheel in preview")
+H.check(Wheel.previewMark:IsShown(), "marked PREVIEW")
+for _, node in ipairs(n) do
+    H.eq(attr(node, "type1"), nil, "nothing armed in preview: " .. node.spellID)
+    H.check(not node.icon:IsDesaturated() and node.known, "every demon lit: " .. node.spellID)
+end
+H.eq(center:GetAttribute("type2"), nil, "no Sacrifice in preview")
+local doomguard = n[4]
+local remembered = ns.char.demon
+local before = #WoW.sounds
+click(doomguard.button)
+H.eq(Wheel.centerName:GetText(), "Doomguard", "a click puts the Doomguard in the centre")
+H.check(doomguard.isActive and not imp.isActive, "and marks its bead active")
+H.eq(#WoW.sounds, before + 1, "with its voice")
+H.check(Wheel.open, "the wheel stays open")
+H.eq(ns.char.demon, remembered, "and the Demon button's demon is untouched")
+H.eq(Wheel.strip.hint:GetText(), "Preview: click a demon to put it in the centre", "the strip says how")
+H.slash("ONETWOTHREE", "preview")
+H.check(not Wheel.preview and not Wheel.previewMark:IsShown(), "/123 preview again stops it")
+WoW.runTimers(0) -- the coalesced rebuild
+H.eq(attr(imp, "spell1"), 688, "the beads are armed again")
+Wheel:Close()
+WoW.runTimers(1)
+for _ = 1, 10 do WoW.tick(0.1) end
+
 -- With the real LibShowcase: opening hides the game UI and lifts the root.
 if haveLib then
     H.check(ns.Presentation:Lib() ~= nil, "LibShowcase r4+ is picked up")

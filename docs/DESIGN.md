@@ -50,6 +50,9 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
 - Forever's Incubus is its own demon: Summon Incubus 713, NPC 185317 (Wowhead's Forever database;
   713 confirmed in game). A pet with an unknown NPC id (an Infernal, a Doomguard) is shown by its
   family, never becomes the Demon button's demon, and gets no Sacrifice.
+- `/123 preview` (Portal Roulette's `/pr preview`): every demon lit, nothing armed, no reagent
+  warnings, "PREVIEW" under the title; a click puts that demon in the centre (model, name, voice),
+  for screenshots on any level. The Demon button's remembered demon is untouched.
 - Opening hides the game UI and runs the cinematic camera through LibShowcase-1.0
   (`UI/Presentation.lua`, from Portal Roulette); `/123 camera` turns both off. Escape, the close
   button, a cast or combat closes it.

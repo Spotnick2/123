@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## v0.1.0 (2026-10-10)
+First public release: the compact bar, the armor reminder and the demon wheel. Group utilities
+(healthstone requests, the summon queue) come next.
+- `/123 preview`: the wheel with every demon shown and nothing cast; a click puts a demon in the
+  centre, for screenshots on any level.
 - Compact bar (#3): Demon (the demon last out), Armor (best rank known), Soulstone and Healthstone
   (use the stone carried, else create the best rank known), Summoning (Ritual of Summoning) and the
   soul shard count. Secure buttons, rebuilt out of combat; shift-drag the "123" handle to move it.

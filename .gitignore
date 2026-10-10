@@ -5,3 +5,7 @@
 # LibStub under Libs/ is vendored and committed.
 Libs/LibGlass-1.0/
 Libs/LibShowcase-1.0/
+# The CurseForge description: its images are CurseForge uploads
+# (media.forgecdn.net, 2 MB max each), so it differs from README.md and is
+# pasted by hand (AltStable's convention).
+README.curseforge.md
