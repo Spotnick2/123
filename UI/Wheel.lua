@@ -150,6 +150,9 @@ function Wheel:CreateNode(index, entry)
         if down or not node.known or mouseButton ~= "LeftButton" then return end
         if IsShiftKeyDown() and not node.shiftArmed and not node.held then return end
         Wheel:Voice(node.spellID)
+        -- A demon picked here is the Demon button's from now on (a major
+        -- demon never is).
+        if not node.major then ns.char.demon = node.spellID end
         if node.held then
             ns.Resummon:Show(button, node.spellID, function() Wheel:Close() end, Wheel.root)
         else

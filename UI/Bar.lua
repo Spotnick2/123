@@ -259,11 +259,24 @@ Bar.PetSummon = petSummon
 
 -- Remember the demon that is out (per character), so the Demon button
 -- summons it again once it is gone.
+-- The out-of-shards fallback (the Imp) is not a choice: while it stands in
+-- for a remembered demon that needs a shard, the Imp it summoned is not
+-- remembered, so that demon comes back with the shards (Codex, #19). An
+-- Imp picked on the wheel is remembered there, explicitly.
+-- Each pet is judged once, when it comes out (by its GUID): a later
+-- rebuild, with shards back, must not turn the fallback Imp into a choice.
 function Bar:RememberPet()
+    local guid = API.UnitGUID("pet")
+    if guid == self.seenPet then return end
+    self.seenPet = guid
     local spellID = petSummon()
-    if spellID then
-        ns.char.demon = spellID
+    if not spellID then return end
+    local last = ns.char.demon
+    if spellID == Data.IMP and last and Data.REAGENT[last] == Data.SOUL_SHARD
+        and API.ItemCount(Data.SOUL_SHARD) == 0 then
+        return
     end
+    ns.char.demon = spellID
 end
 
 -- Out of combat, a right-click on the Demon button while that demon is out

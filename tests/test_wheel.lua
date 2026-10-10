@@ -133,9 +133,10 @@ H.eq(ns.Resummon.frame:GetParent(), Wheel.root, "the question is parented to the
 ns.Resummon.cancel:GetScript("OnClick")()
 H.check(Wheel.open, "Cancel keeps the wheel open")
 
--- A cast speaks and closes the wheel.
+-- A cast speaks and closes the wheel; the demon picked is remembered.
 before = #WoW.sounds
 click(imp.button)
+H.eq(ns.char.demon, 688, "the Imp picked on the wheel is the Demon button's now")
 H.eq(#WoW.sounds, before + 1, "clicking the Imp speaks")
 H.check(not Wheel.open and not Wheel.root:IsShown(), "summoning closes the wheel")
 

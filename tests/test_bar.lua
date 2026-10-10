@@ -110,7 +110,7 @@ H.eq(OneTwoThreeDB.characters[WoW.playerGUID].demon, 697, "keyed on the player's
 H.eq(OneTwoThreeDB.demon, nil, "not account-wide")
 
 -- A demon already out at login (no UNIT_PET) is picked up by any rebuild.
-ns.char.demon = nil
+ns.char.demon, Bar.seenPet = nil, nil -- a new session: nothing remembered, no pet seen
 WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
 H.eq(demon.action and demon.action.spellID, 697, "the demon out at login")
@@ -223,10 +223,19 @@ WoW.fire("BAG_UPDATE_DELAYED")
 WoW.runTimers(0)
 t, v = armed("healthstone"); H.eq(v, 6201, "no stone: create one")
 H.check(byKey.healthstone.icon:IsDesaturated(), "greyed: it needs a shard")
+-- The fallback Imp actually summoned and out: still not the remembered
+-- demon (Codex, #19).
+WoW.petGUID = "Pet-0-4613-0-1234-416-0000ABCDEF"
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
+H.eq(ns.char.demon, 697, "the fallback Imp out does not replace the Voidwalker")
 WoW.counts[6265] = 2
 WoW.fire("BAG_UPDATE_DELAYED")
 WoW.runTimers(0)
 t, v = armed("demon"); H.eq(v, 697, "shards back: the Voidwalker again")
+WoW.petGUID = nil
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
 H.check(not byKey.soulstone.icon:IsDesaturated(), "and the stones light up")
 H.check(not byKey.healthstone.icon:IsDesaturated(), "both")
 
