@@ -30,10 +30,8 @@ ns.Constants = {
 }
 
 ns.Media = {
-    -- The wheel bead's ring (Tools/make_bead_ring.py): an opaque band that
-    -- hides the portrait model's square edges, and its two edge lines.
-    BEAD_RING = ns.MediaRoot .. "Bead_Ring_128.tga",
-    BEAD_EDGE = ns.MediaRoot .. "Bead_Edge_128.tga",
+    -- The fel wheel (#13, Tools/make_wheel_art.py). WHEEL_NODE's opaque band
+    -- hides the portrait model's square edges (a 3D model can't be masked).
     WHEEL_SHADOW = ns.MediaRoot .. "Wheel_Shadow_512.tga",
     WHEEL_CIRCLE = ns.MediaRoot .. "Wheel_Circle_512.tga",
     WHEEL_RUNES = ns.MediaRoot .. "Wheel_Runes_512.tga",
@@ -53,7 +51,7 @@ ns.Media = {
 ns.Colors = {
     ACCENT = { 0.58, 0.51, 0.79 },
     -- The demon wheel's fel theme (owner's "Fel concept" mockup).
-    FEL = { 0.47, 0.95, 0.22 },
+    FEL = { 0.48, 1, 0.12 },
     TEXT = { 1, 1, 1, 0.9 },
     MUTED = { 1, 1, 1, 0.6 },
 }

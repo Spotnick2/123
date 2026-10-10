@@ -12,7 +12,7 @@ local OPEN, CLOSE = 0.58, 0.30
 local RUNE_SWAY, RUNE_PERIOD = math.rad(2), 4
 -- HearthOrb-style growth, strengthened for the wheel's smaller portraits.
 local HOVER_GROWTH = 0.12
-local FEL = { 0.48, 1, 0.12 }
+local FEL = ns.Colors.FEL
 local PALETTE = {
     normal = { 0.38, 0.62, 0.19 }, active = FEL,
     unlearned = { 0.40, 0.43, 0.37 }, missing = { 1, 0.23, 0.12 },
@@ -32,7 +32,9 @@ function FX.Texture(host, key, w, h, layer, additive)
 end
 
 function FX.Plate(host)
-    local tex = FX.Texture(host, "WHEEL_PLATE", host:GetWidth(), host:GetHeight(), "BACKGROUND")
+    local tex = host:CreateTexture(nil, "BACKGROUND")
+    tex:SetAllPoints(host)
+    tex:SetTexture(M.WHEEL_PLATE)
     return tex
 end
 
@@ -46,20 +48,28 @@ function FX.NodeState(node)
     return "normal"
 end
 
+-- Called every frame for every bead: it writes only what changed (an idle,
+-- unhovered bead costs a comparison), except the active bead's breathing.
 function FX.PaintNode(node, t)
     local state = FX.NodeState(node)
-    local c = PALETTE[state]
     local hover = node.hoverLight or 0
-    -- The portrait, mask-covering rim and labels are one visual child.
-    -- Its secure parent retains its size, position and mouse footprint.
-    node.visual:SetScale(1 + HOVER_GROWTH * hover)
-    local pulse = state == "active" and (.5 + .5 * math.sin(t * PI2 / 2.8)) or 0
-    -- Disabled portraits stay grey, including the metal's small green gems.
-    node.ring:SetDesaturated(state == "unlearned")
-    node.edge:SetVertexColor(c[1], c[2], c[3])
+    local key = state .. hover
+    local active = state == "active"
+    if key == node.paintKey and not active then return end
+    local c = PALETTE[state]
+    if key ~= node.paintKey then
+        node.paintKey = key
+        -- The portrait, mask-covering rim and labels are one visual child.
+        -- Its secure parent retains its size, position and mouse footprint.
+        node.visual:SetScale(1 + HOVER_GROWTH * hover)
+        -- Disabled portraits stay grey, including the metal's small green gems.
+        node.ring:SetDesaturated(state == "unlearned")
+        node.edge:SetVertexColor(c[1], c[2], c[3])
+        node.halo:SetVertexColor(c[1], c[2], c[3])
+    end
+    local pulse = active and (.5 + .5 * math.sin(t * PI2 / 2.8)) or 0
     node.edge:SetAlpha((state == "unlearned" and .22 or .64) + .20 * hover + .15 * pulse)
-    node.halo:SetVertexColor(c[1], c[2], c[3])
-    node.halo:SetAlpha((state == "active" and .12 + .07 * pulse or .025) + hover * .16)
+    node.halo:SetAlpha((active and .12 + .07 * pulse or .025) + hover * .16)
 end
 
 function FX.Create(wheel)
@@ -136,7 +146,11 @@ function FX.Close(fx, selected)
     fx.phase, fx.age, fx.selected = "closing", 0, selected
 end
 
-function FX.Stop(fx)
+-- `keepButtons`: a close under combat lockdown, where the secure buttons
+-- can neither hide nor drop their mouse input until combat ends. They keep
+-- casting, so they stay visible (static, no effects) rather than become
+-- invisible armed targets; the decoration fades.
+function FX.Stop(fx, keepButtons)
     fx.driver:SetScript("OnUpdate", nil)
     fx.driver:Hide()
     fx.phase, fx.selected = "stopped", nil
@@ -146,10 +160,15 @@ function FX.Stop(fx)
         ember.impact:SetAlpha(0)
     end
     for _, node in ipairs(fx.wheel.nodes) do
-        node.hovered, node.hoverLight = false, 0
+        node.hovered, node.hoverLight, node.paintKey = false, 0, nil
         node.visual:SetScale(1)
     end
     alpha(fx.wheel, 0)
+    if keepButtons then
+        fx.wheel.centerVisual:SetAlpha(1)
+        fx.wheel.closeVisual:SetAlpha(1)
+        for _, node in ipairs(fx.wheel.nodes) do node.visual:SetAlpha(1) end
+    end
 end
 
 function FX.Update(fx, dt)
@@ -175,8 +194,17 @@ function FX.Update(fx, dt)
         local p = ease(age / OPEN)
         fx.wave:SetSize(fx.size * (.30 + .70 * p), fx.size * (.30 + .70 * p))
         fx.wave:SetAlpha(.9 * math.sin(p * math.pi))
-        if age >= OPEN then fx.phase = "idle" alpha(wheel, 1) fx.wave:SetAlpha(0) end
+        if age >= OPEN then
+            fx.phase = "idle"
+            alpha(wheel, 1)
+            fx.wave:SetAlpha(0)
+            -- Clicks only once every bead can be seen (code review, #23).
+            wheel:OnOpened()
+        end
     end
+    -- The decoration only runs while the wheel can be seen (Alt+Z hides
+    -- UIParent with the camera off); the fades above still finish.
+    if not wheel.root:IsVisible() then return end
     for i, layer in ipairs(fx.layers) do
         layer.tex:SetRotation(layer.offset + t * PI2 / layer.turn)
         layer.tex:SetAlpha(layer.alpha * (.85 + .15 * math.sin(t * .8 + i * 2)))
@@ -187,11 +215,16 @@ function FX.Update(fx, dt)
     fx.aura:SetAlpha(wheel.petOut and (.23 + .06 * math.sin(t * 2)) or .08)
     for _, ember in ipairs(fx.embers) do
         local p = (t / 2.6 + ember.phase) % 1
-        local fall = clamp(p / .72)
-        ember.tex:ClearAllPoints()
-        ember.tex:SetPoint("CENTER", wheel.disc, "CENTER", ember.x + 4 * (1 - fall), ember.y + 32 * (1 - fall))
-        ember.tex:SetAlpha(p < .72 and math.sin(fall * math.pi) * .56 or 0)
-        ember.impact:SetAlpha(p >= .72 and math.sin((p - .72) / .28 * math.pi) * .32 or 0)
+        if p < .72 then
+            local fall = p / .72
+            -- One CENTER anchor, replaced in place: no ClearAllPoints.
+            ember.tex:SetPoint("CENTER", wheel.disc, "CENTER", ember.x + 4 * (1 - fall), ember.y + 32 * (1 - fall))
+            ember.tex:SetAlpha(math.sin(fall * math.pi) * .56)
+            if ember.landed then ember.impact:SetAlpha(0) ember.landed = false end
+        else
+            if not ember.landed then ember.tex:SetAlpha(0) ember.landed = true end
+            ember.impact:SetAlpha(math.sin((p - .72) / .28 * math.pi) * .32)
+        end
     end
     for _, node in ipairs(wheel.nodes) do
         local target = node.hovered and 1 or 0

@@ -47,8 +47,9 @@ local ROOT_W, ROOT_H = 480, 600
 local DISC = 440
 local BEAD = 76
 -- The portrait model's square: inscribed in the bead, its edges under the
--- ring, whose hole is this square's inscribed circle (make_bead_ring.py's
--- INNER = 0.70 of the radius). A 3D model can't be masked.
+-- metal node (Media/Wheel_Node_256.tga, Tools/make_wheel_art.py), whose
+-- opaque band starts at this square's inscribed circle. A 3D model can't
+-- be masked.
 local MODEL = math.floor(BEAD * 0.695)
 local RADIUS = 162
 local CENTER = 170
@@ -141,14 +142,12 @@ function Wheel:CreateNode(index, entry)
         count = count, edge = edge, ring = ring, halo = halo, subPlate = subPlate }
     button:SetScript("OnEnter", function()
         if not Wheel.open then return end
-        node.hovered = true
-        Wheel:PaintEdge(node)
+        node.hovered = true -- the effects clock eases the light in
         Wheel:Hint(Wheel:NodeHint(node))
         Wheel:Voice(node.spellID)
     end)
     button:SetScript("OnLeave", function()
         node.hovered = false
-        Wheel:PaintEdge(node)
         Wheel:Hint()
     end)
     -- Insecure PostClick, after the secure action: the active demon's bead
@@ -156,8 +155,10 @@ function Wheel:CreateNode(index, entry)
     -- something counts: a bead arms the left button, and shift only with
     -- Fel Domination (a secure button never falls back from shift-type1 to
     -- type1), so a right click or a bare shift-click does nothing.
+    -- No "is the wheel open" guard: a click that reached a secure button
+    -- has cast, and its bookkeeping (voice, the remembered demon) follows;
+    -- Close itself does nothing when the wheel is not open.
     button:SetScript("PostClick", function(_, mouseButton, down)
-        if not Wheel.open then return end
         if down or not node.known or mouseButton ~= "LeftButton" then return end
         if IsShiftKeyDown() and not node.shiftArmed and not node.held then return end
         Wheel:Voice(node.spellID)
@@ -209,7 +210,6 @@ function Wheel:CreateCenter()
     button:SetScript("OnEnter", function() Wheel:Hint(Wheel:SacrificeHint()) end)
     button:SetScript("OnLeave", function() Wheel:Hint() end)
     button:SetScript("PostClick", function(_, mouseButton, down)
-        if not Wheel.open then return end
         if down or mouseButton ~= "RightButton" or not Wheel.sacrifice.action then return end
         if IsShiftKeyDown() then return end -- no shift- attributes: nothing cast
         Wheel:Close()
@@ -227,9 +227,12 @@ function Wheel:CreateHeader()
     backing:SetVertexColor(0.02, 0.025, 0.02, 0.95)
     local crest = FX.Texture(header, "WHEEL_CREST", 244, 122, "ARTWORK")
     crest:SetPoint("CENTER", header, "CENTER", 0, 10)
-    local title = Skin:Font(header, 34, "CENTER")
-    -- The client's serif face, already used by Blizzard headings.
+    -- The client's serif face, already used by Blizzard headings, on a plain
+    -- font string: a Skin:Font one is restyled by LibGlass's font changes.
+    local title = header:CreateFontString(nil, "OVERLAY")
     title:SetFont("Fonts\\FRIZQT__.TTF", 38, "")
+    title:SetShadowOffset(1, -1)
+    title:SetShadowColor(0, 0, 0, 0.8)
     title:SetPoint("TOP", 0, 0)
     title:SetText("123")
     title:SetTextColor(0.92, 0.95, 0.88)
@@ -615,7 +618,7 @@ function Wheel:Open()
     end
     self:Create()
     if self.open then return end
-    if self.closing then self:FinishClose() end
+    if self:IsClosing() then self:FinishClose() end
     self.pendingHide = false
     self.open = true
     self:Resolve()
@@ -624,7 +627,7 @@ function Wheel:Open()
     self:PaintPortraits()
     self:Hint()
     self:ApplyPosition()
-    self:SetMouseEnabled(true)
+    self:SetMouseEnabled(false) -- on once the beads have faded in (OnOpened)
     self.root:Show()
     FX.Start(self.effects)
     ns.Presentation:Enter(self.root)
@@ -648,6 +651,16 @@ function Wheel:SetMouseEnabled(enabled)
     self.closeButton:EnableMouse(enabled)
 end
 
+-- The opening has finished: every bead is visible, so it takes clicks.
+function Wheel:OnOpened()
+    if self.open and not InCombatLockdown() then self:SetMouseEnabled(true) end
+end
+
+-- The closing animation runs (one source of truth: the effects' phase).
+function Wheel:IsClosing()
+    return self.effects ~= nil and self.effects.phase == "closing"
+end
+
 -- Stop accepting input immediately. Visual children can finish a normal
 -- close, but combat/forced cleanup always bypasses that animation.
 function Wheel:BeginClose()
@@ -661,12 +674,13 @@ function Wheel:BeginClose()
 end
 
 function Wheel:FinishClose()
-    self.closing = false
-    FX.Stop(self.effects)
+    FX.Stop(self.effects, InCombatLockdown())
     self.portrait:Hide()
     for _, node in ipairs(self.nodes) do node.portrait:Hide() end
     if InCombatLockdown() then
+        -- Its buttons still cast until combat ends: shown, and said so.
         self.pendingHide = true
+        ns.Print("the demon wheel closes when combat ends.")
     else
         self.pendingHide = false
         self.root:Hide()
@@ -681,7 +695,6 @@ end
 function Wheel:Close(selected)
     if not self.open or InCombatLockdown() then return end
     self:BeginClose()
-    self.closing = true
     FX.Close(self.effects, selected)
     ns.Presentation:Exit("close")
 end
@@ -693,7 +706,7 @@ end
 -- Combat entry: still unlocked inside PLAYER_REGEN_DISABLED (measured), so
 -- the wheel closes at once and no invisible targets are left in combat.
 function Wheel:OnCombatStart()
-    if not self.open and not self.closing then return end
+    if not self.open and not self:IsClosing() then return end
     self:Teardown()
     ns.Presentation:ForceExit("combat")
 end
@@ -702,7 +715,7 @@ function Wheel:OnCombatEnd()
     if self.pendingHide and not self.open then
         self.pendingHide = false
         self.root:Hide()
-        self.stage:SetAlpha(1)
+        self:SetMouseEnabled(false) -- FX.Start restores every alpha on the next open
     end
 end
 
@@ -711,7 +724,7 @@ function Wheel:OnForcedExit(reason)
     ns.Presentation:MarkClosed()
     if reason == "ui-shown" and self.open and not InCombatLockdown() then
         self:Close()
-    elseif self.open or self.closing then
+    elseif self.open or self:IsClosing() then
         self:Teardown()
     end
 end

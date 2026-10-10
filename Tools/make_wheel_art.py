@@ -4,7 +4,8 @@ Pillow + numpy (also used by the sibling addons' art tools). The crest source
 is generated art under Tools/Art/Crest; all other layers are procedural.
 Uncompressed, bottom-origin RGBA TGAs; power-of-two sizes. Light layers carry
 white RGB with shape in alpha. The metal node MUST cover the portrait corners:
-its opaque band is 0.70..0.985 of the radius, matching make_bead_ring.py.
+its opaque band is 0.70..0.985 of the radius, from the inscribed circle of
+the portrait's square (Wheel.lua MODEL = 0.695 of the bead) to the rim.
 """
 from pathlib import Path
 import math
