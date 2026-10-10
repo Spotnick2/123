@@ -24,8 +24,8 @@
 --   * Escape: a plain proxy frame in UISpecialFrames (an insecure key handler
 --     taints the Escape binding), armed only while the game UI is visible;
 --     with the UI hidden, Escape goes through LibShowcase (onForcedExit).
---   * Each bead is the demon's live, idling portrait (ns.Portrait's head crop,
---     TimeIsMoney's recipe), falling back to the 2D portrait, then the icon.
+--   * Each bead is the demon's live, idling face (ns.Portrait.Head: the
+--     creature's portrait camera, GlassUnitFrames' recipe), else the icon.
 --   * It opens two thirds of the way across the screen (owner), not centred.
 --   * Art (title crest, rune ring) and animation layers are the Codex
 --     handoff (#13); this is the structure and the fel colours.
@@ -87,7 +87,7 @@ function Wheel:CreateNode(index, entry)
     iconHost:SetPoint("BOTTOMRIGHT", -5, 5)
     local icon = Skin:RoundTexture(iconHost, "ARTWORK")
     icon:Hide()
-    local portrait = ns.Portrait.Create(iconHost, BEAD - 10, ns.Portrait.HEAD)
+    local portrait = ns.Portrait.Head(iconHost, BEAD - 10)
     local hover = Skin:RoundTexture(iconHost, "OVERLAY")
     hover:SetTexture(ns.Media.WHITE)
     hover:SetVertexColor(FEL[1], FEL[2], FEL[3], 0.18)
@@ -112,6 +112,7 @@ function Wheel:CreateNode(index, entry)
     button:SetScript("OnEnter", function()
         hover:Show()
         Wheel:Hint(Wheel:NodeHint(node))
+        Wheel:Voice(node.spellID)
     end)
     button:SetScript("OnLeave", function()
         hover:Hide()
@@ -121,6 +122,7 @@ function Wheel:CreateNode(index, entry)
     -- asks first; any other cast closes the wheel.
     button:SetScript("PostClick", function(_, _, down)
         if down or not node.known then return end
+        Wheel:Voice(node.spellID)
         if node.held then
             ns.Resummon:Show(button, node.spellID, function() Wheel:Close() end)
         else
@@ -444,6 +446,24 @@ function Wheel:ItemName(itemID)
     local name = API.ItemName(itemID)
     if not name then API.RequestItemData(itemID) end
     return name or "reagent"
+end
+
+------------------------------------------------------------
+-- Voices: a demon's line on hover and on click (owner), a different one
+-- each time, on the Dialog channel (TimeIsMoney's Director: the player's
+-- dialog volume and mute apply). A new line cuts the one still playing, so
+-- sweeping over the ring never stacks voices.
+------------------------------------------------------------
+
+function Wheel:Voice(spellID)
+    local lines = Data.VOICE[spellID]
+    if not (lines and ns.db.sounds) then return end
+    local i = math.random(#lines)
+    if #lines > 1 and i == self.lastLine then i = i % #lines + 1 end
+    self.lastLine = i
+    if self.voiceHandle then pcall(StopSound, self.voiceHandle, 200) end
+    local ok, willPlay, handle = pcall(PlaySoundFile, lines[i], "Dialog")
+    self.voiceHandle = ok and willPlay and handle or nil
 end
 
 ------------------------------------------------------------

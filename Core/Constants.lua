@@ -11,6 +11,8 @@ ns.Constants = {
         version = 1,
         -- Ask before re-summoning the demon that is already out.
         confirmResummon = true,
+        -- The demons' voices on the wheel (hover, click). /123 sounds.
+        sounds = true,
         -- Opening the demon wheel (LibShowcase-1.0): hide the game UI and
         -- run the cinematic camera, as Portal Roulette does. /123 camera.
         cinematicCamera = true,

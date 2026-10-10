@@ -48,6 +48,22 @@ ns.Data = {
         [18540] = 16583,    -- Demonic Figurine
     },
 
+    -- Each demon's voice on the wheel (hover and click), by file ID: the
+    -- summon lines the owner picked (succubusvo, doomguardvo) and the same set
+    -- for the Voidwalker, from the community listfile. The Imp has no summon
+    -- lines (impvo: order, dismiss, kill), so its "order" ones; the Felhunter
+    -- and the Infernal don't speak (felhound and infernal sounds); Forever's
+    -- Incubus only has Shadowlands-era lines (vo_92_incubus_*): candidates.
+    VOICE = {
+        [697] = { 563819, 563812, 563814, 563817 },    -- void_summon01-04
+        [712] = { 561163, 561168, 561157, 561154 },    -- succubus_summon01-04
+        [18540] = { 547320, 547328, 547335, 547332 },  -- doom_summon01-04
+        [688] = { 552530, 552533, 552522, 552521 },    -- imp_order01-04
+        [691] = { 548856, 548852, 548858 },            -- felhound stand roar, pre-aggro, aggro
+        [1122] = { 552542 },                           -- minfernalaggroa
+        [713] = { 4278423, 4278424, 4278425, 4278426 },-- vo_92_incubus_01-04
+    },
+
     -- The "Reagent Economy" perk (Resourcefulness legacy tree): "Your class
     -- abilities no longer require reagents purchasable from vendors". Its
     -- spell IDs, one per class, from Portal Roulette's probe; which one is

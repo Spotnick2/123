@@ -59,6 +59,9 @@ local function registerSlashCommands()
             end
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
+        elseif cmd == "sounds" then
+            ns.db.sounds = not ns.db.sounds
+            printMessage(ns.db.sounds and "demon voices on." or "demon voices off.")
         elseif cmd == "camera" then
             local on = not ns.db.cinematicCamera
             ns.db.cinematicCamera, ns.db.hideGameUI = on, on
@@ -72,7 +75,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | wheel | camera (cinematic opening) | confirm (ask before re-summoning) | debug")
+            printMessage("/123 | wheel | camera (cinematic opening) | sounds (demon voices) | confirm (ask before re-summoning) | debug")
         end
     end
 end

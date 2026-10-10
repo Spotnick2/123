@@ -73,6 +73,28 @@ H.eq(Wheel.strip.hint:GetText(), "Click: Summon Imp", "hovering a bead says what
 imp.button:GetScript("OnLeave")()
 H.eq(Wheel.strip.hint:GetText(), "Select a demon to summon", "and back")
 
+-- Voices: hovering or clicking a demon plays one of its lines, never the
+-- same twice in a row, and a new one cuts the one playing.
+local function voiced() return WoW.sounds[#WoW.sounds] end
+local before = #WoW.sounds
+succubus.button:GetScript("OnEnter")()
+local first = voiced()
+local lines = {}
+for _, id in ipairs(ns.Data.VOICE[712]) do lines[id] = true end
+H.eq(#WoW.sounds, before + 1, "hovering the Succubus speaks")
+H.check(lines[first], "one of her summon lines (owner's file IDs)")
+H.eq(WoW.soundChannels[#WoW.sounds], "Dialog", "on the Dialog channel")
+succubus.button:GetScript("OnEnter")()
+H.check(voiced() ~= first, "a different line the next time")
+H.eq(WoW.stopped[#WoW.stopped], WoW.soundHandle - 1, "the previous line is cut")
+ns.db.sounds = false
+n[4].button:GetScript("OnEnter")()
+H.eq(#WoW.sounds, before + 2, "/123 sounds off: silent")
+ns.db.sounds = true
+for _, entry in ipairs(ns.Data.WHEEL) do
+    H.check(ns.Data.VOICE[entry.spell], "a voice for every bead: " .. entry.spell)
+end
+
 -- The centre: right-click Sacrifice (the Voidwalker's pet action).
 local center = Wheel.center
 H.eq(center:GetAttribute("type1"), nil, "a left click on the centre does nothing")
@@ -82,8 +104,10 @@ center:GetScript("OnEnter")()
 H.eq(Wheel.strip.hint:GetText(), "Right-click: Sacrifice Voidwalker", "the hint says so")
 center:GetScript("OnLeave")()
 
--- A cast closes the wheel.
+-- A cast speaks and closes the wheel.
+before = #WoW.sounds
 click(imp.button)
+H.eq(#WoW.sounds, before + 1, "clicking the Imp speaks")
 H.check(not Wheel.open and not Wheel.root:IsShown(), "summoning closes the wheel")
 
 -- Fel Domination, Demonic Sacrifice and Inferno, once learned.
@@ -125,25 +149,17 @@ local pt = Wheel.root._points[#Wheel.root._points]
 H.eq(pt[1], "CENTER", "anchored on its centre")
 H.check(math.abs(pt[4] - UIParent:GetWidth() / 6) < 1e-6, "a sixth of the screen right of centre: two thirds across")
 
--- Portraits. The stub client renders no model: no display, so the icon.
-H.check(imp.icon:IsShown(), "no display: the bead falls back to its icon")
--- With a display but no box in time: the client's round 2D portrait.
-local Portrait = ns.Portrait
-local realDisplay = Portrait.DisplayID
-Portrait.DisplayID = function(npc) return npc + 100000 end
-Wheel:Close()
-click(demonButton)
-WoW.runTimers(0.1)
+-- Portraits: each bead's PlayerModel shows its creature through the
+-- portrait camera. The stub client loads no model file: the icon, in time.
+local m = imp.portrait.model
+H.eq(m._creature, 416, "the Imp's bead shows the Imp (npc 416)")
+H.eq(inferno.portrait.model._creature, 89, "Inferno's bead shows the Infernal (npc 89), not a stale display")
+H.eq(n[4].portrait.model._creature, 11859, "the Doomguard's bead shows the Doomguard")
+H.eq(m._zoom, 1, "through the portrait camera")
+H.check(not imp.icon:IsShown(), "the icon waits for the model")
 for _ = 1, 20 do WoW.runTimers(0.1) end
-H.eq(imp.portrait.flat._portrait, 100416, "no model in time: the Imp's 2D portrait (npc 416)")
-H.check(imp.portrait.flat:IsShown() and not imp.icon:IsShown(), "shown instead of the icon")
-H.check(succubus.portrait.flat:IsDesaturated(), "a demon not learned is greyed")
-Portrait.DisplayID = realDisplay
--- The head crop: the top 40% of the model fills the frame with headroom.
-local scale, z = Portrait.Framing(2, Portrait.HEAD)
-local span = 2 * 40 * math.tan(0.15 / 2)
-H.check(math.abs(scale - span / (2 * 0.40 * Portrait.HEAD.margin)) < 1e-9, "head crop scale")
-H.check(math.abs(z - (-(1 - 0.40) / 2 * 2)) < 1e-9, "the model lowered so its head is centred")
+H.check(imp.icon:IsShown() and not m:IsShown(), "no model file in time: the icon")
+H.eq(succubus.portrait.model._desat, 1, "a demon not learned is greyed")
 
 -- Escape (the proxy in UISpecialFrames) closes it.
 H.check(Wheel.escape:IsShown() or ns.Presentation:IsGameUIHidden(), "Escape is armed")

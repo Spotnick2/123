@@ -1,6 +1,7 @@
 -- ============================================================
--- Portrait: a demon's live, idling 3D model, for the wheel's centre (whole
--- body) and its beads (a head crop).
+-- Portrait: a demon's live, idling 3D model. Two kinds:
+--   * Portrait.Create: the whole body in a ModelScene (the wheel's centre).
+--   * Portrait.Head: a face portrait in a PlayerModel (the wheel's beads).
 --
 -- The recipe measured by AltStable (Scanner.lua, #75 there), Gnomesweeper
 -- (Models.lua) and TimeIsMoney (UI/Director.lua, docs/MODELS.md):
@@ -11,14 +12,18 @@
 --     at +40 on X facing back, field of view 0.15, clip 0.1-100, the actor's
 --     origin centred, the box polled until the model is in (a token drops a
 --     late answer). The idle animation runs by itself.
---   * Head crop (TimeIsMoney): the top 0.40 of the model's height fills the
---     frame with headroom; the client scales the actor's position, so the
---     offset is divided by the scale. Particles off: they escape the frame.
 --   * Fallbacks: the client's round 2D portrait from the same display
 --     (SetPortraitTextureFromCreatureDisplayID, TimeIsMoney's verified one),
 --     then the caller's icon.
--- No measured heights for demons yet: the framing reads the live box, which
--- follows the idle pose (TimeIsMoney pins measured heights instead).
+--   * Faces (GlassUnitFrames' measured unit-frame portraits): a PlayerModel
+--     with SetPortraitZoom(1), the creature's own portrait camera, the one
+--     target frames use. In game a crop of the model's top 0.40 (TimeIsMoney's
+--     goblin crop) framed horns and wing tips instead of faces.
+--   * SetCreature on the drawing model itself: the display lookup answers
+--     only once the creature has loaded, and in game Inferno and the
+--     Doomguard got the Felhunter's display, read just before (TimeIsMoney
+--     measured the same: "SetCreature streams"). A PlayerModel streams its
+--     own creature in.
 -- ============================================================
 
 local _, ns = ...
@@ -32,9 +37,6 @@ local WAIT, POLL = 1.5, 0.1
 -- 0.8 the Imp overflowed the disc and its flames were cut at the scene's
 -- edge (a creature's effects reach past its box; Gnomesweeper measured it).
 local FILL = 0.6
--- Head crop (TimeIsMoney's measured 0.40 / 1.15, with more headroom here: a
--- round bead hides the scene's corners).
-Portrait.HEAD = { fraction = 0.40, margin = 1.35 }
 
 local resolver
 -- The display ID of a creature NPC, or nil.
@@ -70,23 +72,16 @@ local function readHeight(actor)
     return z1 - z0
 end
 
--- Actor scale and vertical position for `height` in a square frame: the
--- whole body at FILL, or the top `crop.fraction` with `crop.margin`.
-function Portrait.Framing(height, crop)
+-- The actor's scale for `height` in a square frame: the whole body at FILL.
+function Portrait.Framing(height)
     local span = 2 * CAMERA * math.tan(FOV / 2)
-    if not crop then
-        return span * FILL / height, 0
-    end
-    local scale = span / (height * crop.fraction * crop.margin)
-    local offset = -(1 - crop.fraction) / 2 * height * scale
-    return scale, offset / scale
+    return span * FILL / height
 end
 
--- A portrait `size` px square on `parent`, centred on it. `crop`: nil for
--- the whole body, Portrait.HEAD for a head crop. The fallbacks: p.flat (the
--- 2D portrait), then onFail (the caller's icon).
+-- A whole-body portrait `size` px square on `parent`, centred on it. The
+-- fallbacks: p.flat (the 2D portrait), then onFail (the caller's icon).
 --   p:Show(npcID, onFail), p:Hide(), p:SetDesaturated(bool)
-function Portrait.Create(parent, size, crop)
+function Portrait.Create(parent, size)
     local p = { token = 0 }
     local flatHost = CreateFrame("Frame", nil, parent)
     flatHost:SetSize(size, size)
@@ -111,7 +106,6 @@ function Portrait.Create(parent, size, crop)
         pcall(scene.SetCameraOrientationByYawPitchRoll, scene, math.pi, 0, 0)
         pcall(actor.SetUseCenterForOrigin, actor, true, true, true)
         pcall(actor.SetPosition, actor, 0, 0, 0)
-        if crop then pcall(actor.SetParticleOverrideScale, actor, 0) end
         scene:Hide()
         p.scene, p.actor = scene, actor
     end
@@ -146,9 +140,7 @@ function Portrait.Create(parent, size, crop)
             if self.token ~= mine then return end
             local height = readHeight(actor)
             if height then
-                local scale, z = Portrait.Framing(height, crop)
-                pcall(actor.SetScale, actor, scale)
-                pcall(actor.SetPosition, actor, 0, 0, z)
+                pcall(actor.SetScale, actor, Portrait.Framing(height))
                 self.height = height
                 self.scene:Show()
             elseif left > 0 then
@@ -172,6 +164,71 @@ function Portrait.Create(parent, size, crop)
         flat:SetDesaturated(on)
         if self.scene then self.scene:SetAlpha(on and 0.55 or 1) end
         flat:SetAlpha(on and 0.55 or 1)
+    end
+
+    return p
+end
+
+-- A face portrait `size` px square on `parent`: the creature `npcID` in a
+-- PlayerModel through its own portrait camera, idling. Gives up for the
+-- caller's icon when no model file has arrived after a while.
+--   p:Show(npcID, onFail), p:Hide(), p:SetDesaturated(bool)
+function Portrait.Head(parent, size)
+    local p = { token = 0 }
+    local ok, model = pcall(CreateFrame, "PlayerModel", nil, parent)
+    if not ok or not model then
+        function p:Show(_, onFail) onFail() end
+        function p:Hide() end
+        function p:SetDesaturated() end
+        return p
+    end
+    model:SetSize(size, size)
+    model:SetPoint("CENTER")
+    model:EnableMouse(false)
+    pcall(model.SetKeepModelOnHide, model, true)
+    model:Hide()
+    p.model = model
+
+    function p:Show(npcID, onFail)
+        self.token = self.token + 1
+        local mine = self.token
+        if not npcID then model:Hide() return onFail() end
+        model:Show()
+        if self.npc ~= npcID then
+            self.npc = npcID
+            pcall(model.ClearModel, model)
+            pcall(model.SetCreature, model, npcID)
+        end
+        -- GlassUnitFrames' sequence after the model: zoom, then reset position.
+        pcall(model.SetPortraitZoom, model, 1)
+        pcall(model.SetPosition, model, 0, 0, 0)
+        local function poll(left)
+            if self.token ~= mine then return end
+            local okF, file = pcall(model.GetModelFileID, model)
+            if okF and ns.API.Number(file) and file > 0 then
+                pcall(model.SetPortraitZoom, model, 1) -- again, once it is in
+                return
+            end
+            if left > 0 then
+                C_Timer.After(POLL, function() poll(left - 1) end)
+            else
+                self.npc = nil
+                model:Hide()
+                onFail()
+            end
+        end
+        C_Timer.After(POLL, function() poll(math.floor(WAIT / POLL + 0.5)) end)
+    end
+
+    function p:Hide()
+        self.token = self.token + 1
+        model:Hide()
+    end
+
+    -- Not learned yet: greyed, like an icon.
+    function p:SetDesaturated(on)
+        pcall(model.SetDesaturation, model, on and 1 or 0)
+        model:SetAlpha(on and 0.55 or 1)
     end
 
     return p

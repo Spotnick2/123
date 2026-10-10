@@ -258,6 +258,11 @@ function Frame:GetFontString() return self._fs end
 function Frame:SetTexture(file) self._texture = file end
 function Frame:GetTexture() return self._texture end
 function Frame:SetColorTexture(r, g, b, a) self._color = { r, g, b, a } end
+-- PlayerModel (portraits): what it was asked to show.
+function Frame:SetCreature(npc) self._creature = npc end
+function Frame:SetPortraitZoom(z) self._zoom = z end
+function Frame:SetDesaturation(d) self._desat = d end
+function Frame:ClearModel() self._creature = nil end
 -- Records what the texture would be drawn with: a secret channel is
 -- unwrapped here, as the client does, never by the addon.
 function Frame:SetVertexColor(r, g, b)
@@ -796,7 +801,16 @@ DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) WoW.messages[#WoW.messages 
 function SendChatMessage(msg, channel) WoW.chat[#WoW.chat + 1] = { msg, channel } end
 function IsShiftKeyDown() return false end
 WoW.sounds = {}
-function PlaySoundFile(path) WoW.sounds[#WoW.sounds + 1] = path return true end
+WoW.soundHandle = 0
+WoW.stopped = {}
+function PlaySoundFile(path, channel)
+    WoW.sounds[#WoW.sounds + 1] = path
+    WoW.soundChannels = WoW.soundChannels or {}
+    WoW.soundChannels[#WoW.sounds] = channel
+    WoW.soundHandle = WoW.soundHandle + 1
+    return true, WoW.soundHandle
+end
+function StopSound(handle) WoW.stopped[#WoW.stopped + 1] = handle end
 -- Spell tooltips: WoW.spellTips[id] = { lines... }; missing -> no data yet.
 WoW.spellTips = {}
 function C_TooltipInfo.GetSpellByID(id)
