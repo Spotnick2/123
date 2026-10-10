@@ -119,6 +119,29 @@ function API.FirstKnown(spellIDs)
     return nil
 end
 
+------------------------------------------------------------
+-- Auras. Measured (PORTING-TBC-TO-FOREVER.md "Auras go dark"): in combat an
+-- index read THROWS, the by-name lookup quietly returns nil, and comparing a
+-- secret field throws. So: an index walk with every touch inside one pcall,
+-- and a third answer, nil, for "can't tell".
+------------------------------------------------------------
+
+local function walkAuras(unit, ids, names)
+    for i = 1, 40 do
+        local aura = C_UnitAuras.GetAuraDataByIndex(unit, i, "HELPFUL")
+        if not aura then return false end
+        if ids[aura.spellId] or names[aura.name] then return true end
+    end
+    return false
+end
+
+-- true / false, or nil when the auras can't be read (combat).
+function API.HasAura(unit, ids, names)
+    local ok, found = pcall(walkAuras, unit, ids, names)
+    if ok then return found end
+    return nil
+end
+
 -- A LuaDurationObject for a Cooldown widget, or nil. Safe with secrets.
 function API.SpellCooldownDuration(spellID)
     local ok, duration = pcall(C_Spell.GetSpellCooldownDuration, spellID)
