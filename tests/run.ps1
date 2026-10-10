@@ -37,7 +37,8 @@ try {
     # file is what the .pkgmeta tag packages; otherwise the result says so.
     $pkg = Get-Content ".pkgmeta" -Raw
     foreach ($lib in @(
-            @{ Name = "LibGlass-1.0"; Env = $env:LIBGLASS; Dir = "..\LibGlass"; File = "LibGlass.lua" })) {
+            @{ Name = "LibGlass-1.0"; Env = $env:LIBGLASS; Dir = "..\LibGlass"; File = "LibGlass.lua" },
+            @{ Name = "LibShowcase-1.0"; Env = $env:LIBSHOWCASE; Dir = "..\LibShowcase"; File = "LibShowcase.lua" })) {
         $dir = if ($lib.Env) { $lib.Env } else { $lib.Dir }
         $m = [regex]::Match($pkg, "Libs/" + [regex]::Escape($lib.Name) + ":\s*\r?\n\s*url: [^\r\n]+\r?\n\s*tag: (\S+)")
         if (-not $m.Success) { Write-Error "no tag pin for $($lib.Name) in .pkgmeta"; exit 1 }

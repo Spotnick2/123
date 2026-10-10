@@ -7,6 +7,7 @@
 
 Libs\LibStub\LibStub.lua
 Libs\LibGlass-1.0\LibGlass-1.0.xml
+Libs\LibShowcase-1.0\LibShowcase-1.0.xml
 
 Core\Constants.lua
 Core\Compat.lua
@@ -15,6 +16,9 @@ Core\DB.lua
 Core\Events.lua
 Core\SecureAction.lua
 UI\Skin.lua
+UI\Presentation.lua
+UI\Portrait.lua
 UI\Resummon.lua
 UI\Bar.lua
+UI\Wheel.lua
 Core\Init.lua

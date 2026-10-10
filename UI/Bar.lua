@@ -1,7 +1,10 @@
 -- ============================================================
 -- Bar: the compact bar (storyboard panel 01, issue #3).
 --
---   [123] Demon · Armor · Soulstone · Healthstone · Summoning | shard count
+--   [123] Demons · Demon · Armor · Soulstone · Healthstone · Summoning | shards
+--
+-- "Demons" opens the demon wheel (Retail's Summon Demon flyout, with Fel
+-- Domination's icon: owner); it casts nothing, so it is a plain button.
 --
 -- Each button is a stationary secure button and the only mouse-enabled
 -- frame in its footprint; the bar itself takes no mouse, and the "123"
@@ -29,8 +32,12 @@ local PAD = 8
 local HANDLE_W = 34
 local SHARD_W = 56
 local LABEL_H = 12
-local WIDTH = PAD + HANDLE_W + PITCH * 5 + 1 + SHARD_W + PAD
+local SLOTS = 6             -- the wheel's button, then the five secure ones
+local WIDTH = PAD + HANDLE_W + PITCH * SLOTS + 1 + SHARD_W + PAD
+-- The names under the icons are a setting, off by default (owner: the
+-- tooltips are enough); without them the bar loses that row.
 local HEIGHT = PAD + ICON + 2 + LABEL_H + PAD
+local HEIGHT_BARE = PAD + ICON + PAD
 
 ------------------------------------------------------------
 -- What each button does: an action for SecureAction.Apply (nil when nothing
@@ -70,9 +77,15 @@ local function wornBy(family)
 end
 
 local RESOLVE = {
+    -- Out of Soul Shards, the Imp (the one demon that needs none) until
+    -- shards come back; the remembered demon itself is kept (owner).
     demon = function()
         local last = ns.char.demon
         local spellID = (last and API.IsKnown(last)) and last or API.FirstKnown(Data.DEMONS)
+        if spellID and Data.REAGENT[spellID] == Data.SOUL_SHARD
+            and API.ItemCount(Data.SOUL_SHARD) == 0 and API.IsKnown(Data.IMP) then
+            spellID = Data.IMP
+        end
         return spellID and spellAction(spellID) or nil
     end,
     armor = function()
@@ -150,11 +163,21 @@ local function setCount(fontString, raw, showOne)
     end
 end
 
+-- True when the armed spell needs a reagent the player has none of (a
+-- Soul Shard to create a stone or for the Ritual). An unreadable count
+-- (secret, in combat) is not "none".
+local function short(action)
+    local itemID = action and action.spellID and Data.REAGENT[action.spellID]
+    return itemID ~= nil and API.ItemCount(itemID) == 0
+end
+
 function Bar:RefreshButton(button)
     local action = button.action
+    local dim = action == nil or short(action)
+    button.short = action ~= nil and dim
     button.icon:SetTexture(actionIcon(action, button.key))
-    button.icon:SetDesaturated(action == nil)
-    button.icon:SetAlpha(action and 1 or 0.45)
+    button.icon:SetDesaturated(dim)
+    button.icon:SetAlpha(dim and 0.45 or 1)
     if action and action.itemID then
         setCount(button.count, API.ItemCountRaw(action.itemID))
         SA.ApplyItemCooldown(button.cooldown, action.itemID)
@@ -232,28 +255,68 @@ local function petSummon()
     local npcID = API.UnitNpcID("pet")
     return npcID and Data.DEMON_NPC[npcID] or nil
 end
+Bar.PetSummon = petSummon
 
 -- Remember the demon that is out (per character), so the Demon button
 -- summons it again once it is gone.
+-- The out-of-shards fallback (the Imp) is not a choice: while it stands in
+-- for a remembered demon that needs a shard, the Imp it summoned is not
+-- remembered, so that demon comes back with the shards (Codex, #19). An
+-- Imp picked on the wheel is remembered there, explicitly.
+-- Each pet is judged once, when it comes out (by its GUID): a later
+-- rebuild, with shards back, must not turn the fallback Imp into a choice.
 function Bar:RememberPet()
+    local guid = API.UnitGUID("pet")
+    if guid == self.seenPet then return end
+    self.seenPet = guid
     local spellID = petSummon()
-    if spellID then
-        ns.char.demon = spellID
+    if not spellID then return end
+    local last = ns.char.demon
+    if spellID == Data.IMP and last and Data.REAGENT[last] == Data.SOUL_SHARD
+        and API.ItemCount(Data.SOUL_SHARD) == 0 then
+        return
     end
+    ns.char.demon = spellID
 end
 
--- Out of combat, a click on the Demon button while that demon is out asks
--- first (ns.Resummon) instead of casting: the button is left unarmed. In
--- combat there is no prompt, so the button is armed as combat starts (a
--- demon that dies mid-fight can be summoned again).
+-- Out of combat, a right-click on the Demon button while that demon is out
+-- asks first (ns.Resummon) instead of casting: the right button is left
+-- unarmed.
 function Bar:HoldsDemon(action)
     return action ~= nil and ns.db.confirmResummon and not SA.inCombat
         and petSummon() == action.spellID
 end
 
-local function syncKey(action, held)
+-- Demonic Sacrifice, when it is known and a demon it takes is out (a
+-- Demonology Warlock sacrifices from the bar, without reopening the wheel:
+-- owner). 18788 measured on Forever (the wheel's centre, #19).
+function Bar:SacrificeAction()
+    if petSummon() and API.IsKnown(Data.DEMONIC_SACRIFICE) then
+        return { type = "spell", spell = Data.DEMONIC_SACRIFICE, spellID = Data.DEMONIC_SACRIFICE }
+    end
+    return nil
+end
+
+-- The Demon button (the wheel has its own button):
+--   * Left: summon the remembered demon, asking first when it is already
+--     out (held: nothing armed, PostClick asks).
+--   * Right: Demonic Sacrifice while a demon is out and the talent is known
+--     (a Demonology Warlock sacrifices from the bar: owner); otherwise the
+--     same summon as the left.
+-- In combat there is no question: the summon is armed as combat starts (a
+-- demon that dies mid-fight comes straight back).
+local function demonActions(action, held, sacrifice)
+    local summon = (SA.inCombat or not held) and action or nil
+    return { summon, sacrifice or summon }
+end
+
+-- What a button is armed with; the Demon button's also depends on combat
+-- and on Sacrifice.
+local function syncKey(key, action, held, sacrifice)
     if not action then return "none" end
     return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
+        .. ((key == "demon" and SA.inCombat) and ":combat" or "")
+        .. (sacrifice and ":sacrifice" or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
@@ -261,10 +324,15 @@ function Bar:Sync()
     self:RememberPet()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
-        local held = button.key == "demon" and self:HoldsDemon(action)
-        local key = syncKey(action, held)
-        if key == button.syncKey or SA.Apply(button, { not held and action or nil }) then
-            button.action, button.held, button.syncKey = action, held, key
+        local isDemon = button.key == "demon"
+        local sacrifice = isDemon and self:SacrificeAction() or nil
+        -- Held whatever Sacrifice does: the left click (and its binding)
+        -- still asks before re-summoning the demon that is out (Codex, #19).
+        local held = isDemon and self:HoldsDemon(action)
+        local actions = isDemon and demonActions(action, held, sacrifice) or { action }
+        local key = syncKey(button.key, action, held, sacrifice)
+        if key == button.syncKey or SA.Apply(button, actions) then
+            button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
         end
     end
     self:Refresh()
@@ -281,10 +349,20 @@ function showTooltip(button)
     if button.armorState == "missing" then
         GameTooltip:AddLine("Not on you", 1, 0.45, 0.45)
     end
-    if button.held then
-        GameTooltip:AddLine("Already out. Click to summon it again (asks first)", 0.75, 0.8, 0.9)
+    if button.key == "demon" and button.action then
+        GameTooltip:AddLine("Click: " .. actionName(button.action)
+            .. (button.held and " (already out: asks first)" or ""), 0.75, 0.8, 0.9)
+        if button.sacrifice then
+            local effect = ns.Wheel.SacrificeEffect(ns.Wheel.DemonName(petSummon()))
+            GameTooltip:AddLine("Right-click: " .. actionName(button.sacrifice), 0.75, 0.8, 0.9)
+            if effect then GameTooltip:AddLine(effect, 1, 1, 1, true) end
+        end
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
+        if button.short then
+            GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.action.spellID]) or "a reagent"),
+                1, 0.45, 0.45)
+        end
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
     end
@@ -322,7 +400,7 @@ function Bar:CreateButton(index, spec, parent)
     local button = SA.Create(parent, "OneTwoThreeBarButton" .. index)
     button:SetSize(ICON, ICON)
     button:SetFrameLevel(self:ContentLevel())
-    local x = PAD + HANDLE_W + PITCH * (index - 1) + (PITCH - ICON) / 2
+    local x = PAD + HANDLE_W + PITCH * index + (PITCH - ICON) / 2
     button:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, -PAD)
     button.key = spec.key
 
@@ -365,17 +443,57 @@ function Bar:CreateButton(index, spec, parent)
 
     button:SetScript("OnEnter", showTooltip)
     button:SetScript("OnLeave", hideTooltip)
-    -- Insecure PostClick: runs after the secure action (none while held).
-    button:SetScript("PostClick", function(b, _, down)
-        if down or not b.held or InCombatLockdown() then return end
-        ns.Resummon:Show(b, b.action.spellID)
-    end)
+    -- Insecure PostClick, after the secure action: a click on the Demon
+    -- button that armed nothing because the demon is out asks first.
+    if spec.key == "demon" then
+        button:SetScript("PostClick", function(b, mouseButton, down)
+            if down or InCombatLockdown() or not b.held then return end
+            if mouseButton == "RightButton" and b.sacrifice then return end
+            ns.Resummon:Show(b, b.action.spellID)
+        end)
+    end
     return button
+end
+
+-- "Demons": opens the wheel. A plain button (it casts nothing), left of
+-- the secure ones, with Fel Domination's icon (owner: Retail's Summon Demon
+-- flyout shows it).
+function Bar:CreateWheelButton()
+    local button = CreateFrame("Button", "OneTwoThreeBarWheel", self.frame)
+    button:SetSize(ICON, ICON)
+    button:SetFrameLevel(self:ContentLevel())
+    button:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD + HANDLE_W + (PITCH - ICON) / 2, -PAD)
+    button:RegisterForClicks("AnyUp")
+    local icon = button:CreateTexture(nil, "ARTWORK")
+    icon:SetAllPoints()
+    icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    icon:SetTexture(API.SpellIcon(Data.FEL_DOMINATION))
+    button.icon = icon
+    local highlight = button:CreateTexture(nil, "HIGHLIGHT")
+    highlight:SetAllPoints()
+    highlight:SetTexture(ns.Media.WHITE)
+    highlight:SetVertexColor(1, 1, 1, 0.15)
+    local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
+    label:SetPoint("TOP", button, "BOTTOM", 0, -2)
+    label:SetText("Demons")
+    label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
+    button.label = label
+    button:SetScript("OnClick", function() ns.Wheel:Toggle() end)
+    button:SetScript("OnEnter", function(b)
+        GameTooltip:SetOwner(b, "ANCHOR_TOP")
+        GameTooltip:SetText("Demons", 1, 1, 1)
+        GameTooltip:AddLine(InCombatLockdown() and "The demon wheel can't open in combat"
+            or "Click: the demon wheel", 0.75, 0.8, 0.9)
+        GameTooltip:Show()
+    end)
+    button:SetScript("OnLeave", hideTooltip)
+    self.wheelButton = button
 end
 
 function Bar:CreateHandle()
     local handle = CreateFrame("Frame", nil, self.frame)
     handle:SetSize(HANDLE_W, HEIGHT)
+    self.handle = handle
     handle:SetFrameLevel(self:ContentLevel())
     handle:SetPoint("LEFT", self.frame, "LEFT", PAD, 0)
     handle:EnableMouse(true)
@@ -415,11 +533,12 @@ function Bar:StopMoving()
 end
 
 function Bar:CreateShards()
-    local left = PAD + HANDLE_W + PITCH * 5
+    local left = PAD + HANDLE_W + PITCH * SLOTS
     local divider = (self.glass.top or self.frame):CreateTexture(nil, "ARTWORK")
     divider:SetTexture(ns.Media.WHITE)
     divider:SetVertexColor(1, 1, 1, 0.18)
     divider:SetSize(1, HEIGHT - PAD * 2)
+    self.divider = divider
     divider:SetPoint("LEFT", self.frame, "LEFT", left, 0)
 
     local icon = (self.glass.top or self.frame):CreateTexture(nil, "ARTWORK")
@@ -451,11 +570,13 @@ function Bar:Initialize()
 
     self.glass = ns.Skin:Pill(frame)
     self:CreateHandle()
+    self:CreateWheelButton()
     self.buttons = {}
     for index, spec in ipairs(self.BUTTONS) do
         self.buttons[index] = self:CreateButton(index, spec, frame)
     end
     self:CreateShards()
+    self:ApplyLabels()
     self:ApplyPosition()
     frame:Show()
 
@@ -487,6 +608,20 @@ function Bar:Initialize()
         SA.RunSyncs()
     end)
     SA.MarkDirty()
+end
+
+-- The names under the icons, and the bar's height with or without them.
+-- The bar holds secure buttons, so it can't be resized in combat.
+function Bar:ApplyLabels()
+    if not self.frame or InCombatLockdown() then return false end
+    local on = ns.db.barLabels == true
+    local h = on and HEIGHT or HEIGHT_BARE
+    for _, button in ipairs(self.buttons) do button.label:SetShown(on) end
+    self.wheelButton.label:SetShown(on)
+    self.frame:SetHeight(h)
+    self.handle:SetHeight(h)
+    self.divider:SetHeight(h - PAD * 2)
+    return true
 end
 
 -- Showing or hiding a frame that holds secure buttons is refused in combat.

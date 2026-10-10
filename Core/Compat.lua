@@ -156,6 +156,12 @@ function API.HasAura(unit, ids, names)
     return nil
 end
 
+function API.SpellDescription(spellID)
+    local ok, text = pcall(C_Spell.GetSpellDescription, spellID)
+    if ok and API.Readable(text) and type(text) == "string" and text ~= "" then return text end
+    return nil
+end
+
 -- A LuaDurationObject for a Cooldown widget, or nil. Safe with secrets.
 function API.SpellCooldownDuration(spellID)
     local ok, duration = pcall(C_Spell.GetSpellCooldownDuration, spellID)
@@ -178,6 +184,10 @@ function API.ItemName(itemID)
     local ok, name = pcall(C_Item.GetItemNameByID, itemID)
     if ok and type(name) == "string" and API.Readable(name) then return name end
     return nil
+end
+
+function API.RequestItemData(itemID)
+    pcall(C_Item.RequestLoadItemDataByID, itemID)
 end
 
 -- Raw count: may be secret in combat. Pass it to a FontString as is.

@@ -9,6 +9,20 @@ end
 ns.Print = printMessage
 
 BINDING_NAME_ONETWOTHREE_TOGGLE = "Show or hide the 123 bar"
+BINDING_NAME_ONETWOTHREE_WHEEL = "Open or close the demon wheel"
+-- Keys that click the bar's secure buttons (they cast, in combat too).
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:LeftButton"] = "Summon the last demon"
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:RightButton"] = "Demonic Sacrifice, or summon the last demon"
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton2:LeftButton"] = "Armor"
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton3:LeftButton"] = "Soulstone"
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton4:LeftButton"] = "Healthstone"
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton5:LeftButton"] = "Ritual of Summoning"
+
+function OneTwoThree_Wheel()
+    if ns.Wheel and ns.isWarlock then
+        ns.Wheel:Toggle()
+    end
+end
 
 function OneTwoThree_Toggle()
     if ns.Bar then
@@ -50,6 +64,23 @@ local function registerSlashCommands()
             if not ok then
                 printMessage("debug failed: " .. tostring(err))
             end
+        elseif cmd == "wheel" then
+            ns.Wheel:Toggle()
+        elseif cmd == "labels" then
+            if InCombatLockdown() then
+                printMessage("the bar can't change in combat.")
+            else
+                ns.db.barLabels = not ns.db.barLabels
+                ns.Bar:ApplyLabels()
+            end
+        elseif cmd == "sounds" then
+            ns.db.sounds = not ns.db.sounds
+            printMessage(ns.db.sounds and "demon voices on." or "demon voices off.")
+        elseif cmd == "camera" then
+            local on = not ns.db.cinematicCamera
+            ns.db.cinematicCamera, ns.db.hideGameUI = on, on
+            printMessage(on and "the demon wheel opens with the cinematic camera and hides the game UI."
+                or "the demon wheel opens over the game, no camera.")
         elseif cmd == "confirm" then
             ns.db.confirmResummon = not ns.db.confirmResummon
             printMessage(ns.db.confirmResummon and "will ask before re-summoning the demon that is out."
@@ -58,7 +89,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | confirm (ask before re-summoning) | debug")
+            printMessage("/123 | wheel | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
         end
     end
 end
@@ -73,5 +104,6 @@ ns.Events:Register("PLAYER_LOGIN", function()
 
     ns.SecureAction.Initialize()
     ns.Bar:Initialize()
+    ns.Wheel:Initialize()
     registerSlashCommands()
 end)
