@@ -27,7 +27,7 @@ soulstone, healthstones and summoning, one click away.
 ## The demon wheel
 ![Hover, click: the Imp takes the centre](docs/screenshots/wheel.gif)
 
-[The demon wheel in action, with sound](https://www.curseforge.com/wow/addons/forever-123) (video on the CurseForge page).
+[The demon wheel in action, with sound (YouTube)](https://www.youtube.com/watch?v=IvxhJ4iC4Sc).
 
 ![Three demons in the centre](docs/screenshots/wheels.jpg)
 
