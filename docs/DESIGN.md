@@ -71,7 +71,8 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
   cloudy smoke, stronger metal bevels, a darker centre and backed status lines for crowds.
   Capture tuning strengthened hover growth and reduced smoke layer opacity by about 38%,
   keeping the runes, active rim and central fire distinct.
-  Temporary world-name hiding is tracked in [LibShowcase #14](https://github.com/Spotnick2/LibShowcase/issues/14).
+  LibShowcase r4 hides world names while the cinematic presentation is up and restores
+  the player's CVar values when it ends. Nameplates are unaffected.
 
 ## Soulstone target
 Assign a group member (GUID), then cast explicitly. The secure `unitN` is rebuilt on roster

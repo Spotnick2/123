@@ -49,9 +49,10 @@ Second pass: sculpted crest, cloudy smoke instead of contour lines, stronger
 bevels, darker central backing, backed status lines and requested hover growth.
 Latest capture tuning: hover 8.5% -> 12%; smoke layer opacity reduced about 38%
 from 0.48/0.64/0.42. Runes, active rim, central fire and motion timings unchanged.
-World-name suppression is tracked in https://github.com/Spotnick2/LibShowcase/issues/14;
-123 does not change the name CVars in this pass. The owner accepted this wheel
-milestone for a PR on 2026-10-10 after the brightness/hover tuning and rune sway.
+LibShowcase r4 (https://github.com/Spotnick2/LibShowcase/issues/14) now owns
+world-name hiding and restoration for the cinematic wheel. Nameplates stay
+visible. The owner accepted this wheel milestone for a PR on 2026-10-10 after
+the brightness/hover tuning and rune sway.
 Portrait cameras are unchanged; keeping the Voidwalker and Succubus faces in
 view throughout their idle animation is a possible later refinement.
 
