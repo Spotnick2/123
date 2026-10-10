@@ -16,4 +16,17 @@ H.check(ns.Skin:Glass() ~= nil, "LibGlass r5+ is picked up")
 H.check(ns.Bar.glass.top ~= nil, "the bar is glass")
 H.eq(H.messagesMatching("not found"), 0, "no fallback warning")
 
+-- The Warlock colour at 60%, at the surface's own opacity (AltStable #220).
+local function near(x, y) return math.abs(x - y) < 1e-6 end
+local function tinted(g, what)
+    local c, built = g.tint and g.tint._color, g.tint and g.tint.glassColor
+    H.check(c and near(c[1], 0.53 * 0.6) and near(c[2], 0.53 * 0.6) and near(c[3], 0.93 * 0.6),
+        what .. " wears the Warlock colour at 60%")
+    H.check(c and built and c[4] == built[4], what .. " keeps its own opacity")
+end
+tinted(ns.Bar.glass, "the bar")
+ns.Wheel:Open()
+tinted(ns.Wheel.nodes[1].glass, "a wheel bead")
+ns.Wheel:Close()
+
 H.done("test_glass")

@@ -21,6 +21,11 @@ ns.Portrait = Portrait
 
 local FOV, CAMERA = 0.15, 40
 local WAIT, POLL = 0.6, 0.1
+-- How tall the model is drawn, as a share of the portrait. In game at 0.8
+-- the Imp overflowed the disc and its flames were sliced at the scene's
+-- edge: a creature's effects reach past its box (Gnomesweeper measured the
+-- same), and the disc is round where the scene is square.
+local FILL = 0.6
 
 local resolver
 -- The display ID of a creature NPC (single-skinned, as demons are), or nil.
@@ -98,9 +103,9 @@ function Portrait.Create(parent, size)
             local height = readHeight(actor)
             if height then
                 -- The view spans `span` scene units over `size` px: the model
-                -- comes out 80% of the portrait tall.
+                -- comes out FILL of the portrait tall.
                 local span = 2 * CAMERA * math.tan(FOV / 2)
-                pcall(actor.SetScale, actor, span * 0.8 / height)
+                pcall(actor.SetScale, actor, span * FILL / height)
                 self.height = height
                 scene:Show()
             elseif left > 0 then

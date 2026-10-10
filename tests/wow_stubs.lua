@@ -257,6 +257,7 @@ function Frame:GetFontString() return self._fs end
 -- so material tests can distinguish surface overrides from library defaults.
 function Frame:SetTexture(file) self._texture = file end
 function Frame:GetTexture() return self._texture end
+function Frame:SetColorTexture(r, g, b, a) self._color = { r, g, b, a } end
 -- Records what the texture would be drawn with: a secret channel is
 -- unwrapped here, as the client does, never by the addon.
 function Frame:SetVertexColor(r, g, b)
@@ -363,6 +364,8 @@ function GetBuildInfo() return "1.60.1", WoW.build, "Sep 22 2026", 16001 end
 function GetRealmName() return "ClassicBetaPvE" end
 function UnitName() return "Testcase Surname", nil end
 WoW.petGUID = nil
+-- FrameXML's ClassColors.lua fills this at load.
+RAID_CLASS_COLORS = { WARLOCK = { r = 0.53, g = 0.53, b = 0.93 } }
 -- Pet bar: WoW.petActions[slot] = { name =, spellID = }.
 WoW.petActions = {}
 function GetPetActionInfo(slot)

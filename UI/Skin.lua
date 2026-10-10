@@ -57,6 +57,29 @@ function Skin:RoundTexture(frame, layer, sublevel)
     return texture
 end
 
+-- The class colour's share of the glass: AltStable's class-coloured glass
+-- (#220 there), tried in game on its clear preset. At full strength the glass
+-- went milky; at 60% it reads as a cast on the glass. The alpha stays the
+-- surface's own (SetSurfaceTint with no alpha keeps the built one).
+local CLASS_SHADE = 0.6
+
+-- The Warlock colour: the client's class colour, else the addon's accent.
+function Skin:ClassColor()
+    local colors = RAID_CLASS_COLORS
+    local c = type(colors) == "table" and colors.WARLOCK
+    if type(c) == "table" and type(c.r) == "number" then return c.r, c.g, c.b end
+    return ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3]
+end
+
+-- Every LibGlass surface of 123 wears the Warlock colour.
+function Skin:ClassTint(g)
+    local glass = self:Glass()
+    if not (glass and glass.SetSurfaceTint and g) then return false end
+    local r, gg, b = self:ClassColor()
+    local ok, done = pcall(glass.SetSurfaceTint, g, r * CLASS_SHADE, gg * CLASS_SHADE, b * CLASS_SHADE)
+    return ok and done ~= false
+end
+
 -- A round glass surface on a square host (the wheel). Returns g with g.top,
 -- the frame to parent content above the glass to, and g.rim when there is
 -- one. size: "disc" (128 px and up) or "disc_small".
@@ -65,6 +88,7 @@ function Skin:Disc(host, size)
     if glass and glass.Disc then
         local ok, g = pcall(glass.Disc, host, size)
         if ok and g then
+            self:ClassTint(g)
             return g
         end
     end
@@ -102,6 +126,7 @@ function Skin:Pill(host)
     if glass then
         local ok, g = pcall(glass.Apply, host, "small")
         if ok and g then
+            self:ClassTint(g)
             return g
         end
     end
