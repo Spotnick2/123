@@ -19,8 +19,10 @@
 --   /123probe range              per group member: position, distance, map, range
 --   /123probe report | reset
 --
--- Results are printed and kept in OneTwoThreeProbeDB, written on /reload or
--- logout to _classic_beta_\WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua.
+-- Results are printed and kept in OneTwoThreeProbeDB.runs (one entry per
+-- session, older sessions kept), written on /reload or logout to
+-- _classic_beta_\WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua.
+-- `reset` clears this session's run only.
 --
 -- Every client global is read with rawget, so an API this client lacks is
 -- recorded as missing rather than throwing. Every touch of a returned value
@@ -40,10 +42,35 @@ end
 
 OneTwoThreeProbe = {}
 
--- Fresh every session: a measurement belongs to the session and build it
--- was taken in.
-OneTwoThreeProbeDB = { results = {}, log = {} }
-local DB = OneTwoThreeProbeDB
+-- One run per session, appended to OneTwoThreeProbeDB.runs: a measurement
+-- belongs to the session and build it was taken in, and a /reload between
+-- probe commands must not lose the earlier ones. SavedVariables load AFTER
+-- this file, so the run is attached to the saved table at ADDON_LOADED.
+local DB = { results = {}, log = {} }
+
+local function Attach()
+    local saved = G("OneTwoThreeProbeDB")
+    if type(saved) ~= "table" then saved = {} end
+    if type(saved.runs) ~= "table" then
+        -- Files written before runs existed held one session at the top.
+        local legacy = saved.results and { build = saved.build, results = saved.results, log = saved.log, book = saved.book }
+        saved = { runs = { legacy } }
+    end
+    DB.started = G("date") and date("%Y-%m-%d %H:%M:%S") or nil
+    saved.runs[#saved.runs + 1] = DB
+    OneTwoThreeProbeDB = saved
+end
+
+local loader = CreateFrame("Frame")
+local okReg, registered = pcall(loader.RegisterEvent, loader, "ADDON_LOADED")
+if not okReg or registered == false then
+    Say("|cffff6060cannot watch ADDON_LOADED: results will not be saved|r")
+end
+loader:SetScript("OnEvent", function(self, _, name)
+    if name ~= "OneTwoThreeProbe" then return end
+    Attach()
+    self:UnregisterEvent("ADDON_LOADED")
+end)
 
 local function IsSecret(v)
     local test = G("issecretvalue")
@@ -173,7 +200,7 @@ local function Book()
         end
     end
     DB.book = book
-    Say(#book .. " spellbook entries saved to OneTwoThreeProbeDB.book")
+    Say(#book .. " spellbook entries saved to this run's book")
 end
 
 local function Pet()
