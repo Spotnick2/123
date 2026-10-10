@@ -22,17 +22,19 @@ ns.Data = {
     },
     VOIDWALKER = 697,
 
-    -- The wheel, left to right over its top arc: the Succubus and Incubus on
-    -- the left, the Imp at the top, the Voidwalker and Felhunter on the right.
-    WHEEL_ORDER = { 712, 713, 688, 697, 691 },
-
-    -- The major demons, on their own smaller beads low on the wheel (#4): not
-    -- pets to switch to, and never the Demon button's "last demon". Inferno
-    -- (level 50) drops an Infernal where you click; Ritual of Doom (60) is a
-    -- group ritual for a Doomguard. Both exist on Forever (run 2).
-    MAJOR_DEMONS = {
-        { spell = 1122, clock = 7.5 },     -- Inferno
-        { spell = 18540, clock = 4.5 },    -- Ritual of Doom
+    -- The wheel's seven beads, clockwise from 12 (owner's "Fel concept"
+    -- mockup). Inferno and Ritual of Doom are major demons: not pets to
+    -- switch to, never the Demon button's "last demon", no Fel Domination.
+    -- Inferno (level 50) drops an Infernal where you click; Ritual of Doom
+    -- (60) is a group ritual for a Doomguard. Both exist on Forever (run 2).
+    WHEEL = {
+        { spell = 697 },                                -- Voidwalker
+        { spell = 691 },                                -- Felhunter
+        { spell = 1122, major = true },                 -- Inferno
+        { spell = 18540, major = true, label = "Doomguard" },
+        { spell = 688 },                                -- Imp
+        { spell = 712 },                                -- Succubus
+        { spell = 713 },                                -- Incubus
     },
 
     -- What each summon consumes (Wowhead's Forever database): a Soul Shard

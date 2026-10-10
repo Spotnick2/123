@@ -1,6 +1,8 @@
--- The demon wheel (#4): which demon each slot summons, the Sacrifice pill,
--- Fel Domination on shift, and closing (click, Escape, combat). Then, with
--- the real LibShowcase ($LIBSHOWCASE or ../LibShowcase), the presentation.
+-- The demon wheel (#4, "Fel concept"): seven beads, the active demon in the
+-- centre and marked on its bead, Sacrifice on the centre's right click, Fel
+-- Domination on shift, reagents, the hint strip, and closing (a cast,
+-- Escape, combat). Then, with the real LibShowcase ($LIBSHOWCASE or
+-- ../LibShowcase), the presentation.
 
 dofile("tests/wow_stubs.lua")
 local H = dofile("tests/harness.lua")
@@ -15,12 +17,13 @@ WoW.spells[712] = { name = "Summon Succubus", known = false }
 WoW.spells[691] = { name = "Summon Felhunter", known = false }
 WoW.spells[713] = { name = "Summon Incubus", known = false }
 WoW.spells[1122] = { name = "Inferno", known = false }
-WoW.items[5565] = "Infernal Stone"
-WoW.items[6265] = "Soul Shard"
 WoW.spells[18540] = { name = "Ritual of Doom", known = false }
 WoW.spells[7812] = { name = "Sacrifice", known = false }
 WoW.spells[18708] = { name = "Fel Domination", known = false }
 WoW.spells[18788] = { name = "Demonic Sacrifice", known = false }
+WoW.items[5565] = "Infernal Stone"
+WoW.items[6265] = "Soul Shard"
+WoW.counts[6265] = 3
 -- The Voidwalker is out (GUID as measured in run 2), Sacrifice on its bar.
 WoW.petGUID = "Pet-0-4613-0-1234-1860-0000ABCDEF"
 WoW.petActions[5] = { name = "Sacrifice", spellID = 7812 }
@@ -29,75 +32,85 @@ local ns = H.loadAddon(haveLib and { libs = { libFile } } or nil)
 local Wheel = ns.Wheel
 local demonButton = ns.Bar.buttons[1]
 local function click(button, mouse) button:GetScript("PostClick")(button, mouse or "LeftButton", false) end
+local function attr(node, k) return node.button:GetAttribute(k) end
 
 click(demonButton)
 H.check(Wheel.open and Wheel.root:IsShown(), "the Demon button's left click opens the wheel")
 
+-- Seven beads, clockwise from 12, as in the mockup.
 local n = Wheel.nodes
-local function attr(node, k) return node.button:GetAttribute(k) end
--- The Voidwalker out: the other four over the top arc, 9 to 3.
-local function slot(i, spellID, clock, what)
-    H.eq(n[i].spellID, spellID, what)
-    H.check(n[i].clock and math.abs(n[i].clock - clock) < 1e-6,
-        what .. " at " .. clock .. " o'clock (got " .. tostring(n[i].clock) .. ")")
-end
-slot(1, 712, 9, "the Succubus")
-slot(2, 713, 11, "the Incubus (Forever)")
-slot(3, 688, 13, "the Imp")
-slot(4, 691, 15, "the Felhunter")
-H.eq(attr(n[3], "spell1"), 688, "the Imp is armed")
-H.eq(attr(n[1], "type1"), nil, "not learned: no action")
-H.check(n[1].icon:IsDesaturated(), "and greyed out")
-H.check(not n[5].button:IsShown(), "the Voidwalker is out: no fifth slot")
+local order = { 697, 691, 1122, 18540, 688, 712, 713 }
+H.eq(#n, 7, "seven beads")
+for i, spellID in ipairs(order) do H.eq(n[i].spellID, spellID, "bead " .. i) end
+local void, inferno, imp, succubus, incubus = n[1], n[3], n[5], n[6], n[7]
+H.eq(n[4].label:GetText(), "Doomguard", "Ritual of Doom's bead is the Doomguard")
+H.eq(imp.label:GetText(), "Imp", "the others by their summon")
 
--- Inferno and Ritual of Doom on their own beads, either side of the pill.
-local inferno, doom = Wheel.majors[1], Wheel.majors[2]
-H.eq(inferno.spellID, 1122, "Inferno's bead"); H.eq(doom.spellID, 18540, "Ritual of Doom's bead")
-H.eq(inferno.label:GetText(), "Inferno", "named by its spell")
-H.eq(attr(inferno, "type1"), nil, "not learned: no action")
-H.check(inferno.icon:IsDesaturated(), "and greyed out")
-H.eq(Wheel.centerName:GetText(), "Voidwalker", "the active demon in the centre")
-H.eq(attr(n[3], "shift-type1"), nil, "no Fel Domination before it is learned")
+-- The active demon: the centre, and its bead marked; a click there asks.
+H.eq(Wheel.centerName:GetText(), "Voidwalker", "the Voidwalker in the centre")
+H.check(Wheel.centerState:GetText():find("Active"), "marked active")
+H.check(void.isActive and void.sub:GetText():find("Active"), "its bead too")
+H.eq(attr(void, "type1"), nil, "its bead casts nothing: it asks first")
+click(void.button)
+H.check(ns.Resummon:IsShown(), "the re-summon question")
+H.eq(ns.Resummon.summon:GetAttribute("spell1"), 697, "armed with the Voidwalker")
+ns.Resummon.summon:GetScript("PostClick")(ns.Resummon.summon, "LeftButton", false)
+H.check(not Wheel.open, "Summon there closes the wheel too")
+click(demonButton)
 
-local sac = Wheel.sacrifice
-H.check(sac.button:IsShown(), "the Sacrifice pill shows")
-H.eq(sac.button:GetAttribute("type1"), "pet", "the Voidwalker's Sacrifice is a pet action")
-H.eq(sac.button:GetAttribute("action1"), 5, "on the pet bar slot that holds it")
-H.eq(sac.label:GetText(), "Sacrifice Voidwalker", "and says so")
+-- Learned and not.
+H.eq(attr(imp, "spell1"), 688, "the Imp is armed")
+H.eq(attr(succubus, "type1"), nil, "not learned: no action")
+H.check(succubus.icon:IsDesaturated(), "and greyed out")
+H.eq(succubus.sub:GetText(), "Not learned", "and says so")
+H.eq(attr(imp, "shift-type1"), nil, "no Fel Domination before it is learned")
 
--- A click on a demon closes the wheel once the secure action has run.
-click(n[3].button)
+-- The hint strip: shards, and what the hovered bead does.
+H.eq(Wheel.strip.shards:GetText(), 3, "soul shards in the strip")
+H.eq(Wheel.strip.hint:GetText(), "Select a demon to summon", "the resting hint")
+imp.button:GetScript("OnEnter")()
+H.eq(Wheel.strip.hint:GetText(), "Click: Summon Imp", "hovering a bead says what it does")
+imp.button:GetScript("OnLeave")()
+H.eq(Wheel.strip.hint:GetText(), "Select a demon to summon", "and back")
+
+-- The centre: right-click Sacrifice (the Voidwalker's pet action).
+local center = Wheel.center
+H.eq(center:GetAttribute("type1"), nil, "a left click on the centre does nothing")
+H.eq(center:GetAttribute("type2"), "pet", "right-click: the Voidwalker's Sacrifice")
+H.eq(center:GetAttribute("action2"), 5, "on its pet bar slot")
+center:GetScript("OnEnter")()
+H.eq(Wheel.strip.hint:GetText(), "Right-click: Sacrifice Voidwalker", "the hint says so")
+center:GetScript("OnLeave")()
+
+-- A cast closes the wheel.
+click(imp.button)
 H.check(not Wheel.open and not Wheel.root:IsShown(), "summoning closes the wheel")
 
--- Fel Domination and Demonic Sacrifice, once learned.
+-- Fel Domination, Demonic Sacrifice and Inferno, once learned.
 WoW.spells[18708].known = true
 WoW.spells[18788].known = true
+WoW.spells[1122].known = true
 WoW.spellDescriptions[18788] = "When activated, sacrifices your summoned Demon.\n\n"
     .. "Imp: Increases your Shadow damage by 15%.\n\nVoidwalker: Restores 2% of your total Mana every 4 sec."
 click(demonButton)
-H.eq(attr(n[3], "shift-type1"), "macro", "shift-click: a macro")
-H.eq(attr(n[3], "shift-macrotext1"), "/cast Fel Domination\n/cast Summon Imp", "Fel Domination, then the summon")
-H.eq(attr(n[3], "spell1"), 688, "a plain click still just summons")
-H.eq(sac.button:GetAttribute("spell1"), 18788, "the talent replaces the pet action")
-H.eq(sac.effect:GetText(), "Voidwalker: Restores 2% of your total Mana every 4 sec.",
+H.eq(attr(imp, "shift-type1"), "macro", "shift-click: a macro")
+H.eq(attr(imp, "shift-macrotext1"), "/cast Fel Domination\n/cast Summon Imp", "Fel Domination, then the summon")
+H.eq(attr(imp, "spell1"), 688, "a plain click still just summons")
+H.eq(center:GetAttribute("spell2"), 18788, "the talent replaces the pet action")
+center:GetScript("OnEnter")()
+H.eq(Wheel.strip.hint:GetText(),
+    "Right-click: Demonic Sacrifice - Voidwalker: Restores 2% of your total Mana every 4 sec.",
     "with the active demon's effect, read from the client")
-
--- Inferno learned: its bead casts it (the reticle is the client's), no Fel Domination.
-WoW.spells[1122].known = true
-Wheel:Close()
-click(demonButton)
+center:GetScript("OnLeave")()
 H.eq(attr(inferno, "spell1"), 1122, "Inferno is armed once learned")
+H.eq(attr(inferno, "shift-type1"), nil, "no Fel Domination for Inferno")
 H.eq(inferno.count:GetText(), 0, "its Infernal Stones counted")
 H.eq(inferno.sub:GetText(), "|cffff6060No Infernal Stone|r", "and the missing one named")
 WoW.counts[5565] = 2
 WoW.fire("BAG_UPDATE_DELAYED")
 H.eq(inferno.count:GetText(), 2, "the count follows the bags")
 H.eq(inferno.sub:GetText(), "", "nothing missing")
-H.eq(n[3].count:GetText(), "", "no count on a pet's bead (shards are on the bar)")
-H.eq(attr(inferno, "shift-type1"), nil, "no Fel Domination for Inferno")
-click(inferno.button)
-H.check(not Wheel.open, "casting it closes the wheel")
-click(demonButton)
+H.eq(imp.count:GetText(), "", "no count on a pet's bead (shards are in the strip)")
 
 -- Escape (the proxy in UISpecialFrames) closes it.
 H.check(Wheel.escape:IsShown() or ns.Presentation:IsGameUIHidden(), "Escape is armed")
@@ -111,53 +124,38 @@ else
     Wheel:Close()
 end
 
--- No demon out: all five from 8 to 4, an empty centre, no Sacrifice.
+-- No demon out: an empty centre, no Sacrifice, no bead active.
 WoW.petGUID = nil
 WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
 click(demonButton)
-slot(1, 712, 8, "no demon: the Succubus")
-slot(2, 713, 10, "no demon: the Incubus")
-slot(3, 688, 12, "no demon: the Imp")
-slot(4, 697, 14, "no demon: the Voidwalker")
-slot(5, 691, 16, "no demon: the Felhunter")
-H.check(n[5].button:IsShown(), "all five slots")
 H.eq(Wheel.centerName:GetText(), "No demon", "an empty centre")
-H.check(not sac.button:IsShown(), "no Sacrifice without a demon")
-
--- A demon arriving while it is open: re-resolved at once.
-WoW.petGUID = "Pet-0-4613-0-1234-416-0000ABCDEF"
-WoW.fire("UNIT_PET", "player")
-WoW.runTimers(0)
-H.eq(Wheel.centerName:GetText(), "Imp", "the Imp in the centre")
-slot(3, 697, 13, "the Voidwalker takes the Imp's place")
-H.eq(n[3].sub:GetText(), "|cffff6060No Soul Shard|r", "a learned demon without a shard says so")
+H.eq(center:GetAttribute("type2"), nil, "no Sacrifice without a demon")
+H.eq(attr(void, "spell1"), 697, "the Voidwalker can be summoned again")
+H.eq(void.sub:GetText(), "", "and has its shard")
+WoW.counts[6265] = 0
+WoW.fire("BAG_UPDATE_DELAYED")
+H.eq(void.sub:GetText(), "|cffff6060No Soul Shard|r", "a learned demon without a shard says so")
 
 -- Forever's Incubus out (NPC 185317, from Wowhead's Forever database).
 WoW.petGUID = "Pet-0-4613-0-1234-185317-0000ABCDEF"
 WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
 H.eq(Wheel.centerName:GetText(), "Incubus", "the Incubus in the centre")
+H.check(incubus.isActive, "its bead marked")
 H.eq(ns.char.demon, 713, "and remembered for the Demon button")
 
--- A demon whose NPC id is unknown: named by its family, all five on offer.
-WoW.petGUID = "Pet-0-4613-0-1234-99999-0000ABCDEF"
-WoW.petFamily = { "Felguard", 29 }
-WoW.fire("UNIT_PET", "player")
-WoW.runTimers(0)
-H.eq(Wheel.centerName:GetText(), "Felguard", "an unknown demon by its family")
-H.check(n[5].button:IsShown(), "every demon still offered")
-H.eq(n[1].clock, 9, "on the top arc: the centre has a demon")
-H.check(not sac.button:IsShown(), "no Sacrifice for an unknown demon")
--- An Infernal out (not a pet to switch to): every demon on offer, no pill,
--- and never remembered as the Demon button's demon.
+-- An Infernal out: named by its family, no bead active, no Sacrifice, and
+-- never the Demon button's demon.
 WoW.petGUID = "Pet-0-4613-0-1234-89-0000ABCDEF"
 WoW.petFamily = { "Infernal", 0 }
-ns.char.demon = 713
 WoW.fire("UNIT_PET", "player")
 WoW.runTimers(0)
 H.eq(Wheel.centerName:GetText(), "Infernal", "the Infernal in the centre")
-H.check(not sac.button:IsShown(), "no Sacrifice for an Infernal")
+H.eq(center:GetAttribute("type2"), nil, "no Sacrifice for an Infernal")
+local anyActive = false
+for _, node in ipairs(n) do anyActive = anyActive or node.isActive end
+H.check(not anyActive, "no bead active")
 H.eq(ns.char.demon, 713, "the Demon button keeps its demon")
 WoW.petFamily = nil
 

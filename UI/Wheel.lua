@@ -1,28 +1,31 @@
 -- ============================================================
--- Wheel: the demon wheel (storyboard top, issue #4). Opens from the Demon
--- button.
+-- Wheel: the demon wheel (issue #4), on the owner's "Fel concept" mockup.
+-- Opens from the Demon button.
 --
---   * The demons you can switch to spread evenly over the top arc, from 9
---     to 3, in Data.WHEEL_ORDER (the Sacrifice pill takes 6 o'clock); with
---     no demon out, all five spread from 8 to 4. The active demon is the
---     centre, a 3D portrait (ns.Portrait), and is never offered again here.
---   * Click a demon: summon it. Shift-click: Fel Domination first, once known.
---   * Inferno and Ritual of Doom (Data.MAJOR_DEMONS) sit on smaller beads at
---     half past 7 and half past 4, either side of the Sacrifice pill.
---   * The pill under the centre: Demonic Sacrifice when the talent is known,
---     else the Voidwalker's own Sacrifice (a pet action). Hidden otherwise.
+--   * Seven beads on a fel ring, clockwise from 12 (Data.WHEEL): Voidwalker,
+--     Felhunter, Inferno, Doomguard, Imp, Succubus, Incubus.
+--   * The centre: the active demon in 3D (ns.Portrait), its name, the pet's
+--     name and "Active". Its bead stays on the ring, marked active.
+--   * Click a bead: summon. Shift-click: Fel Domination first, once known
+--     (not for Inferno or Ritual of Doom). The active demon's bead asks first
+--     (ns.Resummon), as the Demon button's right click does.
+--   * Right-click the centre: Sacrifice. Demonic Sacrifice when the talent
+--     is known, else the Voidwalker's own Sacrifice (a pet action). A left
+--     click there does nothing, so it is never an accident.
+--   * The strip under the ring: soul shards, and a line about what the
+--     hovered bead does ("Select a demon to summon" otherwise).
 --
 -- Built on Portal Roulette's wheel (UI/Wheel/Roulette.lua), trimmed:
 --   * The root parents secure buttons, so it is protected: it opens and
 --     closes out of combat only. InCombatLockdown() is still false inside
 --     PLAYER_REGEN_DISABLED, so the wheel closes synchronously there.
---   * Secure buttons never move while the wheel is open: they are placed
---     when it resolves, out of combat, and the coalesced sync writes which
---     demon each one summons.
+--   * Secure buttons sit at fixed positions and never move; which spell each
+--     one casts is written by the coalesced sync.
 --   * Escape: a plain proxy frame in UISpecialFrames (an insecure key handler
 --     taints the Escape binding), armed only while the game UI is visible;
 --     with the UI hidden, Escape goes through LibShowcase (onForcedExit).
---   * Art and animation are placeholders until the Codex handoff (#13).
+--   * Art (title crest, rune ring, demon portraits) and animation are the
+--     Codex handoff (#13); this is the structure and the fel colours.
 -- ============================================================
 
 local _, ns = ...
@@ -35,27 +38,21 @@ local Skin = ns.Skin
 local Wheel = { nodes = {}, open = false }
 ns.Wheel = Wheel
 
-local ROOT_W, ROOT_H = 420, 470
-local DISC = 380
-local NODE = 64
-local RADIUS = 132
-local CENTER = 124
-local SLOTS = 5
-local MAJOR = 50
-local MAJOR_RADIUS = 150
+local FEL = ns.Colors.FEL
+local ROOT_W, ROOT_H = 480, 600
+local DISC = 440
+local BEAD = 70
+local RADIUS = 162
+local CENTER = 170
+local HINT = "Select a demon to summon"
 
 local function clockOffset(clock, radius)
     local angle = math.rad(90 - (clock % 12) * 30)
     return math.cos(angle) * radius, math.sin(angle) * radius
 end
 
--- The clock position of node `i` of `n`, spread evenly from `from` to `to`
--- (clockwise): over the top arc (9 to 3) when the pill is under the centre,
--- 8 to 4 when it is not and all five demons are out there.
-local function arcClock(i, n, from, to)
-    if n == 1 then return 12 end
-    local span = (to - from) % 12
-    return from + span * (i - 1) / (n - 1)
+local function hex(c)
+    return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
 end
 
 -- "Summon Imp" -> "Imp".
@@ -68,23 +65,19 @@ end
 -- Construction (lazy, out of combat)
 ------------------------------------------------------------
 
-local function plate(parent, anchor, size)
-    local label = Skin:Font(parent, size, "CENTER")
-    label:SetPoint("TOP", anchor, "BOTTOM", 0, -4)
-    return label
-end
-
-function Wheel:CreateNode(index, size)
+function Wheel:CreateNode(index, entry)
     local root = self.root
     local button = SA.Create(root, "OneTwoThreeWheelNode" .. index)
-    button:SetSize(size or NODE, size or NODE)
+    button:SetSize(BEAD, BEAD)
     button:SetFrameLevel(root:GetFrameLevel() + 20)
+    local x, y = clockOffset((index - 1) * 12 / #Data.WHEEL, RADIUS)
+    button:SetPoint("CENTER", self.disc, "CENTER", x, y)
 
     -- Everything visible on a mouse-disabled child of the button.
     local visual = CreateFrame("Frame", nil, button)
     visual:SetAllPoints()
     visual:EnableMouse(false)
-    local glass = Skin:Disc(visual, "disc_small")
+    local glass = Skin:Disc(visual, "disc_small", FEL)
     local top = glass.top or visual
     local iconHost = CreateFrame("Frame", nil, top)
     iconHost:SetPoint("TOPLEFT", 5, -5)
@@ -92,97 +85,146 @@ function Wheel:CreateNode(index, size)
     local icon = Skin:RoundTexture(iconHost, "ARTWORK")
     local hover = Skin:RoundTexture(iconHost, "OVERLAY")
     hover:SetTexture(ns.Media.WHITE)
-    hover:SetVertexColor(1, 1, 1, 0.14)
+    hover:SetVertexColor(FEL[1], FEL[2], FEL[3], 0.18)
     hover:Hide()
-    local label = plate(top, button, 13)
-    local sub = Skin:Font(top, 10, "CENTER")
-    sub:SetPoint("TOP", label, "BOTTOM", 0, -1)
-    sub:SetTextColor(1, 1, 1, 0.6)
-
     local count = Skin:Font(top, 12, "RIGHT")
     count:SetPoint("BOTTOMRIGHT", -4, 3)
 
-    local node = { index = index, button = button, glass = glass, icon = icon, label = label, sub = sub,
-        count = count }
-    button:SetScript("OnEnter", function() hover:Show() end)
-    button:SetScript("OnLeave", function() hover:Hide() end)
-    -- Insecure PostClick, after the cast: the wheel's job is done.
+    -- The name plate under the bead, as in the mockup.
+    local plate = CreateFrame("Frame", nil, top)
+    plate:SetSize(BEAD + 30, 20)
+    plate:SetPoint("TOP", button, "BOTTOM", 0, 6)
+    local plateGlass = Skin:Pill(plate, FEL)
+    local label = Skin:Font(plateGlass.top or plate, 12, "CENTER")
+    label:SetPoint("CENTER")
+    local sub = Skin:Font(top, 10, "CENTER")
+    sub:SetPoint("TOP", plate, "BOTTOM", 0, -1)
+    sub:SetTextColor(1, 1, 1, 0.6)
+
+    local node = { index = index, entry = entry, spellID = entry.spell, major = entry.major,
+        button = button, glass = glass, icon = icon, label = label, sub = sub, count = count }
+    button:SetScript("OnEnter", function()
+        hover:Show()
+        Wheel:Hint(Wheel:NodeHint(node))
+    end)
+    button:SetScript("OnLeave", function()
+        hover:Hide()
+        Wheel:Hint()
+    end)
+    -- Insecure PostClick, after the secure action: the active demon's bead
+    -- asks first; any other cast closes the wheel.
     button:SetScript("PostClick", function(_, _, down)
-        if down or not node.spellID or not node.known then return end
-        Wheel:Close()
+        if down or not node.known then return end
+        if node.held then
+            ns.Resummon:Show(button, node.spellID, function() Wheel:Close() end)
+        else
+            Wheel:Close()
+        end
     end)
     return node
 end
 
 function Wheel:CreateCenter()
-    local center = CreateFrame("Frame", nil, self.stage)
-    center:SetSize(CENTER, CENTER)
-    center:SetPoint("CENTER", self.disc, "CENTER")
+    -- The centre is a secure button too (right-click: Sacrifice); what shows
+    -- hangs off a mouse-disabled child.
+    local button = SA.Create(self.root, "OneTwoThreeWheelCenter")
+    button:SetSize(CENTER, CENTER)
+    button:SetFrameLevel(self.root:GetFrameLevel() + 20)
+    button:SetPoint("CENTER", self.disc, "CENTER")
+    local center = CreateFrame("Frame", nil, button)
+    center:SetAllPoints()
     center:EnableMouse(false)
-    local glass = Skin:Disc(center, "disc_small")
-    Skin:SetRimColor(glass, ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3], 0.9)
+    local glass = Skin:Disc(center, "disc", FEL)
+    Skin:SetRimColor(glass, FEL[1], FEL[2], FEL[3], 0.9)
     local top = glass.top or center
     local iconHost = CreateFrame("Frame", nil, top)
-    iconHost:SetPoint("TOPLEFT", 14, -14)
-    iconHost:SetPoint("BOTTOMRIGHT", -14, 14)
+    iconHost:SetSize(80, 80)
+    iconHost:SetPoint("CENTER", 0, 20)
     self.centerIcon = Skin:RoundTexture(iconHost, "ARTWORK")
-    self.portrait = ns.Portrait.Create(top, CENTER - 8)
-    self.centerName = plate(top, center, 15)
-    self.centerSub = Skin:Font(top, 11, "CENTER")
+    self.portrait = ns.Portrait.Create(top, 120)
+    if self.portrait.scene then
+        self.portrait.scene:ClearAllPoints()
+        self.portrait.scene:SetPoint("CENTER", 0, 18)
+    end
+    self.centerName = Skin:Font(top, 15, "CENTER")
+    self.centerName:SetPoint("BOTTOM", center, "BOTTOM", 0, 46)
+    self.centerSub = Skin:Font(top, 12, "CENTER")
     self.centerSub:SetPoint("TOP", self.centerName, "BOTTOM", 0, -1)
     self.centerSub:SetTextColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
-    self.center = center
-end
+    self.centerState = Skin:Font(top, 12, "CENTER")
+    self.centerState:SetPoint("TOP", self.centerSub, "BOTTOM", 0, -1)
 
-function Wheel:CreateSacrifice()
-    local button = SA.Create(self.root, "OneTwoThreeWheelSacrifice")
-    button:SetSize(140, 26)
-    button:SetFrameLevel(self.root:GetFrameLevel() + 20)
-    button:SetPoint("TOP", self.center, "BOTTOM", 0, -40)
-    local visual = CreateFrame("Frame", nil, button)
-    visual:SetAllPoints()
-    visual:EnableMouse(false)
-    local glass = Skin:Pill(visual)
-    local label = Skin:Font(glass.top or visual, 12, "CENTER")
-    label:SetPoint("CENTER")
-    local effect = Skin:Font(glass.top or visual, 10, "CENTER")
-    effect:SetPoint("TOP", button, "BOTTOM", 0, -3)
-    effect:SetWidth(220)
-    effect:SetTextColor(1, 1, 1, 0.6)
-    button:SetScript("PostClick", function(_, _, down)
-        if not down then Wheel:Close() end
+    button:SetScript("OnEnter", function() Wheel:Hint(Wheel:SacrificeHint()) end)
+    button:SetScript("OnLeave", function() Wheel:Hint() end)
+    button:SetScript("PostClick", function(_, mouseButton, down)
+        if down or mouseButton ~= "RightButton" or not Wheel.sacrifice.action then return end
+        Wheel:Close()
     end)
-    self.sacrifice = { button = button, label = label, effect = effect }
+    self.center = button
+    self.sacrifice = {}
 end
 
 function Wheel:CreateHeader()
     local header = CreateFrame("Frame", nil, self.stage)
-    header:SetSize(150, 28)
-    header:SetPoint("BOTTOM", self.disc, "TOP", 0, 6)
-    local glass = Skin:Pill(header)
-    local title = Skin:Font(glass.top or header, 14, "CENTER")
-    title:SetPoint("CENTER")
+    header:SetSize(220, 56)
+    header:SetPoint("BOTTOM", self.disc, "TOP", 0, 2)
+    local title = Skin:Font(header, 34, "CENTER")
+    title:SetPoint("TOP", 0, 0)
     title:SetText("123")
-    title:SetTextColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
+    title:SetTextColor(0.92, 0.95, 0.88)
+    local subtitle = Skin:Font(header, 12, "CENTER")
+    subtitle:SetPoint("TOP", title, "BOTTOM", 0, -2)
+    subtitle:SetText("DEMON SUMMONING")
+    subtitle:SetTextColor(FEL[1], FEL[2], FEL[3])
+    self.header = header
 
-    -- A plain (insecure) close button, beside the header.
+    -- A plain (insecure) close button, right of the title.
     local close = CreateFrame("Button", nil, self.root)
-    close:SetSize(26, 26)
-    close:SetPoint("LEFT", header, "RIGHT", 8, 0)
+    close:SetSize(30, 30)
+    close:SetPoint("LEFT", header, "RIGHT", 20, -6)
     close:SetFrameLevel(self.root:GetFrameLevel() + 20)
-    local closeGlass = Skin:Disc(close, "disc_small")
-    local x = Skin:Font(closeGlass.top or close, 14, "CENTER")
+    local closeGlass = Skin:Disc(close, "disc_small", FEL)
+    local x = Skin:Font(closeGlass.top or close, 15, "CENTER")
     x:SetPoint("CENTER", 0, 1)
     x:SetText("x")
     close:SetScript("OnClick", function() Wheel:Close() end)
     self.closeButton = close
 end
 
+-- The strip under the ring: soul shards | what the hovered bead does.
+function Wheel:CreateStrip()
+    local strip = CreateFrame("Frame", nil, self.stage)
+    strip:SetSize(380, 44)
+    strip:SetPoint("TOP", self.disc, "BOTTOM", 0, -6)
+    local glass = Skin:Pill(strip, FEL)
+    local top = glass.top or strip
+    local shard = top:CreateTexture(nil, "ARTWORK")
+    shard:SetSize(22, 22)
+    shard:SetPoint("LEFT", 16, 0)
+    shard:SetTexture(API.ItemIcon(Data.SOUL_SHARD))
+    shard:SetTexCoord(0.08, 0.92, 0.08, 0.92)
+    local shards = Skin:Font(top, 16, "LEFT")
+    shards:SetPoint("LEFT", shard, "RIGHT", 8, 0)
+    local divider = top:CreateTexture(nil, "ARTWORK")
+    divider:SetTexture(ns.Media.WHITE)
+    divider:SetVertexColor(1, 1, 1, 0.2)
+    divider:SetSize(1, 24)
+    divider:SetPoint("LEFT", 82, 0)
+    -- Two lines at most, inside the strip (a long Sacrifice effect wraps).
+    local hint = Skin:Font(top, 11, "CENTER")
+    hint:SetPoint("LEFT", divider, "RIGHT", 10, 0)
+    hint:SetPoint("RIGHT", -12, 0)
+    hint:SetWordWrap(true)
+    hint:SetMaxLines(2)
+    hint:SetText(HINT)
+    self.strip = { frame = strip, shards = shards, hint = hint }
+end
+
 function Wheel:Create()
     if self.root then return self.root end
     local root = CreateFrame("Frame", "OneTwoThreeWheel", UIParent)
     root:SetSize(ROOT_W, ROOT_H)
-    root:SetPoint("CENTER", UIParent, "CENTER", 0, 40)
+    root:SetPoint("CENTER", UIParent, "CENTER", 0, 20)
     root:SetFrameStrata("HIGH")
     root:SetClampedToScreen(true)
     root:EnableMouse(false)
@@ -196,26 +238,18 @@ function Wheel:Create()
 
     local disc = CreateFrame("Frame", nil, stage)
     disc:SetSize(DISC, DISC)
-    disc:SetPoint("CENTER", root, "CENTER", 0, -10)
+    disc:SetPoint("CENTER", root, "CENTER", 0, 4)
     disc:EnableMouse(false)
-    Skin:Disc(disc, "disc")
+    local ring = Skin:Disc(disc, "disc", FEL)
+    Skin:SetRimColor(ring, FEL[1], FEL[2], FEL[3], 0.85)
     self.disc = disc
 
     self:CreateHeader()
+    self:CreateStrip()
     self:CreateCenter()
-    for index = 1, SLOTS do
-        self.nodes[index] = self:CreateNode(index)
+    for index, entry in ipairs(Data.WHEEL) do
+        self.nodes[index] = self:CreateNode(index, entry)
     end
-    -- The major demons: fixed beads, placed once.
-    self.majors = {}
-    for i, major in ipairs(Data.MAJOR_DEMONS) do
-        local node = self:CreateNode(SLOTS + i, MAJOR)
-        node.spellID, node.fixed = major.spell, true
-        local x, y = clockOffset(major.clock, MAJOR_RADIUS)
-        node.button:SetPoint("CENTER", disc, "CENTER", x, y)
-        self.majors[i] = node
-    end
-    self:CreateSacrifice()
 
     -- Escape: a proxy in UISpecialFrames whose OnHide closes the wheel. No
     -- parent, so hiding the game UI does not hide it.
@@ -265,30 +299,20 @@ local function sacrificeEffect(demon)
     return nil
 end
 
--- What every slot shows and does, from the current state.
+-- What every bead and the centre do, from the current state.
 function Wheel:Resolve()
     local active = ns.Bar.PetSummon()
-    -- A pet whose NPC id is not in Data.DEMON_NPC (unmeasured): shown in the
-    -- centre by its family, and every demon stays on offer.
+    -- A pet whose NPC id is not in Data.DEMON_NPC (an Infernal, a Doomguard,
+    -- an unmeasured demon) is shown by its family; no bead is active then.
     self.petOut = API.UnitNpcID("pet") ~= nil
-    local list = {}
-    for _, spellID in ipairs(Data.WHEEL_ORDER) do
-        if spellID ~= active then list[#list + 1] = spellID end
-    end
-    local from, to = 9, 3
-    if not self.petOut and #list > 4 then from, to = 8, 4 end
-    for index, node in ipairs(self.nodes) do
-        node.spellID = list[index]
-        node.known = node.spellID ~= nil and API.IsKnown(node.spellID)
-        node.clock = node.spellID and arcClock(index, #list, from, to) or nil
-    end
-    for _, node in ipairs(self.majors) do
-        node.known = API.IsKnown(node.spellID)
-    end
     self.active = active
+    for _, node in ipairs(self.nodes) do
+        node.known = API.IsKnown(node.spellID)
+        node.isActive = node.spellID == active
+        node.held = node.isActive and node.known and ns.db.confirmResummon
+    end
 
-    -- Sacrifice is for the demons Data.DEMON_NPC knows: an Infernal or a
-    -- Doomguard (or an unmeasured demon) gets no pill.
+    -- Sacrifice is for the demons Data.DEMON_NPC knows.
     local sac = self.sacrifice
     sac.action, sac.text, sac.effectText = nil, nil, nil
     if active then
@@ -307,64 +331,48 @@ function Wheel:Resolve()
     end
 end
 
--- The pet's family name ("Voidwalker"), for a demon not in Data.DEMON_NPC.
+-- The pet's family name ("Infernal"), for a demon not in Data.DEMON_NPC.
 function Wheel:PetFamily()
     local ok, family = pcall(UnitCreatureFamily, "pet")
     if ok and API.Readable(family) and type(family) == "string" then return family end
     return ""
 end
 
--- The coalesced secure rebuild (registered with SecureAction). Out of
--- combat only, so the buttons are placed here too.
+-- The coalesced secure rebuild (registered with SecureAction).
 function Wheel:SyncSecure()
     if not self.root then return end
-    for _, node in ipairs(self.nodes) do
-        if node.clock then
-            local x, y = clockOffset(node.clock, RADIUS)
-            node.button:ClearAllPoints()
-            node.button:SetPoint("CENTER", self.disc, "CENTER", x, y)
-        end
-    end
     local felDom = API.IsKnown(Data.FEL_DOMINATION) and API.SpellName(Data.FEL_DOMINATION)
     for _, node in ipairs(self.nodes) do
         local actions = {}
-        if node.known then
+        if node.known and not node.held then
             actions[1] = { type = "spell", spell = node.spellID }
             local name = API.SpellName(node.spellID)
-            if felDom and name then
+            if felDom and name and not node.major then
                 actions.shift = { { type = "macro", macrotext = "/cast " .. felDom .. "\n/cast " .. name } }
             end
         end
         SA.Apply(node.button, actions)
-        node.button:SetShown(node.spellID ~= nil)
     end
-    for _, node in ipairs(self.majors) do
-        SA.Apply(node.button, { node.known and { type = "spell", spell = node.spellID } or nil })
-    end
-    local sac = self.sacrifice
-    SA.Apply(sac.button, { sac.action })
-    sac.button:SetShown(sac.action ~= nil)
+    -- The centre: right button only.
+    SA.Apply(self.center, { nil, self.sacrifice.action })
 end
 
 -- Repaint everything non-secure. Safe in combat.
 function Wheel:Paint()
     if not self.root then return end
-    local beads = {}
-    for _, node in ipairs(self.nodes) do beads[#beads + 1] = node end
-    for _, node in ipairs(self.majors) do beads[#beads + 1] = node end
-    for _, node in ipairs(beads) do
-        if node.spellID then
-            node.icon:SetTexture(API.SpellIcon(node.spellID))
-            node.icon:SetDesaturated(not node.known)
-            node.icon:SetAlpha(node.known and 1 or 0.45)
-            node.label:SetText(node.fixed and (API.SpellName(node.spellID) or "") or demonName(node.spellID))
-            self:PaintReagent(node)
-        end
+    for _, node in ipairs(self.nodes) do
+        node.icon:SetTexture(API.SpellIcon(node.spellID))
+        node.icon:SetDesaturated(not node.known)
+        node.icon:SetAlpha(node.known and 1 or 0.45)
+        node.label:SetText(node.entry.label or demonName(node.spellID))
+        Skin:SetRimColor(node.glass, FEL[1], FEL[2], FEL[3], node.isActive and 1 or 0.45)
+        self:PaintReagent(node)
     end
     if self.petOut then
         self.centerName:SetText(self.active and demonName(self.active) or self:PetFamily())
         local petName = UnitName("pet")
-        self.centerSub:SetText(API.Readable(petName) and petName or "Active demon")
+        self.centerSub:SetText(API.Readable(petName) and petName or "")
+        self.centerState:SetText(hex(FEL) .. "\226\151\143 Active|r")
         self.centerIcon:SetTexture(self.active and API.SpellIcon(self.active) or nil)
         self.centerIcon:Hide()
         local npcID = API.UnitNpcID("pet")
@@ -373,29 +381,66 @@ function Wheel:Paint()
         self.portrait:Hide()
         self.centerIcon:Hide()
         self.centerName:SetText("No demon")
-        self.centerSub:SetText("Pick one to summon")
+        self.centerSub:SetText("")
+        self.centerState:SetText("")
     end
-    local sac = self.sacrifice
-    sac.label:SetText(sac.text or "")
-    sac.effect:SetText(sac.effectText or "")
+    self.strip.shards:SetText(API.ItemCount(Data.SOUL_SHARD) or "")
 end
 
 -- The reagent a summon consumes: "No <reagent>" under a learned bead that
 -- can't be cast for want of it, and how many are carried on the major
--- demons' beads (their reagents are rare; shards are on the bar).
+-- demons' beads (their reagents are rare; shards are in the strip).
 function Wheel:PaintReagent(node)
     local itemID = Data.REAGENT[node.spellID]
     local have = itemID and API.ItemCount(itemID)
-    node.count:SetText(node.fixed and itemID and have or "")
+    node.count:SetText(node.major and itemID and have or "")
     if not node.known then
         node.sub:SetText("Not learned")
+    elseif node.isActive then
+        node.sub:SetText(hex(FEL) .. "Active|r")
     elseif itemID and have == 0 then
-        local name = API.ItemName(itemID)
-        if not name then API.RequestItemData(itemID) end
-        node.sub:SetText("|cffff6060No " .. (name or "reagent") .. "|r")
+        node.sub:SetText("|cffff6060No " .. self:ItemName(itemID) .. "|r")
     else
         node.sub:SetText("")
     end
+end
+
+function Wheel:ItemName(itemID)
+    local name = API.ItemName(itemID)
+    if not name then API.RequestItemData(itemID) end
+    return name or "reagent"
+end
+
+------------------------------------------------------------
+-- The strip's hint line
+------------------------------------------------------------
+
+function Wheel:Hint(text)
+    if self.strip then self.strip.hint:SetText(text or HINT) end
+end
+
+function Wheel:NodeHint(node)
+    if not node.known then
+        return (node.entry.label or demonName(node.spellID)) .. ": not learned yet"
+    end
+    local name = API.SpellName(node.spellID) or ""
+    if node.isActive then
+        return name .. " again (already out)"
+    end
+    local itemID = Data.REAGENT[node.spellID]
+    if itemID and API.ItemCount(itemID) == 0 then
+        return name .. ": needs " .. self:ItemName(itemID)
+    end
+    if not node.major and API.IsKnown(Data.FEL_DOMINATION) then
+        return "Click: " .. name .. "    Shift: Fel Domination first"
+    end
+    return "Click: " .. name
+end
+
+function Wheel:SacrificeHint()
+    local sac = self.sacrifice
+    if not sac.action then return nil end
+    return "Right-click: " .. sac.text .. (sac.effectText and (" - " .. sac.effectText) or "")
 end
 
 -- New state (pet, spells): resolve, re-arm (deferred in combat), repaint.
@@ -436,6 +481,7 @@ function Wheel:Open()
     self:Resolve()
     SA.RunSyncs() -- out of combat: attributes are current before the first click
     self:Paint()
+    self:Hint()
     self.root:Show()
     ns.Presentation:Enter(self.root)
     self:SyncEscape()
@@ -458,6 +504,7 @@ function Wheel:Close()
     self:StopTicker()
     self.escape:Hide()
     self.portrait:Hide()
+    ns.Resummon:Hide()
     self.root:Hide()
     ns.Presentation:Exit("close")
 end
@@ -486,6 +533,7 @@ function Wheel:OnForcedExit()
         self:StopTicker()
         self:SyncEscape()
         self.portrait:Hide()
+        ns.Resummon:Hide()
         self.root:Hide()
     end
 end

@@ -9,9 +9,11 @@
 - Armor (#7): glows while the armor it casts is not on you (any rank of that armor counts; Demon
   Skin doesn't count once Demon Armor is learned). No glow in combat, where buffs can't be read.
   Fel Armor 403619 (in Forever's database) waits until it is measured.
-- Demon wheel (#4): left-click Demon opens it (right-click re-summons). The demons you can switch
-  to, Forever's Incubus included, around the active one, Inferno and Ritual of Doom on their own
-  beads with their reagent counts, a "No Soul Shard" line where a reagent is missing (a 3D portrait), shift-click for Fel Domination, and a Sacrifice pill
-  (Demonic Sacrifice, or the Voidwalker's own). Opens with LibShowcase's cinematic camera and
-  hidden game UI (`/123 camera` to turn off); closes on Escape, a summon or combat.
+- Demon wheel (#4), on the "Fel concept" mockup: left-click Demon opens it (right-click
+  re-summons). Seven demons on a fel ring (Forever's Incubus, Inferno and the Doomguard included),
+  the active one in 3D in the centre, shift-click for Fel Domination, right-click the centre for
+  Sacrifice, reagents shown where missing, a strip with shards and hints. Opens with LibShowcase's
+  cinematic camera and hidden game UI (`/123 camera` to turn off); closes on Escape, a cast or
+  combat.
+- The re-summon prompt grows with its text (it overflowed).
 - Scaffold: the Warlock-only glass bar loads, `/123` and `/123 debug`, key binding.

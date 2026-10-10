@@ -45,6 +45,7 @@ function Resummon:Create()
     local text = ns.Skin:Font(top, 13, "CENTER")
     text:SetPoint("TOP", 0, -12)
     text:SetWidth(WIDTH - 24)
+    text:SetWordWrap(true)
     self.text = text
 
     -- The secure Summon button and the plain Cancel one, above the glass.
@@ -63,7 +64,9 @@ function Resummon:Create()
             ns.Print("won't ask again before re-summoning (/123 confirm to ask again).")
             SA.MarkDirty()
         end
+        local done = self.onSummon
         self:Hide()
+        if done then done() end
     end)
     self.summon = summon
 
@@ -85,15 +88,21 @@ function Resummon:Create()
     frame:Hide()
 end
 
--- Ask about re-summoning `spellID`, above `anchor` (the Demon button).
-function Resummon:Show(anchor, spellID)
+-- Ask about re-summoning `spellID`, above `anchor` (the Demon button, or
+-- the wheel's bead). `onSummon` runs after Summon was clicked.
+function Resummon:Show(anchor, spellID, onSummon)
     if InCombatLockdown() then return end
     if not self.frame then self:Create() end
+    self.onSummon = onSummon
     local name = API.SpellName(spellID) or "that demon"
     local demon = name:gsub("^Summon ", "")
     self.text:SetText("You already have your " .. demon .. " summoned. Summon it again?")
     self.dontAsk:SetChecked(false)
     SA.Apply(self.summon, { { type = "spell", spell = spellID } })
+    -- Tall enough for the question however it wraps (it overflowed in game):
+    -- top pad, the text, the checkbox row, the buttons row, bottom pad.
+    local textH = tonumber(self.text:GetStringHeight()) or 16
+    self.frame:SetHeight(math.max(HEIGHT, 12 + textH + 6 + 24 + 6 + 22 + 10))
     self.frame:ClearAllPoints()
     self.frame:SetPoint("BOTTOM", anchor, "TOP", 0, 14)
     self.frame:Show()
@@ -101,6 +110,7 @@ end
 
 function Resummon:Hide()
     if not self.frame or InCombatLockdown() then return end
+    self.onSummon = nil
     self.frame:Hide()
     SA.Clear(self.summon)
 end

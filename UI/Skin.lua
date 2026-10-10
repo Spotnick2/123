@@ -71,11 +71,13 @@ function Skin:ClassColor()
     return ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3]
 end
 
--- Every LibGlass surface of 123 wears the Warlock colour.
-function Skin:ClassTint(g)
+-- Every LibGlass surface of 123 wears the Warlock colour, or `color`
+-- ({ r, g, b }: the wheel's fel green).
+function Skin:ClassTint(g, color)
     local glass = self:Glass()
     if not (glass and glass.SetSurfaceTint and g) then return false end
     local r, gg, b = self:ClassColor()
+    if color then r, gg, b = color[1], color[2], color[3] end
     local ok, done = pcall(glass.SetSurfaceTint, g, r * CLASS_SHADE, gg * CLASS_SHADE, b * CLASS_SHADE)
     return ok and done ~= false
 end
@@ -83,12 +85,12 @@ end
 -- A round glass surface on a square host (the wheel). Returns g with g.top,
 -- the frame to parent content above the glass to, and g.rim when there is
 -- one. size: "disc" (128 px and up) or "disc_small".
-function Skin:Disc(host, size)
+function Skin:Disc(host, size, color)
     local glass = self:Glass()
     if glass and glass.Disc then
         local ok, g = pcall(glass.Disc, host, size)
         if ok and g then
-            self:ClassTint(g)
+            self:ClassTint(g, color)
             return g
         end
     end
@@ -121,12 +123,12 @@ end
 
 -- A rounded-rect glass pill. Returns g with g.top, the frame to parent
 -- content above the glass to.
-function Skin:Pill(host)
+function Skin:Pill(host, color)
     local glass = self:Glass()
     if glass then
         local ok, g = pcall(glass.Apply, host, "small")
         if ok and g then
-            self:ClassTint(g)
+            self:ClassTint(g, color)
             return g
         end
     end

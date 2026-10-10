@@ -32,6 +32,8 @@ ns.Media = {
 -- Warlock purple; the chat prefix and the bar accent.
 ns.Colors = {
     ACCENT = { 0.58, 0.51, 0.79 },
+    -- The demon wheel's fel theme (owner's "Fel concept" mockup).
+    FEL = { 0.47, 0.95, 0.22 },
     TEXT = { 1, 1, 1, 0.9 },
     MUTED = { 1, 1, 1, 0.6 },
 }
