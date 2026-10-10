@@ -1,6 +1,7 @@
 -- Smart stones (#6): left uses the best stone carried, else creates the best
 -- rank known; right creates the best rank known when it beats the stone
--- carried (stones are unique per rank), else does the same as left.
+-- carried (stones are unique per rank), else is unarmed (a stray right click
+-- spends nothing).
 
 dofile("tests/wow_stubs.lua")
 local H = dofile("tests/harness.lua")
@@ -35,7 +36,7 @@ end
 
 -- Carrying the best rank known: both clicks use it.
 H.eq(arm(hs, 1), "item:5512", "left: use the Minor Healthstone")
-H.eq(arm(hs, 2), "item:5512", "right: the same, nothing better to make")
+H.eq(arm(hs, 2), nil, "right: unarmed, nothing better to make")
 H.check(not hs.upgradeMark:IsShown(), "no upgrade mark")
 H.eq(hs.upgrade, nil, "no upgrade")
 
@@ -45,20 +46,21 @@ update()
 H.eq(arm(hs, 1), "item:5512", "left: still use the stone carried")
 H.eq(arm(hs, 2), 6202, "right: create the Lesser Healthstone")
 H.check(hs.upgradeMark:IsShown(), "the green + says a better one can be made")
+H.eq(hs.upgradeMark._textColor[2], 1, "green: it can be made now")
 H.eq(hs.upgrade and hs.upgrade.spellID, 6202, "the upgrade is known for the tooltip")
 
 -- The better stone carried too: it is the one used, nothing to upgrade.
 WoW.counts[5511] = 1
 update()
 H.eq(arm(hs, 1), "item:5511", "left: the Lesser, the best carried")
-H.eq(arm(hs, 2), "item:5511", "right: the same")
+H.eq(arm(hs, 2), nil, "right: unarmed")
 H.check(not hs.upgradeMark:IsShown(), "no mark once the best is carried")
 
 -- None carried: both create the best rank known.
 WoW.counts[5511], WoW.counts[5512] = 0, 0
 update()
 H.eq(arm(hs, 1), 6202, "left: create the best rank known")
-H.eq(arm(hs, 2), 6202, "right: the same")
+H.eq(arm(hs, 2), nil, "right: unarmed (the left already creates it)")
 
 -- Out of shards: a carried stone stays lit (using it costs none), while the
 -- upgrade that would spend one is still offered (the tooltip says it needs a
@@ -68,7 +70,16 @@ update()
 H.eq(arm(hs, 1), "item:5512", "left: use the stone")
 H.check(not hs.icon:IsDesaturated(), "lit: using it needs no shard")
 H.eq(arm(hs, 2), 6202, "right: the upgrade is still there")
+H.check(hs.upgradeMark:IsShown(), "the + shows")
+H.eq(hs.upgradeMark._textColor[2], 0.55, "grey: it can't be made without a shard")
 WoW.counts[6265] = 3
+
+-- The + only exists on the stone buttons.
+for _, b in ipairs(Bar.buttons) do
+    if b.key ~= "healthstone" and b.key ~= "soulstone" then
+        H.eq(b.upgradeMark, nil, "no + on " .. b.key)
+    end
+end
 
 -- Soulstones work the same way.
 H.eq(arm(ss, 1), "item:5232", "soulstone left: use the Minor Soulstone")

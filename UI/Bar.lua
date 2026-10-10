@@ -57,8 +57,9 @@ end
 --   * left: use the best stone carried, else create the best rank known;
 --   * right: create the best rank known when it beats the stone carried
 --     (stones are unique per rank, so a better one can be made while a
---     lesser one is carried), else the same as the left.
--- Returns the left action and the right one.
+--     lesser one is carried); otherwise unarmed, so a stray right click
+--     spends no stone and no shard (and #5 may still claim it).
+-- Returns the left action and the right one (or nil).
 local function stone(tiers)
     local carried, itemID, known
     for i, tier in ipairs(tiers) do
@@ -72,7 +73,7 @@ local function stone(tiers)
     local create = known and spellAction(tiers[known].create)
     local left = use or create
     local better = create and use and known < carried and create or nil
-    return left, better or left
+    return left, better
 end
 
 local showTooltip
@@ -186,7 +187,18 @@ end
 
 function Bar:RefreshButton(button)
     local action = button.action
-    button.upgradeMark:SetShown(button.upgrade ~= nil)
+    if button.upgradeMark then
+        -- Green when it can be made now, grey while its Soul Shard is missing.
+        local upgrade = button.upgrade
+        button.upgradeMark:SetShown(upgrade ~= nil)
+        if upgrade then
+            if short(upgrade) then
+                button.upgradeMark:SetTextColor(0.55, 0.55, 0.55)
+            else
+                button.upgradeMark:SetTextColor(0.45, 1, 0.45)
+            end
+        end
+    end
     local dim = action == nil or short(action)
     button.short = action ~= nil and dim
     button.icon:SetTexture(actionIcon(action, button.key))
@@ -330,29 +342,26 @@ local function keyOf(action)
     return action and (action.type .. ":" .. tostring(action[action.type])) or "none"
 end
 
--- `upgrade`: a stone button's right click, when it differs from the left.
-local function syncKey(key, action, held, sacrifice, upgrade)
-    if not action then return "none" end
-    return keyOf(action) .. (held and ":held" or "")
-        .. ((key == "demon" and SA.inCombat) and ":combat" or "")
-        .. (sacrifice and ":sacrifice" or "")
-        .. (upgrade and (":right=" .. keyOf(upgrade)) or "")
+-- What a button is armed with, both buttons, plus the state its PostClick
+-- reads (held): any change of either slot rewrites the attributes.
+local function syncKey(actions, held, action)
+    return keyOf(actions[1]) .. "|" .. keyOf(actions[2]) .. (held and "|held" or "")
+        .. "|" .. keyOf(action)
 end
 
 -- Rewrites a button's attributes only when what it does changed.
 function Bar:Sync()
     self:RememberPet()
     for _, button in ipairs(self.buttons) do
-        local action, right = RESOLVE[button.key]()
-        -- A stone's right click, when it does something the left doesn't.
-        local upgrade = right ~= action and right or nil
+        -- A stone's right click is its upgrade (#6), nil when there is none.
+        local action, upgrade = RESOLVE[button.key]()
         local isDemon = button.key == "demon"
         local sacrifice = isDemon and self:SacrificeAction() or nil
         -- Held whatever Sacrifice does: the left click (and its binding)
         -- still asks before re-summoning the demon that is out (Codex, #19).
         local held = isDemon and self:HoldsDemon(action)
-        local actions = isDemon and demonActions(action, held, sacrifice) or { action, right }
-        local key = syncKey(button.key, action, held, sacrifice, upgrade)
+        local actions = isDemon and demonActions(action, held, sacrifice) or { action, upgrade }
+        local key = syncKey(actions, held, action)
         if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
             button.upgrade = upgrade
@@ -365,6 +374,11 @@ end
 ------------------------------------------------------------
 -- Frames
 ------------------------------------------------------------
+
+-- "Needs <reagent>" under a tooltip line whose spell lacks its reagent.
+local function addNeeds(action)
+    GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[action.spellID]) or "a reagent"), 1, 0.45, 0.45)
+end
 
 function showTooltip(button)
     GameTooltip:SetOwner(button, "ANCHOR_TOP")
@@ -382,17 +396,11 @@ function showTooltip(button)
         end
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
-        if button.short then
-            GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.action.spellID]) or "a reagent"),
-                1, 0.45, 0.45)
-        end
+        if button.short then addNeeds(button.action) end
         if button.upgrade then
             GameTooltip:AddLine("Right-click: " .. actionName(button.upgrade) .. " (a better rank)",
                 0.45, 1, 0.45)
-            if short(button.upgrade) then
-                GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.upgrade.spellID])
-                    or "a reagent"), 1, 0.45, 0.45)
-            end
+            if short(button.upgrade) then addNeeds(button.upgrade) end
         end
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
@@ -460,13 +468,14 @@ function Bar:CreateButton(index, spec, parent)
     local count = ns.Skin:Font(overlay, 13, "RIGHT")
     count:SetPoint("BOTTOMRIGHT", -1, 2)
     button.count = count
-    -- A better rank can be created (right click): a small green "+".
-    local mark = ns.Skin:Font(overlay, 14, "RIGHT")
-    mark:SetPoint("TOPRIGHT", -1, -1)
-    mark:SetText("+")
-    mark:SetTextColor(0.45, 1, 0.45)
-    mark:Hide()
-    button.upgradeMark = mark
+    -- A stone button: a better rank can be created (right click), a "+".
+    if spec.key == "healthstone" or spec.key == "soulstone" then
+        local mark = ns.Skin:Font(overlay, 14, "RIGHT")
+        mark:SetPoint("TOPRIGHT", -1, -1)
+        mark:SetText("+")
+        mark:Hide()
+        button.upgradeMark = mark
+    end
 
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)

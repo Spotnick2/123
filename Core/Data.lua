@@ -115,11 +115,14 @@ ns.Data = {
     SOUL_SHARD = 6265,
 
     -- Stones by tier, strongest first (#6): the spell that creates the tier
-    -- and the items it makes. Each item is unique, so a lower rank carried
-    -- doesn't stop a higher one being created. Within a healthstone tier the
-    -- base stone comes before the Improved Healthstone variants, as Apotheca
-    -- lists them (which heals more is unmeasured on Forever). All healthstone
-    -- ranks share one cooldown (Apotheca; to be confirmed in #1).
+    -- and the items it makes. Every stone is "Unique" per item in Forever's
+    -- client data (References/forever-consumables-1.60.1.70009.tsv), so a
+    -- lower rank carried shouldn't stop a higher one being created; that the
+    -- client allows it is still to confirm in game (FOREVER-PROBE.md).
+    -- Within a tier, items are strongest first by that data's heal values:
+    -- the base stone ties the best Improved Healthstone variant and the
+    -- other heals less (Major 1440 / 1440 / 1320 ... Minor 120 / 120 / 110).
+    -- All healthstone ranks share one cooldown (Apotheca; to confirm, #1).
     HEALTHSTONE_TIERS = {
         { create = 11730, items = { 9421, 19013, 19012 } },  -- Major
         { create = 11729, items = { 5510, 19011, 19010 } },  -- Greater
