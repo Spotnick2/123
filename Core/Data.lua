@@ -33,8 +33,9 @@ ns.Data = {
     -- casts the best known rank of the first family known; any rank of THAT
     -- family on the player counts as wearing it (#7). Rank numbers do not
     -- compare across families. TBC's Fel Armor (28176) does not exist on
-    -- Forever; Forever's own Fel Armor (403619) is in its database but may
-    -- never ship. Learned-only, so it changes nothing until it is known.
+    -- Forever. Fel Armor 403619 is in Forever's database, probably a Season of
+    -- Discovery leftover (like the Grimoire's 402265); learned-only, so it
+    -- changes nothing unless it ships.
     ARMOR = {
         { 403619 },                             -- Fel Armor (Forever)
         { 11735, 11734, 11733, 1086, 706 },     -- Demon Armor

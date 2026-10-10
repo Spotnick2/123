@@ -50,7 +50,7 @@ Still open: near (same spot), offline, inside an instance.
   - Demon Armor 706 / 1086 / 11733 / 11734 / 11735
   - Create Healthstone 6202 / 5699 / 11729 / 11730
   - Create Soulstone 20752 / 20755 / 20756 / 20757
-- **Fel Armor 28176 does not exist.** The armor line is Demon Skin, then Demon Armor. Forever has its own Fel Armor, **403619**, in its database (Wowhead), but it may never ship. To check with `book` at higher levels.
+- **Fel Armor 28176 does not exist.** The armor line is Demon Skin, then Demon Armor. Fel Armor **403619** is in Forever's database (Wowhead), probably a Season of Discovery leftover, as the Grimoire's 402265 may be; it may never ship. To check with `book` at higher levels.
 - **The spellbook has a "Summon Demon" entry with a nil spell ID** (Demonology), next to the individual summons. It is probably a flyout; to be checked before the wheel relies on it.
 - **402265 is "Learning"**, the Grimoire's teach spell (item 216748 uses it). The Portal of Summoning spell ID itself is still unknown.
 
