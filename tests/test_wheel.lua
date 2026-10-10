@@ -115,6 +115,17 @@ center:GetScript("PostClick")(center, "RightButton", false)
 H.check(Wheel.open, "shift+right on the centre casts nothing either")
 WoW.shiftDown = false
 
+-- /123 confirm while the wheel is open: the active bead follows (Codex, #19).
+H.eq(attr(void, "type1"), nil, "asking: the active bead casts nothing")
+H.slash("ONETWOTHREE", "confirm")
+WoW.runTimers(0)
+H.eq(attr(void, "spell1"), 697, "confirmation off: the active bead summons at once")
+H.check(not void.held, "and its PostClick won't ask")
+H.slash("ONETWOTHREE", "confirm")
+WoW.runTimers(0)
+H.eq(attr(void, "type1"), nil, "back on: it asks again")
+H.check(void.held, "both ways")
+
 -- The re-summon question sits on the wheel's root: with the game UI hidden,
 -- a prompt under UIParent would be hidden with it.
 click(void.button)

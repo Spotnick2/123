@@ -388,6 +388,9 @@ end
 -- click (the buttons are hidden with the root meanwhile).
 function Wheel:SyncSecure()
     if not (self.root and self.open) then return end
+    -- The current state, never the last Resolve's: /123 confirm only marks
+    -- the sync dirty, and the active bead must follow it (Codex, #19).
+    self:Resolve()
     local felDom = API.IsKnown(Data.FEL_DOMINATION) and API.SpellName(Data.FEL_DOMINATION)
     for _, node in ipairs(self.nodes) do
         local actions = {}

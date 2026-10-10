@@ -6,7 +6,9 @@ Target: `docs/mockups/storyboard.png`. Spell availability is still to be measure
 ## Compact bar
 One small glass bar, Apotheca-style: **Demons** (the wheel), **Demon**, **Armor**, **Soulstone** (assigned target under the
 icon), **Healthstone** (count), **Summoning**, then the soul shard count. Shift-drag moves it.
-No names under the icons unless `/123 labels` (the tooltips say it).
+No names under the icons unless `/123 labels` (the tooltips say it). Out of Soul Shards, the
+Demon button summons the Imp (the one demon that needs none) until shards come back, and the
+buttons that would spend one (create a stone, Ritual of Summoning) grey out.
 Every button is a stationary secure button; visuals refresh in combat, attributes only out of it.
 
 - **Armor**: the highest learned rank of the preferred armor spell (Demon Armor over Demon Skin;

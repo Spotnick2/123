@@ -39,14 +39,19 @@ ns.Data = {
         { spell = 713, npc = 185317 },                  -- Incubus
     },
 
-    -- What each summon consumes (Wowhead's Forever database): a Soul Shard
-    -- for every demon but the Imp, an Infernal Stone for Inferno, a Demonic
-    -- Figurine for Ritual of Doom. The wheel shows what is missing.
+    -- What a spell consumes (Wowhead's Forever database): a Soul Shard for
+    -- every demon but the Imp, for creating a stone and for Ritual of
+    -- Summoning; an Infernal Stone for Inferno, a Demonic Figurine for
+    -- Ritual of Doom. The wheel shows what is missing; the bar greys out.
     REAGENT = {
         [697] = 6265, [712] = 6265, [713] = 6265, [691] = 6265,
+        [6201] = 6265, [6202] = 6265, [5699] = 6265, [11729] = 6265, [11730] = 6265,
+        [693] = 6265, [20752] = 6265, [20755] = 6265, [20756] = 6265, [20757] = 6265,
+        [698] = 6265,       -- Ritual of Summoning
         [1122] = 5565,      -- Infernal Stone
         [18540] = 16583,    -- Demonic Figurine
     },
+    IMP = 688,
 
     -- Each demon's voice on the wheel (hover and click), by file ID: the
     -- summon lines the owner picked (succubusvo, doomguardvo) and the same set

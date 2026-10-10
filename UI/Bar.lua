@@ -77,9 +77,15 @@ local function wornBy(family)
 end
 
 local RESOLVE = {
+    -- Out of Soul Shards, the Imp (the one demon that needs none) until
+    -- shards come back; the remembered demon itself is kept (owner).
     demon = function()
         local last = ns.char.demon
         local spellID = (last and API.IsKnown(last)) and last or API.FirstKnown(Data.DEMONS)
+        if spellID and Data.REAGENT[spellID] == Data.SOUL_SHARD
+            and API.ItemCount(Data.SOUL_SHARD) == 0 and API.IsKnown(Data.IMP) then
+            spellID = Data.IMP
+        end
         return spellID and spellAction(spellID) or nil
     end,
     armor = function()
@@ -157,11 +163,21 @@ local function setCount(fontString, raw, showOne)
     end
 end
 
+-- True when the armed spell needs a reagent the player has none of (a
+-- Soul Shard to create a stone or for the Ritual). An unreadable count
+-- (secret, in combat) is not "none".
+local function short(action)
+    local itemID = action and action.spellID and Data.REAGENT[action.spellID]
+    return itemID ~= nil and API.ItemCount(itemID) == 0
+end
+
 function Bar:RefreshButton(button)
     local action = button.action
+    local dim = action == nil or short(action)
+    button.short = action ~= nil and dim
     button.icon:SetTexture(actionIcon(action, button.key))
-    button.icon:SetDesaturated(action == nil)
-    button.icon:SetAlpha(action and 1 or 0.45)
+    button.icon:SetDesaturated(dim)
+    button.icon:SetAlpha(dim and 0.45 or 1)
     if action and action.itemID then
         setCount(button.count, API.ItemCountRaw(action.itemID))
         SA.ApplyItemCooldown(button.cooldown, action.itemID)
@@ -297,7 +313,9 @@ function Bar:Sync()
         local action = RESOLVE[button.key]()
         local isDemon = button.key == "demon"
         local sacrifice = isDemon and self:SacrificeAction() or nil
-        local held = isDemon and not sacrifice and self:HoldsDemon(action)
+        -- Held whatever Sacrifice does: the left click (and its binding)
+        -- still asks before re-summoning the demon that is out (Codex, #19).
+        local held = isDemon and self:HoldsDemon(action)
         local actions = isDemon and demonActions(action, held, sacrifice) or { action }
         local key = syncKey(button.key, action, held, sacrifice)
         if key == button.syncKey or SA.Apply(button, actions) then
@@ -328,6 +346,10 @@ function showTooltip(button)
         end
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
+        if button.short then
+            GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.action.spellID]) or "a reagent"),
+                1, 0.45, 0.45)
+        end
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
     end

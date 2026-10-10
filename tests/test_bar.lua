@@ -185,6 +185,10 @@ WoW.runTimers(0)
 t, v = armed("demon", 2); H.eq(v, 18788, "right-click: Demonic Sacrifice")
 demon:GetScript("PostClick")(demon, "RightButton", false)
 H.check(not ns.Resummon:IsShown(), "no re-summon question then")
+t = armed("demon"); H.eq(t, nil, "the left click still asks first (Codex, #19)")
+demon:GetScript("PostClick")(demon, "LeftButton", false)
+H.check(ns.Resummon:IsShown(), "it asks")
+ns.Resummon.cancel:GetScript("OnClick")()
 WoW.enterCombat()
 t, v = armed("demon", 2); H.eq(v, 18788, "in combat too")
 t, v = armed("demon"); H.eq(v, 697, "the left click summons in combat")
@@ -203,6 +207,28 @@ WoW.spells[18788] = { name = "Demonic Sacrifice", known = true }
 WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
 t, v = armed("demon", 2); H.eq(v, 697, "no demon out: right-click summons, Sacrifice or not")
+
+-- Out of Soul Shards: the Demon button summons the Imp, the stones that
+-- would be created and the Ritual grey out; a carried stone stays lit.
+WoW.counts[6265] = 0
+WoW.fire("BAG_UPDATE_DELAYED")
+WoW.runTimers(0)
+t, v = armed("demon"); H.eq(v, 688, "no shards: the Imp (needs none)")
+H.eq(ns.char.demon, 697, "the remembered demon is kept")
+H.check(byKey.soulstone.icon:IsDesaturated(), "Soulstone (create) greyed without shards")
+H.check(byKey.summoning.icon:IsDesaturated(), "Ritual of Summoning greyed without shards")
+H.check(not byKey.healthstone.icon:IsDesaturated(), "a carried Healthstone stays lit")
+WoW.counts[5512] = 0
+WoW.fire("BAG_UPDATE_DELAYED")
+WoW.runTimers(0)
+t, v = armed("healthstone"); H.eq(v, 6201, "no stone: create one")
+H.check(byKey.healthstone.icon:IsDesaturated(), "greyed: it needs a shard")
+WoW.counts[6265] = 2
+WoW.fire("BAG_UPDATE_DELAYED")
+WoW.runTimers(0)
+t, v = armed("demon"); H.eq(v, 697, "shards back: the Voidwalker again")
+H.check(not byKey.soulstone.icon:IsDesaturated(), "and the stones light up")
+H.check(not byKey.healthstone.icon:IsDesaturated(), "both")
 
 -- Key bindings click the bar's secure buttons by name.
 local binds = assert(io.open("Bindings.xml")):read("*a")
