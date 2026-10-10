@@ -104,6 +104,24 @@ center:GetScript("OnEnter")()
 H.eq(Wheel.strip.hint:GetText(), "Right-click: Sacrifice Voidwalker", "the hint says so")
 center:GetScript("OnLeave")()
 
+-- Only a click that cast something closes the wheel: a bead arms the left
+-- button, and shift only with Fel Domination (not learned yet).
+click(imp.button, "RightButton")
+H.check(Wheel.open, "a right click on a bead casts nothing and keeps the wheel")
+WoW.shiftDown = true
+click(imp.button)
+H.check(Wheel.open, "a bare shift-click casts nothing and keeps the wheel")
+center:GetScript("PostClick")(center, "RightButton", false)
+H.check(Wheel.open, "shift+right on the centre casts nothing either")
+WoW.shiftDown = false
+
+-- The re-summon question sits on the wheel's root: with the game UI hidden,
+-- a prompt under UIParent would be hidden with it.
+click(void.button)
+H.eq(ns.Resummon.frame:GetParent(), Wheel.root, "the question is parented to the wheel")
+ns.Resummon.cancel:GetScript("OnClick")()
+H.check(Wheel.open, "Cancel keeps the wheel open")
+
 -- A cast speaks and closes the wheel.
 before = #WoW.sounds
 click(imp.button)
@@ -125,6 +143,25 @@ center:GetScript("OnEnter")()
 H.eq(Wheel.strip.hint:GetText(),
     "Right-click: Demonic Sacrifice - Voidwalker: Restores 2% of your total Mana every 4 sec.",
     "with the active demon's effect, read from the client")
+-- The effect line is matched on the names before its colon, whole.
+WoW.spellDescriptions[18788] = "Improved: not this one.\n\nImp: Increases your Shadow damage by 15%.\n\n"
+    .. "Succubus/Incubus: Increases your Fire damage by 15%."
+WoW.petGUID = "Pet-0-4613-0-1234-416-0000ABCDEF"
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
+center:GetScript("OnEnter")()
+H.eq(Wheel.strip.hint:GetText(), "Right-click: Demonic Sacrifice - Imp: Increases your Shadow damage by 15%.",
+    "Imp's line, not 'Improved'")
+WoW.petGUID = "Pet-0-4613-0-1234-185317-0000ABCDEF"
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
+center:GetScript("OnEnter")()
+H.eq(Wheel.strip.hint:GetText(), "Right-click: Demonic Sacrifice - Succubus/Incubus: Increases your Fire damage by 15%.",
+    "the Incubus in a shared line")
+center:GetScript("OnLeave")()
+WoW.petGUID = "Pet-0-4613-0-1234-1860-0000ABCDEF"
+WoW.fire("UNIT_PET", "player")
+WoW.runTimers(0)
 center:GetScript("OnLeave")()
 H.eq(attr(inferno, "spell1"), 1122, "Inferno is armed once learned")
 H.eq(attr(inferno, "shift-type1"), nil, "no Fel Domination for Inferno")
@@ -167,6 +204,17 @@ H.check(not imp.icon:IsShown(), "the icon waits for the model")
 for _ = 1, 20 do WoW.runTimers(0.1) end
 H.check(imp.icon:IsShown() and not m:IsShown(), "no model file in time: the icon")
 H.eq(succubus.portrait.model._desat, 1, "a demon not learned is greyed")
+
+-- Closed, the wheel's buttons are left alone by the coalesced sync.
+Wheel:Close()
+local writes = 0
+local orig = imp.button.SetAttribute
+imp.button.SetAttribute = function(self, k, v) writes = writes + 1 return orig(self, k, v) end
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+H.eq(writes, 0, "no attribute work while the wheel is closed")
+imp.button.SetAttribute = orig
+click(demonButton)
 
 -- Escape (the proxy in UISpecialFrames) closes it.
 H.check(Wheel.escape:IsShown() or ns.Presentation:IsGameUIHidden(), "Escape is armed")

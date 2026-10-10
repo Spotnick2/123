@@ -14,7 +14,7 @@ local run = runs[2]
 H.eq(next(run.results), nil, "this session starts empty")
 
 local cmds = { "", "book", "pet", "stones", "watch on", "secure target", "trade target",
-    "tradeitem 5512", "say PARTY hello", "range", "report", "watch off" }
+    "tradeitem 5512", "say PARTY hello", "range", "auras", "report", "watch off" }
 for _, cmd in ipairs(cmds) do
     local before = H.messagesMatching("failed:")
     local ok, err = pcall(H.slash, "ONETWOTHREEPROBE", cmd)

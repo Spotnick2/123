@@ -89,10 +89,14 @@ function Resummon:Create()
 end
 
 -- Ask about re-summoning `spellID`, above `anchor` (the Demon button, or
--- the wheel's bead). `onSummon` runs after Summon was clicked.
-function Resummon:Show(anchor, spellID, onSummon)
+-- the wheel's bead). `onSummon` runs after Summon was clicked. `parent`:
+-- the wheel's root, which LibShowcase keeps on screen while it hides
+-- UIParent (a prompt under UIParent would be hidden with it).
+function Resummon:Show(anchor, spellID, onSummon, parent)
     if InCombatLockdown() then return end
     if not self.frame then self:Create() end
+    self.frame:SetParent(parent or UIParent)
+    self.frame:SetFrameStrata("DIALOG")
     self.onSummon = onSummon
     local name = API.SpellName(spellID) or "that demon"
     local demon = name:gsub("^Summon ", "")

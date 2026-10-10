@@ -799,7 +799,7 @@ LE_PARTY_CATEGORY_INSTANCE = 2
 WoW.chat = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) WoW.messages[#WoW.messages + 1] = msg end }
 function SendChatMessage(msg, channel) WoW.chat[#WoW.chat + 1] = { msg, channel } end
-function IsShiftKeyDown() return false end
+function IsShiftKeyDown() return WoW.shiftDown or false end
 WoW.sounds = {}
 WoW.soundHandle = 0
 WoW.stopped = {}

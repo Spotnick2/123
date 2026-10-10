@@ -38,22 +38,39 @@ local WAIT, POLL = 1.5, 0.1
 -- edge (a creature's effects reach past its box; Gnomesweeper measured it).
 local FILL = 0.6
 
-local resolver
--- The display ID of a creature NPC, or nil.
-function Portrait.DisplayID(npcID)
-    if not npcID then return nil end
-    if not resolver then
-        local ok, model = pcall(CreateFrame, "PlayerModel", nil, UIParent)
-        if not ok or not model then return nil end
-        model:SetSize(1, 1)
-        model:Hide()
-        resolver = model
+-- The display ID of a creature NPC, handed to `callback` (nil if none).
+-- SetCreature streams: GetDisplayInfo answers only once the creature has
+-- loaded, and a shared lookup model answered the PREVIOUS creature's
+-- display meanwhile (in game: Inferno got the Felhunter). So each NPC gets
+-- its own hidden PlayerModel, polled until it answers, and the answer is
+-- kept for the session.
+local displays, lookups = {}, {}
+function Portrait.ResolveDisplay(npcID, callback)
+    if not npcID then return callback(nil) end
+    if displays[npcID] then return callback(displays[npcID]) end
+    local model = lookups[npcID]
+    if not model then
+        local ok, m = pcall(CreateFrame, "PlayerModel", nil, UIParent)
+        if not ok or not m then return callback(nil) end
+        m:SetSize(1, 1)
+        m:Hide()
+        if not pcall(m.SetCreature, m, npcID) then return callback(nil) end
+        lookups[npcID], model = m, m
     end
-    if not pcall(resolver.SetCreature, resolver, npcID) then return nil end
-    local ok, id = pcall(resolver.GetDisplayInfo, resolver)
-    pcall(resolver.ClearModel, resolver)
-    id = ok and ns.API.Number(id)
-    return (id and id > 0) and id or nil
+    local function poll(left)
+        local ok, id = pcall(model.GetDisplayInfo, model)
+        id = ok and ns.API.Number(id)
+        if id and id > 0 then
+            displays[npcID] = id
+            return callback(id)
+        end
+        if left > 0 then
+            C_Timer.After(POLL, function() poll(left - 1) end)
+        else
+            callback(nil)
+        end
+    end
+    poll(math.floor(WAIT / POLL + 0.5))
 end
 
 -- The model's height in scene units, or nil until it has loaded. Forever
@@ -124,7 +141,13 @@ function Portrait.Create(parent, size)
         local mine = self.token
         if self.scene then self.scene:Hide() end
         flat:Hide()
-        local display = Portrait.DisplayID(npcID)
+        Portrait.ResolveDisplay(npcID, function(display)
+            if self.token == mine then self:Load(display, onFail) end
+        end)
+    end
+
+    function p:Load(display, onFail)
+        local mine = self.token
         if not (display and self.scene) then return flatOrFail(display, onFail) end
         if self.display == display and self.height then
             self.scene:Show()

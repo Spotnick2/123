@@ -17,6 +17,8 @@
 --   /123probe say <chan> [text]  send to PARTY / RAID / INSTANCE_CHAT now (typed)
 --                                and again 1 s later from a timer (not typed)
 --   /123probe range              per group member: position, distance, map, range
+--   /123probe auras              the player's buffs: name, spell ID, duration
+--                                (Demonic Sacrifice's buff per demon, #20)
 --   /123probe report | reset
 --
 -- Results are printed and kept in OneTwoThreeProbeDB.runs (one entry per
@@ -438,8 +440,29 @@ local function Report()
     Say(#keys .. " results, " .. #DB.log .. " log lines")
 end
 
+-- The player's buffs, each read inside pcall (secret in combat).
+local function Auras()
+    local list = {}
+    for i = 1, 40 do
+        local auras = G("C_UnitAuras")
+        local ok, aura = pcall(auras and auras.GetAuraDataByIndex, "player", i, "HELPFUL")
+        if not ok then
+            Record("auras", "blocked (combat?): " .. tostring(aura))
+            return
+        end
+        if not aura then break end
+        local okF, line = pcall(function()
+            return string.format("%s  spell %s  duration %s", tostring(aura.name), tostring(aura.spellId),
+                tostring(aura.duration))
+        end)
+        list[#list + 1] = okF and line or "unreadable"
+        Say("aura " .. i .. ": " .. list[#list])
+    end
+    Record("auras", #list > 0 and table.concat(list, " | ") or "none")
+end
+
 local COMMANDS = {
-    book = Book, pet = Pet, stones = Stones, range = Range, report = Report,
+    book = Book, pet = Pet, stones = Stones, range = Range, report = Report, auras = Auras,
     secure = Secure, trade = Trade, tradeitem = TradeItem, say = SayTo,
     watch = function(arg) Watch(arg ~= "off") end,
     reset = function()

@@ -81,8 +81,11 @@ function Wheel:CreateNode(index, entry)
     button:SetPoint("CENTER", self.disc, "CENTER", x, y)
 
     -- Everything visible on a mouse-disabled child of the button.
+    -- Sized, not SetAllPoints: LibGlass's Disc wants a square host with a
+    -- size when it is built, and the root has no anchor yet.
     local visual = CreateFrame("Frame", nil, button)
-    visual:SetAllPoints()
+    visual:SetSize(BEAD, BEAD)
+    visual:SetPoint("CENTER")
     visual:EnableMouse(false)
     local glass = Skin:Disc(visual, "disc_small", FEL)
     local top = glass.top or visual
@@ -138,12 +141,16 @@ function Wheel:CreateNode(index, entry)
         Wheel:Hint()
     end)
     -- Insecure PostClick, after the secure action: the active demon's bead
-    -- asks first; any other cast closes the wheel.
-    button:SetScript("PostClick", function(_, _, down)
-        if down or not node.known then return end
+    -- asks first; any other cast closes the wheel. Only a click that cast
+    -- something counts: a bead arms the left button, and shift only with
+    -- Fel Domination (a secure button never falls back from shift-type1 to
+    -- type1), so a right click or a bare shift-click does nothing.
+    button:SetScript("PostClick", function(_, mouseButton, down)
+        if down or not node.known or mouseButton ~= "LeftButton" then return end
+        if IsShiftKeyDown() and not node.shiftArmed and not node.held then return end
         Wheel:Voice(node.spellID)
         if node.held then
-            ns.Resummon:Show(button, node.spellID, function() Wheel:Close() end)
+            ns.Resummon:Show(button, node.spellID, function() Wheel:Close() end, Wheel.root)
         else
             Wheel:Close()
         end
@@ -159,7 +166,8 @@ function Wheel:CreateCenter()
     button:SetFrameLevel(self.root:GetFrameLevel() + 20)
     button:SetPoint("CENTER", self.disc, "CENTER")
     local center = CreateFrame("Frame", nil, button)
-    center:SetAllPoints()
+    center:SetSize(CENTER, CENTER)
+    center:SetPoint("CENTER")
     center:EnableMouse(false)
     local glass = Skin:Disc(center, "disc", FEL)
     Skin:SetRimColor(glass, FEL[1], FEL[2], FEL[3], 0.9)
@@ -187,6 +195,7 @@ function Wheel:CreateCenter()
     button:SetScript("OnLeave", function() Wheel:Hint() end)
     button:SetScript("PostClick", function(_, mouseButton, down)
         if down or mouseButton ~= "RightButton" or not Wheel.sacrifice.action then return end
+        if IsShiftKeyDown() then return end -- no shift- attributes: nothing cast
         Wheel:Close()
     end)
     self.center = button
@@ -258,6 +267,7 @@ function Wheel:Create()
     root:EnableMouse(false)
     root:Hide()
     self.root = root
+    self:ApplyPosition()
 
     local stage = CreateFrame("Frame", nil, root)
     stage:SetAllPoints()
@@ -319,9 +329,14 @@ end
 local function sacrificeEffect(demon)
     local text = API.SpellDescription(Data.DEMONIC_SACRIFICE)
     if not text or demon == "" then return nil end
+    -- "Imp: ..." or "Succubus/Incubus: ...": the names before the colon,
+    -- matched whole, so "Imp" never matches "Improved".
     for line in text:gmatch("[^\r\n]+") do
-        if line:find(demon, 1, true) and line:find(":", 1, true) then
-            return line
+        local head = line:match("^%s*([^:]+):")
+        if head then
+            for name in head:gmatch("[^/]+") do
+                if name:match("^%s*(.-)%s*$") == demon then return line end
+            end
         end
     end
     return nil
@@ -367,16 +382,20 @@ function Wheel:PetFamily()
 end
 
 -- The coalesced secure rebuild (registered with SecureAction).
+-- Closed, there is nothing to arm: Open resolves and syncs before the first
+-- click (the buttons are hidden with the root meanwhile).
 function Wheel:SyncSecure()
-    if not self.root then return end
+    if not (self.root and self.open) then return end
     local felDom = API.IsKnown(Data.FEL_DOMINATION) and API.SpellName(Data.FEL_DOMINATION)
     for _, node in ipairs(self.nodes) do
         local actions = {}
+        node.shiftArmed = false
         if node.known and not node.held then
             actions[1] = { type = "spell", spell = node.spellID }
             local name = API.SpellName(node.spellID)
             if felDom and name and not node.major then
                 actions.shift = { { type = "macro", macrotext = "/cast " .. felDom .. "\n/cast " .. name } }
+                node.shiftArmed = true
             end
         end
         SA.Apply(node.button, actions)
@@ -404,6 +423,13 @@ function Wheel:PaintPortraits()
         node.portrait:Show(node.entry.npc, function() node.icon:Show() end)
         node.portrait:SetDesaturated(not node.known)
     end
+    self.centerIcon:Hide()
+    if self.petOut then
+        self.centerIcon:SetTexture(self.active and API.SpellIcon(self.active) or nil)
+        self.portrait:Show(API.UnitNpcID("pet"), function() self.centerIcon:Show() end)
+    else
+        self.portrait:Hide()
+    end
 end
 
 -- Repaint everything non-secure. Safe in combat.
@@ -419,13 +445,7 @@ function Wheel:Paint()
         local petName = UnitName("pet")
         self.centerSub:SetText(API.Readable(petName) and petName or "")
         self.centerState:SetText(hex(FEL) .. "\226\151\143 Active|r")
-        self.centerIcon:SetTexture(self.active and API.SpellIcon(self.active) or nil)
-        self.centerIcon:Hide()
-        local npcID = API.UnitNpcID("pet")
-        self.portrait:Show(npcID, function() self.centerIcon:Show() end)
     else
-        self.portrait:Hide()
-        self.centerIcon:Hide()
         self.centerName:SetText("No demon")
         self.centerSub:SetText("")
         self.centerState:SetText("")
@@ -564,6 +584,7 @@ function Wheel:Open()
     self:PaintPortraits()
     self:Hint()
     self:ApplyPosition()
+    self.stage:SetAlpha(1)
     self.root:Show()
     ns.Presentation:Enter(self.root)
     self:SyncEscape()
@@ -580,14 +601,28 @@ function Wheel:StopTicker()
     end
 end
 
-function Wheel:Close()
-    if not self.open or InCombatLockdown() then return end
+-- Everything closing shares: the prompt, the ticker, Escape, the models,
+-- the root. Under lockdown the root can't hide: it fades and hides at
+-- PLAYER_REGEN_ENABLED (pendingHide).
+function Wheel:Teardown()
     self.open = false
     self:StopTicker()
+    self.syncingEscape = true
     self.escape:Hide()
+    self.syncingEscape = false
     self.portrait:Hide()
     ns.Resummon:Hide()
-    self.root:Hide()
+    if InCombatLockdown() then
+        self.stage:SetAlpha(0)
+        self.pendingHide = true
+    else
+        self.root:Hide()
+    end
+end
+
+function Wheel:Close()
+    if not self.open or InCombatLockdown() then return end
+    self:Teardown()
     ns.Presentation:Exit("close")
 end
 
@@ -599,25 +634,22 @@ end
 -- the wheel closes at once and no invisible targets are left in combat.
 function Wheel:OnCombatStart()
     if not self.open then return end
-    self.open = false
-    self:StopTicker()
-    self.escape:Hide()
-    self.portrait:Hide()
+    self:Teardown()
     ns.Presentation:ForceExit("combat")
-    if not InCombatLockdown() then self.root:Hide() end
+end
+
+function Wheel:OnCombatEnd()
+    if self.pendingHide and not self.open then
+        self.pendingHide = false
+        self.root:Hide()
+        self.stage:SetAlpha(1)
+    end
 end
 
 -- Escape or Alt+Z through LibShowcase, or another forced restore.
 function Wheel:OnForcedExit()
     ns.Presentation:MarkClosed()
-    if self.open and not InCombatLockdown() then
-        self.open = false
-        self:StopTicker()
-        self:SyncEscape()
-        self.portrait:Hide()
-        ns.Resummon:Hide()
-        self.root:Hide()
-    end
+    if self.open then self:Teardown() end
 end
 
 function Wheel:Initialize()
@@ -634,4 +666,5 @@ function Wheel:Initialize()
         if Wheel.open then Wheel:Paint() end
     end)
     ns.Events:Register("PLAYER_REGEN_DISABLED", function() Wheel:OnCombatStart() end)
+    ns.Events:Register("PLAYER_REGEN_ENABLED", function() Wheel:OnCombatEnd() end)
 end

@@ -52,6 +52,7 @@ Still open: near (same spot), offline, inside an instance.
   - Create Soulstone 20752 / 20755 / 20756 / 20757
 - **Fel Armor 28176 does not exist.** The armor line is Demon Skin, then Demon Armor. Fel Armor **403619** is in Forever's database (Wowhead), probably a Season of Discovery leftover, as the Grimoire's 402265 may be; it may never ship. `book` now lists it; the bar uses it only once it is measured known and castable.
 - **The spellbook has a "Summon Demon" entry with a nil spell ID** (Demonology), next to the individual summons. It is probably a flyout; to be checked before the wheel relies on it.
+- **Demonic Sacrifice is 18788 on Forever** (owner, 2026-10-10): with the talent taken, the wheel's right-click on the centre (spell 18788) sacrificed the demon. Its buff IDs per demon: `/123probe auras` after a sacrifice (#20).
 - **Incubus (Forever):** Summon Incubus 713, level 20 from the quest "The Binding", summons NPC 185317 (Wowhead's Forever database). `book` lists 713; the NPC id is confirmed with `pet` once it is learned.
 - **402265 is "Learning"**, the Grimoire's teach spell (item 216748 uses it). The Portal of Summoning spell ID itself is still unknown.
 

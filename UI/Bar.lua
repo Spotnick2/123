@@ -260,10 +260,11 @@ local function demonActions(action, held)
     return { nil, not held and action or nil }
 end
 
-local function syncKey(action, held)
+-- What a button is armed with; the Demon button's also depends on combat.
+local function syncKey(key, action, held)
     if not action then return "none" end
     return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
-        .. (SA.inCombat and ":combat" or "")
+        .. ((key == "demon" and SA.inCombat) and ":combat" or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
@@ -273,7 +274,7 @@ function Bar:Sync()
         local action = RESOLVE[button.key]()
         local held = button.key == "demon" and self:HoldsDemon(action)
         local actions = button.key == "demon" and demonActions(action, held) or { action }
-        local key = syncKey(action, held)
+        local key = syncKey(button.key, action, held)
         if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.syncKey = action, held, key
         end
