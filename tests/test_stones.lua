@@ -94,7 +94,12 @@ WoW.counts[5510] = 1          -- a Greater Healthstone from a raid Warlock
 WoW.unusable[5510] = true     -- level 36: not usable yet
 update()
 H.eq(arm(hs, 1), "item:5512", "an unusable stone is not the one used")
-WoW.counts[5510], WoW.unusable[5510] = 0, nil
+-- Reaching its level, with no bag or spell change: it is the one used.
+WoW.unusable[5510] = nil
+WoW.fire("PLAYER_LEVEL_UP", 36)
+WoW.runTimers(0)
+H.eq(arm(hs, 1), "item:5510", "after the level up the Greater is used")
+WoW.counts[5510] = 0
 
 -- Counts unreadable (secret as combat starts): keep what is armed.
 local before = arm(hs, 1)

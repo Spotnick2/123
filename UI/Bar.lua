@@ -650,6 +650,8 @@ function Bar:Initialize()
     end
     ns.Events:Register("SPELLS_CHANGED", rebuild)
     ns.Events:Register("BAG_UPDATE_DELAYED", bagsChanged)
+    -- A carried stone skipped for its level becomes usable (#6).
+    ns.Events:Register("PLAYER_LEVEL_UP", rebuild)
     ns.Events:Register("BAG_UPDATE_COOLDOWN", refresh)
     ns.Events:Register("SPELL_UPDATE_COOLDOWN", refresh)
     -- The Demon button follows the demon that is out, however it came.
