@@ -4,7 +4,7 @@
 Reference: docs/mockups/wheel-fel.png and the owner's current in-game screenshot.
 Scope of this milestone: wheel, portrait frames, title crest, footer, and motion.
 Existing live portraits, central demon/fire, sounds, secure actions and layout stay.
-Source API check: C:\Projects\References\forever-api-1.60.1.70338.md.
+Source API check: C:\Projects\WoW\References\forever-api-1.60.1.70338.md.
 
 IMPLEMENTATION
 UI/WheelEffects.lua owns the decorative textures, state colours and clock.

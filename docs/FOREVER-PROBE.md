@@ -85,4 +85,4 @@ Still open: near (same spot), offline, inside an instance.
 - Same map (1453). `UnitInRange` is still secret.
 
 Already measured elsewhere (do not re-probe): see `docs/DESIGN.md` and
-`C:\Projects\References\PORTING-TBC-TO-FOREVER.md`.
+`C:\Projects\WoW\References\PORTING-TBC-TO-FOREVER.md`.

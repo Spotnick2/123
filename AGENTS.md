@@ -2,17 +2,17 @@
 
 123 ("123 — Warlock Summons, Demons & Stones") is a Warlock-only smart bar for **WoW: Forever**:
 Vanilla content on the Retail (Mainline) API, client 1.60.1, `## Interface: 16001`. It is built on
-the architecture and conventions of `C:\Projects\PortalRoulette` (the Mage teleport wheel) and,
-for the bar, `C:\Projects\Apotheca`.
+the architecture and conventions of `C:\Projects\WoW\PortalRoulette` (the Mage teleport wheel) and,
+for the bar, `C:\Projects\WoW\Apotheca`.
 
 Read before changing code:
-- `C:\Projects\References\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
-- `C:\Projects\References\forever-api-1.60.1.70338.md`: the client's API (grep it; it is huge). Always the
+- `C:\Projects\WoW\References\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
+- `C:\Projects\WoW\References\forever-api-1.60.1.70338.md`: the client's API (grep it; it is huge). Always the
   newest `forever-api-*.md`: a new client build gets a new dump.
-- `C:\Projects\References\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
-- `C:\Projects\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
-- `C:\Projects\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
-- `C:\Projects\wow-ui-source`: FrameXML (build 70338, `version.txt`).
+- `C:\Projects\WoW\References\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
+- `C:\Projects\WoW\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
+- `C:\Projects\WoW\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
+- `C:\Projects\WoW\wow-ui-source`: FrameXML (build 70338, `version.txt`).
 - `docs/DESIGN.md`: what 123 does. `docs/FOREVER-PROBE.md`: what has been measured for it.
 - Sibling addons have already answered a lot (secure buttons, roster, range, sounds, models):
   look there before writing a probe. `docs/DESIGN.md` lists where.
@@ -36,7 +36,7 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
 - Adversarial reviews with Codex, when the owner asks: `.claude/skills/codex-consult` (gpt-6-astra,
   high effort), iterated to consensus. Adopt what is simpler or safer; avoid overengineering.
 - Art and animation are Codex handoffs (`codex-handoff` label), on the model of
-  `C:\Projects\PortalRoulette-Codex-Handoff\START-HERE.txt`.
+  `C:\Projects\WoW\PortalRoulette-Codex-Handoff\START-HERE.txt`.
 - Releases: tag `vX.Y.Z` after main's CI is green; CurseForge packages from `.pkgmeta`.
 
 ## Naming
