@@ -75,7 +75,7 @@ reading is done BY running commands, so the two forbid the same thing. That cont
 critique of nothing. Match the instruction to the mode.
 
 For 123, good things to hand Codex: a feature plan before coding, a secure-button or trade change,
-or the probe results. Hand it `docs/FOREVER-PROBE.md` and `C:\Projects\References\PORTING-TBC-TO-FOREVER.md`
+or the probe results. Hand it `docs/FOREVER-PROBE.md` and `C:\Projects\WoW\References\PORTING-TBC-TO-FOREVER.md`
 alongside: those are measured on the live client, and a cold reviewer will otherwise argue from
 Classic-era API behaviour that no longer holds.
 

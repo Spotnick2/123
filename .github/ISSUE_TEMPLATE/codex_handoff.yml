@@ -13,7 +13,7 @@ body:
     id: references
     attributes:
       label: References
-      description: Mockups, motion studies, current screenshots. The handoff folder follows PortalRoulette-Codex-Handoff/START-HERE.txt.
+      description: Mockups, motion studies, current screenshots. The handoff folder follows docs/handoffs/issue-13/START-HERE.txt.
   - type: textarea
     id: done
     attributes:
