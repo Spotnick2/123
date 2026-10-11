@@ -52,14 +52,23 @@ local function itemAction(itemID)
     return { type = "item", item = "item:" .. itemID, itemID = itemID }
 end
 
--- Use the best stone carried, else create the best rank known.
-local function stone(items, creates)
-    local itemID = API.FirstCarried(items)
-    if itemID then
-        return itemAction(itemID)
+-- A stone button (#6), from its tiers (strongest first): use the best stone
+-- carried, else create the best rank known. Only stones the player can use
+-- count (a traded higher-level stone doesn't). Returns the action, or KEEP
+-- when a stone count can't be read (secret, as combat starts): the button
+-- keeps what it is armed with rather than turn "use" into "create".
+local KEEP = {}
+Bar.KEEP = KEEP
+local function stone(tiers)
+    for _, tier in ipairs(tiers) do
+        local id, _, unreadable = API.FirstCarried(tier.items, true)
+        if unreadable then return KEEP end
+        if id then return itemAction(id) end
     end
-    local spellID = API.FirstKnown(creates)
-    return spellID and spellAction(spellID) or nil
+    for _, tier in ipairs(tiers) do
+        if API.IsKnown(tier.create) then return spellAction(tier.create) end
+    end
+    return nil
 end
 
 local showTooltip
@@ -100,10 +109,10 @@ local RESOLVE = {
         return nil
     end,
     soulstone = function()
-        return stone(Data.SOULSTONES, Data.CREATE_SOULSTONE)
+        return stone(Data.SOULSTONE_TIERS)
     end,
     healthstone = function()
-        return stone(Data.HEALTHSTONES, Data.CREATE_HEALTHSTONE)
+        return stone(Data.HEALTHSTONE_TIERS)
     end,
     summoning = function()
         local spellID = Data.RITUAL_OF_SUMMONING
@@ -242,6 +251,8 @@ function Bar:Refresh()
     if not self.frame then return end
     for _, button in ipairs(self.buttons) do
         self:RefreshButton(button)
+        -- An open tooltip follows what the button now does.
+        if GameTooltip:IsOwned(button) then showTooltip(button) end
     end
     setCount(self.shardCount, API.ItemCountRaw(Data.SOUL_SHARD), true)
 end
@@ -310,13 +321,20 @@ local function demonActions(action, held, sacrifice)
     return { summon, sacrifice or summon }
 end
 
--- What a button is armed with; the Demon button's also depends on combat
--- and on Sacrifice.
-local function syncKey(key, action, held, sacrifice)
-    if not action then return "none" end
-    return action.type .. ":" .. tostring(action[action.type]) .. (held and ":held" or "")
-        .. ((key == "demon" and SA.inCombat) and ":combat" or "")
-        .. (sacrifice and ":sacrifice" or "")
+-- One armed slot, as written: type, payload and unit (a changed unit
+-- token must rewrite the attributes, #5).
+local function keyOf(action)
+    return action and (action.type .. ":" .. tostring(action[action.type]) .. "@" .. tostring(action.unit))
+        or "none"
+end
+
+-- What a button is armed with: both slots, their shift- variants, and, when
+-- the Demon button holds (asks first, nothing armed), what it would summon.
+-- Any change rewrites the attributes; nothing else does.
+local function syncKey(actions, held, action)
+    local shift = actions.shift or {}
+    return keyOf(actions[1]) .. "|" .. keyOf(actions[2]) .. "|" .. keyOf(shift[1]) .. "|" .. keyOf(shift[2])
+        .. (held and ("|held:" .. keyOf(action)) or "")
 end
 
 -- Rewrites a button's attributes only when what it does changed.
@@ -324,13 +342,17 @@ function Bar:Sync()
     self:RememberPet()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
+        if action == KEEP then
+            -- Unreadable counts: keep what it is armed with.
+            action = button.action
+        end
         local isDemon = button.key == "demon"
         local sacrifice = isDemon and self:SacrificeAction() or nil
         -- Held whatever Sacrifice does: the left click (and its binding)
         -- still asks before re-summoning the demon that is out (Codex, #19).
         local held = isDemon and self:HoldsDemon(action)
         local actions = isDemon and demonActions(action, held, sacrifice) or { action }
-        local key = syncKey(button.key, action, held, sacrifice)
+        local key = syncKey(actions, held, action)
         if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
         end
@@ -342,6 +364,11 @@ end
 ------------------------------------------------------------
 -- Frames
 ------------------------------------------------------------
+
+-- "Needs <reagent>" under a tooltip line whose spell lacks its reagent.
+local function addNeeds(action)
+    GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[action.spellID]) or "a reagent"), 1, 0.45, 0.45)
+end
 
 function showTooltip(button)
     GameTooltip:SetOwner(button, "ANCHOR_TOP")
@@ -359,10 +386,7 @@ function showTooltip(button)
         end
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
-        if button.short then
-            GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[button.action.spellID]) or "a reagent"),
-                1, 0.45, 0.45)
-        end
+        if button.short then addNeeds(button.action) end
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
     end
@@ -589,6 +613,8 @@ function Bar:Initialize()
     end
     ns.Events:Register("SPELLS_CHANGED", rebuild)
     ns.Events:Register("BAG_UPDATE_DELAYED", bagsChanged)
+    -- A carried stone skipped for its level becomes usable (#6).
+    ns.Events:Register("PLAYER_LEVEL_UP", rebuild)
     ns.Events:Register("BAG_UPDATE_COOLDOWN", refresh)
     ns.Events:Register("SPELL_UPDATE_COOLDOWN", refresh)
     -- The Demon button follows the demon that is out, however it came.

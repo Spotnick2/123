@@ -258,6 +258,7 @@ function Frame:GetFontString() return self._fs end
 function Frame:SetTexture(file) self._texture = file end
 function Frame:GetTexture() return self._texture end
 function Frame:SetColorTexture(r, g, b, a) self._color = { r, g, b, a } end
+function Frame:SetTextColor(r, g, b, a) self._textColor = { r, g, b, a } end
 -- PlayerModel (portraits): what it was asked to show.
 function Frame:SetCreature(npc) self._creature = npc end
 function Frame:SetPortraitZoom(z) self._zoom = z end
