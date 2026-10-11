@@ -36,7 +36,7 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
 - Adversarial reviews with Codex, when the owner asks: `.claude/skills/codex-consult` (gpt-6-astra,
   high effort), iterated to consensus. Adopt what is simpler or safer; avoid overengineering.
 - Art and animation are Codex handoffs (`codex-handoff` label), on the model of
-  `C:\Projects\WoW\PortalRoulette-Codex-Handoff\START-HERE.txt`.
+  `docs/handoffs/issue-13/START-HERE.txt`.
 - Releases: tag `vX.Y.Z` after main's CI is green; CurseForge packages from `.pkgmeta`.
 
 ## Naming
