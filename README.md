@@ -17,8 +17,6 @@ soulstone, healthstones and summoning, one click away.
 - **Armor** casts your best armor (Demon Armor over Demon Skin, highest rank) and glows while
   it is not on you.
 - **Soulstone / Healthstone** use the best stone you carry, or create the best one you know.
-  Learned a better rank while carrying a lesser one? A green **+** appears: right-click creates
-  the better stone (each rank is unique, so you can hold both).
 - **Summoning** is Ritual of Summoning.
 - Out of Soul Shards, the Demon button falls back to the Imp and the buttons that would spend
   one grey out, until shards come back.

@@ -1,9 +1,8 @@
 # Changelog
 
 ## Unreleased
-- Smart stones (#6): Healthstone and Soulstone use the best stone carried (or create the best rank
-  known); when a better rank is known than the stone carried, a green + marks the button and its
-  right click creates the better stone.
+- Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a
+  traded higher-level stone is skipped until you reach its level), else create the best rank known.
 
 ## v0.1.0 (2026-10-10)
 First public release: the compact bar, the armor reminder and the demon wheel. Group utilities

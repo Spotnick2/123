@@ -14,10 +14,10 @@ Every button is a stationary secure button; visuals refresh in combat, attribute
 - **Armor**: the highest learned rank of the preferred armor spell (Demon Armor over Demon Skin;
   any Forever armor only once measured). Spell choice refreshes on `SPELLS_CHANGED`; the "missing"
   glow comes from the player's auras, checked at login and on aura updates.
-- **Stones** (#6): left uses the best stone carried, else creates the best rank known; right
-  creates the best rank known when it beats the stone carried (stones are unique per rank), marked
-  by a green "+". `Data.HEALTHSTONE_TIERS` / `SOULSTONE_TIERS` pair each create spell with its
-  items. Trading a healthstone is #8.
+- **Stones** (#6): use the best stone carried (that the player can use), else create the best
+  rank known. `Data.HEALTHSTONE_TIERS` / `SOULSTONE_TIERS` pair each create spell with its items.
+  Creating a better rank while carrying a lesser one (right click) waits for a measurement, #31.
+  Trading a healthstone is #8.
 
 ## Demon wheel
 The owner's "Fel concept" mockup (`docs/mockups/wheel-fel.png`): very close to Portal Roulette, fel

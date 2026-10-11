@@ -1,7 +1,6 @@
--- Smart stones (#6): left uses the best stone carried, else creates the best
--- rank known; right creates the best rank known when it beats the stone
--- carried (stones are unique per rank), else is unarmed (a stray right click
--- spends nothing).
+-- Smart stones (#6): a stone button uses the best stone carried (that the
+-- player can use), else creates the best rank known. The right click stays
+-- unarmed (a better rank while carrying a lesser one waits for #31).
 
 dofile("tests/wow_stubs.lua")
 local H = dofile("tests/harness.lua")
@@ -34,62 +33,46 @@ local function update()
     WoW.runTimers(0)
 end
 
--- Carrying the best rank known: both clicks use it.
-H.eq(arm(hs, 1), "item:5512", "left: use the Minor Healthstone")
-H.eq(arm(hs, 2), nil, "right: unarmed, nothing better to make")
-H.check(not hs.upgradeMark:IsShown(), "no upgrade mark")
-H.eq(hs.upgrade, nil, "no upgrade")
+-- Carrying a stone: it is the one used.
+H.eq(arm(hs, 1), "item:5512", "use the Minor Healthstone")
+H.eq(arm(hs, 2), nil, "right click unarmed")
 
--- A better rank learned: left still uses the Minor, right makes a Lesser.
+-- A better rank learned: the stone carried is still the one used.
 WoW.spells[6202].known = true
 update()
-H.eq(arm(hs, 1), "item:5512", "left: still use the stone carried")
-H.eq(arm(hs, 2), 6202, "right: create the Lesser Healthstone")
-H.check(hs.upgradeMark:IsShown(), "the green + says a better one can be made")
-H.eq(hs.upgradeMark._textColor[2], 1, "green: it can be made now")
-H.eq(hs.upgrade and hs.upgrade.spellID, 6202, "the upgrade is known for the tooltip")
+H.eq(arm(hs, 1), "item:5512", "still use the stone carried")
+H.eq(arm(hs, 2), nil, "right click still unarmed (#31)")
 
--- The better stone carried too: it is the one used, nothing to upgrade.
+-- The better stone carried too: it is the one used.
 WoW.counts[5511] = 1
 update()
-H.eq(arm(hs, 1), "item:5511", "left: the Lesser, the best carried")
-H.eq(arm(hs, 2), nil, "right: unarmed")
-H.check(not hs.upgradeMark:IsShown(), "no mark once the best is carried")
+H.eq(arm(hs, 1), "item:5511", "the Lesser, the best carried")
 
--- None carried: both create the best rank known.
+-- None carried: create the best rank known.
 WoW.counts[5511], WoW.counts[5512] = 0, 0
 update()
-H.eq(arm(hs, 1), 6202, "left: create the best rank known")
-H.eq(arm(hs, 2), nil, "right: unarmed (the left already creates it)")
+H.eq(arm(hs, 1), 6202, "create the best rank known")
+H.eq(arm(hs, 2), nil, "right click unarmed")
 
--- Out of shards: a carried stone stays lit (using it costs none), while the
--- upgrade that would spend one is still offered (the tooltip says it needs a
--- shard).
-WoW.counts[5512], WoW.counts[6265] = 1, 0
+-- Out of shards: a carried stone stays lit (using it costs none); creating
+-- one greys out.
+WoW.counts[6265] = 0
 update()
-H.eq(arm(hs, 1), "item:5512", "left: use the stone")
+H.check(hs.icon:IsDesaturated(), "create without a shard: grey")
+WoW.counts[5512] = 1
+update()
+H.eq(arm(hs, 1), "item:5512", "use the stone")
 H.check(not hs.icon:IsDesaturated(), "lit: using it needs no shard")
-H.eq(arm(hs, 2), 6202, "right: the upgrade is still there")
-H.check(hs.upgradeMark:IsShown(), "the + shows")
-H.eq(hs.upgradeMark._textColor[2], 0.55, "grey: it can't be made without a shard")
 WoW.counts[6265] = 3
 
--- The + only exists on the stone buttons.
-for _, b in ipairs(Bar.buttons) do
-    if b.key ~= "healthstone" and b.key ~= "soulstone" then
-        H.eq(b.upgradeMark, nil, "no + on " .. b.key)
-    end
-end
-
 -- Soulstones work the same way.
-H.eq(arm(ss, 1), "item:5232", "soulstone left: use the Minor Soulstone")
+H.eq(arm(ss, 1), "item:5232", "soulstone: use the Minor Soulstone")
+WoW.counts[5232] = 0
 WoW.spells[20752].known = true
 update()
-H.eq(arm(ss, 2), 20752, "soulstone right: create the Lesser Soulstone")
-H.check(ss.upgradeMark:IsShown(), "with the mark")
+H.eq(arm(ss, 1), 20752, "soulstone: create the best rank known")
 
 -- A stone the player can't use yet (a traded higher-level one) is ignored.
-WoW.counts[16892] = 0
 WoW.counts[5510] = 1          -- a Greater Healthstone from a raid Warlock
 WoW.unusable[5510] = true     -- level 36: not usable yet
 update()
@@ -100,6 +83,7 @@ WoW.fire("PLAYER_LEVEL_UP", 36)
 WoW.runTimers(0)
 H.eq(arm(hs, 1), "item:5510", "after the level up the Greater is used")
 WoW.counts[5510] = 0
+update()
 
 -- Counts unreadable (secret as combat starts): keep what is armed.
 local before = arm(hs, 1)
