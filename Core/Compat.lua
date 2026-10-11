@@ -204,12 +204,26 @@ end
 
 -- The first item of a list (best first) the player carries, and its count.
 -- Out of combat only in practice: counts may be secret in combat.
-function API.FirstCarried(itemIDs)
+-- With `usable`, an item the player can't use (a level requirement: a
+-- stone traded from a higher-level Warlock) is skipped. The third return is
+-- true when a count could not be read (secret): "not carried" is unknown.
+function API.FirstCarried(itemIDs, usable)
+    local unreadable = false
     for _, itemID in ipairs(itemIDs) do
-        local count = API.ItemCount(itemID)
-        if count and count > 0 then return itemID, count end
+        local raw = API.ItemCountRaw(itemID)
+        if not API.Readable(raw) then
+            unreadable = true
+        elseif type(raw) == "number" and raw > 0 and (not usable or API.IsUsableItem(itemID)) then
+            return itemID, raw, unreadable
+        end
     end
-    return nil
+    return nil, nil, unreadable
+end
+
+-- C_Item.IsUsableItem's first return, false when unreadable.
+function API.IsUsableItem(itemID)
+    local ok, usable = pcall(C_Item.IsUsableItem, itemID)
+    return ok and API.Readable(usable) and usable == true
 end
 
 -- (start, duration, enable) as C_Container.GetItemCooldown returns them;

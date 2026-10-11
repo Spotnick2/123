@@ -110,23 +110,31 @@ ns.Data = {
     DEMONIC_SACRIFICE = 18788,
     VOIDWALKER_SACRIFICE = 7812,
 
-    CREATE_HEALTHSTONE = { 11730, 11729, 5699, 6202, 6201 },
-    CREATE_SOULSTONE = { 20757, 20756, 20755, 20752, 693 },
     RITUAL_OF_SUMMONING = 698,
 
     SOUL_SHARD = 6265,
 
-    -- By tier, strongest tier first; within a tier the base stone comes
-    -- before the Improved Healthstone variants, as Apotheca lists them. Which
-    -- heals more within a tier is unmeasured on Forever (#6). All ranks share
-    -- one cooldown (Apotheca; to be confirmed in #1).
-    HEALTHSTONES = {
-        9421, 19013, 19012,     -- Major
-        5510, 19011, 19010,     -- Greater
-        5509, 19009, 19008,     -- Healthstone
-        5511, 19007, 19006,     -- Lesser
-        5512, 19005, 19004,     -- Minor
+    -- Stones by tier, strongest first (#6): the spell that creates the tier
+    -- and the items it makes. Every stone is "Unique" per item in Forever's
+    -- client data (References/forever-consumables-1.60.1.70009.tsv), so a
+    -- lower rank carried shouldn't stop a higher one being created; that the
+    -- client allows it is still to confirm in game (FOREVER-PROBE.md).
+    -- Within a tier, items are strongest first by that data's heal values:
+    -- the base stone ties the best Improved Healthstone variant and the
+    -- other heals less (Major 1440 / 1440 / 1320 ... Minor 120 / 120 / 110).
+    -- All healthstone ranks share one cooldown (Apotheca; to confirm, #1).
+    HEALTHSTONE_TIERS = {
+        { create = 11730, items = { 9421, 19013, 19012 } },  -- Major
+        { create = 11729, items = { 5510, 19011, 19010 } },  -- Greater
+        { create = 5699, items = { 5509, 19009, 19008 } },   -- Healthstone
+        { create = 6202, items = { 5511, 19007, 19006 } },   -- Lesser
+        { create = 6201, items = { 5512, 19005, 19004 } },   -- Minor
     },
-
-    SOULSTONES = { 16896, 16895, 16893, 16892, 5232 },  -- Major ... Minor
+    SOULSTONE_TIERS = {
+        { create = 20757, items = { 16896 } },  -- Major
+        { create = 20756, items = { 16895 } },  -- Greater
+        { create = 20755, items = { 16893 } },  -- Soulstone
+        { create = 20752, items = { 16892 } },  -- Lesser
+        { create = 693, items = { 5232 } },     -- Minor
+    },
 }
