@@ -602,7 +602,8 @@ function Bar:Initialize()
     self:CreateShards()
     self:ApplyLabels()
     self:ApplyPosition()
-    frame:Show()
+    self:ApplyScale()
+    self:ApplyShown()
 
     SA.RegisterSync(function() self:Sync() end)
     local function rebuild() SA.MarkDirty() end
@@ -650,12 +651,34 @@ function Bar:ApplyLabels()
     return true
 end
 
--- Showing or hiding a frame that holds secure buttons is refused in combat.
+-- Showing, hiding or scaling a frame that holds secure buttons is refused
+-- in combat. Both are saved (#15).
+function Bar:ApplyShown()
+    if not self.frame or InCombatLockdown() then return false end
+    self.frame:SetShown(ns.db.bar.shown ~= false)
+    return true
+end
+
+function Bar:ApplyScale()
+    if not self.frame or InCombatLockdown() then return false end
+    self.frame:SetScale(tonumber(ns.db.bar.scale) or 1)
+    return true
+end
+
 function Bar:Toggle()
     if not self.frame then return end
     if InCombatLockdown() then
         ns.Print("the bar can't be shown or hidden in combat.")
         return
     end
-    self.frame:SetShown(not self.frame:IsShown())
+    ns.db.bar.shown = not self.frame:IsShown()
+    self:ApplyShown()
+end
+
+-- Back to the default place (moving is refused in combat).
+function Bar:ResetPosition()
+    if not self.frame or InCombatLockdown() then return end
+    local default = ns.Constants.DEFAULTS.bar
+    ns.db.bar.point, ns.db.bar.x, ns.db.bar.y = default.point, default.x, default.y
+    self:ApplyPosition()
 end
