@@ -399,6 +399,81 @@ Probe:Command("range", range, "per group member: position, distance, map, range"
 Probe:Command("auras", auras, "the player's buffs (Demonic Sacrifice's, #20)")
 Probe:Command("clear", function() Probe:ClearLog(); say("log cleared") end, "empty the saved log")
 
+------------------------------------------------------------
+-- disable (#39): can 123 turn itself off for one character?
+------------------------------------------------------------
+
+-- C_AddOns.GetAddOnEnableState(name, character) -> Enum.AddOnEnableState
+-- (0 None, 1 Some, 2 All). A nil character asks about every character.
+local function enableState(character)
+    local fn = resolve("C_AddOns.GetAddOnEnableState")
+    local ok, state = pcall(fn, "123", character)
+    return ok and state or ("ERROR " .. show(state))
+end
+
+-- Every name form the client gives the player, to see which one
+-- DisableAddOn accepts (Forever's names are "First Surname").
+local function names()
+    local okU, unitName, realm = pcall(G("UnitName"), "player")
+    local okG, short = pcall(G("GetUnitName"), "player", false)
+    local okR, full = pcall(G("GetUnitName"), "player", true)
+    return okU and unitName or nil, okU and realm or nil, okG and short or nil, okR and full or nil
+end
+
+local function playerName() return (names()) end
+
+local function states()
+    local me = playerName()
+    say("123 enable state: this character (" .. show(me) .. ") " .. show(enableState(me))
+        .. ", every character " .. show(enableState(nil)))
+    return enableState(me), enableState(nil)
+end
+
+Probe:Steps("disable", {
+    title = "123 turns itself off for one character (#39)",
+    { text = "On a NON-Warlock alt, out of combat, with 123 enabled for all characters in the AddOns list. "
+        .. "Reading the names and 123's enable state.", auto = true, run = function()
+          local unitName, realm, short, full = names()
+          say("names: UnitName " .. show(unitName) .. " realm " .. show(realm) .. ", GetUnitName short "
+              .. show(short) .. ", full " .. show(full))
+          return unitName, realm, short, full, states()
+      end },
+    { text = "Turn 123 off for THIS character only (DisableAddOn with UnitName).", button = "Disable here",
+      run = function()
+          local me = playerName()
+          local ok, err = pcall(resolve("C_AddOns.DisableAddOn"), "123", me)
+          say("DisableAddOn(\"123\", " .. show(me) .. "): " .. (ok and "ok" or show(err)))
+          -- The danger measured here: a character the client didn't take
+          -- disables 123 for every character. Put it straight back.
+          if enableState(nil) == 0 then
+              pcall(resolve("C_AddOns.EnableAddOn"), "123")
+              say("|cffff6060disabled for EVERY character: re-enabled for all at once|r")
+          end
+          return ok, states()
+      end,
+      check = function()
+          local mine, all = enableState(playerName()), enableState(nil)
+          return mine == 0 and all == 1, "this character " .. show(mine) .. " (want 0), every character "
+              .. show(all) .. " (want 1: still on for the others)"
+      end },
+    { text = "Open the AddOns list (Esc > AddOns) with THIS character selected at the top: is 123 unchecked? "
+        .. "Then switch the list's character dropdown to a Warlock: is 123 still checked there?", ask = true },
+    { text = "Turn 123 back on for this character.", button = "Enable here", run = function()
+          local me = playerName()
+          local ok, err = pcall(resolve("C_AddOns.EnableAddOn"), "123", me)
+          say("EnableAddOn(\"123\", " .. show(me) .. "): " .. (ok and "ok" or show(err)))
+          return ok, states()
+      end,
+      check = function()
+          local mine, all = enableState(playerName()), enableState(nil)
+          return mine == 2 and all == 2, "this character " .. show(mine) .. ", every character " .. show(all)
+              .. " (want 2 and 2)"
+      end },
+    { text = "Type /reload to save the results." , reload = true },
+})
+
+Probe:Command("disable", function() Probe:StartSteps("disable") end, "#39: can 123 turn itself off for one character?")
+
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.
 local boot = CreateFrame("Frame")
