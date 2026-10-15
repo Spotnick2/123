@@ -18,7 +18,7 @@ Read before changing code:
   look there before writing a probe. `docs/DESIGN.md` lists where.
 
 The rule is **measured beats reasoned**. Anything spell-, item-, trade-, chat- or combat-dependent
-is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before code relies on it.
+is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module: `/fp 123`; `C:\Projects\WoW\References\PROBES.md`) before code relies on it.
 
 ## Build, test, deploy
 - Tests: `pwsh tests/run.ps1` (Lua 5.1 at `C:\Program Files (x86)\Lua\5.1\`): `luac -p` over every
@@ -28,7 +28,7 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
   It deploys git-tracked files only (stage new files first) to
   `C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns`, and LibGlass from the
   sibling checkout `..\LibGlass`.
-- A brand-new addon folder needs a client restart; otherwise `/reload`. Enable `/console scriptErrors 1`.
+- `/reload` loads changed files and a brand-new addon folder (ForeverProbe GUIDE.md section 7); exit fully only to test persistence. Enable `/console scriptErrors 1`.
 
 ## Workflow
 - Issue → branch (`feature/<n>-slug`, `fix/<n>-slug`, `measure/<n>-slug`) → PR with `Closes #N`.

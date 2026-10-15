@@ -1,5 +1,5 @@
 name: Measurement
-description: Something to confirm in game with the probe (/123probe) before code relies on it.
+description: Something to confirm in game with the probe (/fp 123, a ForeverProbe module) before code relies on it.
 labels: ["measure"]
 body:
   - type: textarea

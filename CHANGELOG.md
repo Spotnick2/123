@@ -5,6 +5,13 @@
   traded higher-level stone is skipped until you reach its level), else create the best rank known.
 - The bar uses LibGlass's clean glass (thin rims, no grain, a softer shadow), like the other Glass
   addons. Embeds LibGlass-1.0 r8 (was r5).
+- Options page (#15) in Options > AddOns > 123: show, scale and reset the bar, names under the
+  icons, the demon wheel's camera and confirm, demon voices, alert sounds, the minimap button.
+  `/123 options` opens it. The bar's shown or hidden state and its scale are saved.
+- Minimap button and Addon Compartment entry (#15): click for the demon wheel, shift-click to show
+  or hide the bar, right-click for options.
+- Alert sounds (#14): a sound per alert (summon request, healthstone request), picked by ear on
+  the options page. They sound once those features land.
 
 ## v0.1.0 (2026-10-10)
 First public release: the compact bar, the armor reminder and the demon wheel. Group utilities

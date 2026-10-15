@@ -1,9 +1,11 @@
 # 123 — what is measured on WoW: Forever
 
-Run the probe on a Warlock: `pwsh Tools/deploy.ps1 -Probe`, restart the client (a new addon folder),
-`/console scriptErrors 1`, then the `/123probe` commands below. Results print in chat and are saved
-to `WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua` on `/reload` or logout, one entry per
-session under `runs` (earlier sessions are kept).
+The probe is a ForeverProbe module (#35; `References/PROBES.md`). Run it on a Warlock:
+`pwsh Tools/deploy.ps1 -Probe` (it deploys the `..\ForeverProbe` host first), `/reload`,
+`/console scriptErrors 1`, then `/fp 123 <command>` (the commands below; `/fp 123` lists them).
+Lines go to the ForeverProbe console (`/fp`), never to chat, and to
+`WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua` (`log`) on `/reload` or logout. Sessions
+from before the migration stay under `runs`. Chat payloads are logged by shape only.
 
 Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
@@ -42,6 +44,10 @@ Still open: near (same spot), offline, inside an instance.
 
 **Chat (row 7):** `C_ChatInfo.SendChatMessage(..., "PARTY")` raised no error either typed or from a
 1 s timer. Still open: whether the other player received both.
+**Incoming payloads** (GlassChat's ChatProbe, item 5, in `PORTING-TBC-TO-FOREVER.md`): text, sender,
+lineID and GUID are **plain** in the open world, in and out of combat, and
+`C_ChatInfo.InChatMessagingLockdown()` is false. Measured on SAY and LOOT; PARTY / RAID /
+INSTANCE_CHAT and inside a dungeon are still open (`/fp 123 watch on`, shapes).
 
 ## Run 2 — build 70334, 2026-10-09, low-level Warlock, open world, party of 2
 

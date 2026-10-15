@@ -15,6 +15,17 @@ ns.Constants = {
         barLabels = false,
         -- The demons' voices on the wheel (hover, click). /123 sounds.
         sounds = true,
+        -- Alert sounds (#14): a sound kit per alert, picked on the options
+        -- page (Core/Sound.lua lists the choices).
+        alertSounds = true,
+        alerts = {
+            summonRequest = 3081,
+            stoneRequest = 880,
+        },
+        -- Minimap button (LibDBIcon) and Addon Compartment entry (#15).
+        showMinimapButton = true,
+        showCompartment = true,
+        minimap = {},
         -- Opening the demon wheel (LibShowcase-1.0): hide the game UI and
         -- run the cinematic camera, as Portal Roulette does. /123 camera.
         cinematicCamera = true,
@@ -25,6 +36,8 @@ ns.Constants = {
             point = "CENTER",
             x = 0,
             y = -180,
+            shown = true,
+            scale = 1,
         },
     },
 }

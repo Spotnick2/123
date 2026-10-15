@@ -100,6 +100,18 @@ explicit policy (option).
 Grimoire of Portal of Summoning (item 216748; its use-spell 402265 is the generic "Learning" teach spell, not the portal) is in the database; whether it is
 live is unknown (its IDs look like Season of Discovery leftovers in Forever's database). Everything about it is hidden unless the spell is known; its own spell ID is still to be measured.
 
+## Options, minimap, sounds (#14, #15)
+- **Options > AddOns > 123** (`Options/Options.lua`): a Settings canvas category, built on first
+  show, Portal Roulette's widgets (checkboxes, cycling buttons, steppers; no dropdown). A bar
+  change (shown, scale, labels) is refused in combat and the page re-reads the saved value.
+  The bar's shown state and scale are saved in `db.bar`.
+- **Minimap** (`UI/Minimap.lua`): LibDataBroker + LibDBIcon (vendored) and the Addon
+  Compartment. Click: the wheel; shift-click: the bar; right-click: options.
+- **Sounds** (`Core/Sound.lua`): only what the game doesn't already announce. Spells (a summon,
+  the Ritual, a stone) sound in game, so they get none; a summon request and a healthstone request
+  do, each a client sound kit picked by ear on the options page (a refused kit says so),
+  throttled to one per burst. The demons' voices stay with the wheel.
+
 ## Already answered by sibling addons
 | Topic | Where |
 |---|---|

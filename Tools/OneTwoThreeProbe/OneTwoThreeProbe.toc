@@ -1,8 +1,10 @@
 ## Interface: 16001
 ## Title: |cff9482c9123 Probe|r
-## Notes: Dev-only API probe for 123 on WoW: Forever. /123probe
+## Notes: Throwaway probe for 123: Warlock spells, stones, summons, trades, chat payload shapes. A ForeverProbe module: /fp 123
 ## Author: Spotnick
 ## Version: dev
+## Dependencies: ForeverProbe
+## OptionalDeps: 123
 ## SavedVariables: OneTwoThreeProbeDB
 
 OneTwoThreeProbe.lua
