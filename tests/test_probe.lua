@@ -19,13 +19,35 @@ local function logged(pattern)
     return false
 end
 
+-- The host's dispatcher catches a handler's throw: it logs "ERROR /fp ..."
+-- and hands the error to geterrorhandler(). Both are watched, so a command
+-- that throws fails here (an API refusal the probe measures is logged by
+-- Probe:Call as ABSENT / ERROR: and is not a command failure).
+local thrown = {}
+rawset(_G, "geterrorhandler", function() return function(err) thrown[#thrown + 1] = tostring(err) end end)
+local function failures()
+    local n = 0
+    for _, line in ipairs(DB.log) do if line:find("ERROR|r /fp 123", 1, true) then n = n + 1 end end
+    return n
+end
+
+-- The check catches a failing command.
+ns._test.Probe:Command("boom", function() error("boom") end, "test only")
+fp("123 boom")
+H.eq(failures(), 1, "a throwing command is logged as an ERROR")
+H.eq(#thrown, 1, "and reaches the error handler")
+thrown = {}
+
 local chatBefore = #WoW.messages
 local cmds = { "", "book", "pet", "stones", "watch on", "secure target", "trade target",
     "tradeitem 5512", "range", "auras", "watch off" }
 for _, cmd in ipairs(cmds) do
+    local before = failures()
     local ok, err = pcall(fp, "123 " .. cmd)
     H.check(ok, "/fp 123 " .. cmd .. " runs: " .. tostring(err))
+    H.eq(failures(), before, "/fp 123 " .. cmd .. " logs no ERROR")
 end
+H.eq(#thrown, 0, "no command reached the error handler: " .. table.concat(thrown, "; "))
 WoW.runTimers(5)
 H.check(logged("pet exists"), "results land in the saved log")
 H.check(logged("item 6265 Soul Shard count"), "stones are logged")
