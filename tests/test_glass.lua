@@ -12,7 +12,7 @@ if not io.open(libFile) then
 end
 
 local ns = H.loadAddon({ libs = { libFile } })
-H.check(ns.Skin:Glass() ~= nil, "LibGlass r5+ is picked up")
+H.check(ns.Skin:Glass() ~= nil, "LibGlass r6+ is picked up")
 H.check(ns.Bar.glass.top ~= nil, "the bar is glass")
 H.eq(H.messagesMatching("not found"), 0, "no fallback warning")
 

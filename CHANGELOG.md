@@ -3,8 +3,8 @@
 ## Unreleased
 - Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a
   traded higher-level stone is skipped until you reach its level), else create the best rank known.
-- Embeds LibGlass-1.0 r7 (was r5): no change to how 123 looks; a disabled glass surface now dims its
-  wash too.
+- The bar uses LibGlass's clean glass (thin rims, no grain, a softer shadow), like the other Glass
+  addons. Embeds LibGlass-1.0 r7 (was r5).
 
 ## v0.1.0 (2026-10-10)
 First public release: the compact bar, the armor reminder and the demon wheel. Group utilities
