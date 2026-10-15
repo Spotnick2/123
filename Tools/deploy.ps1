@@ -112,7 +112,17 @@ function Deploy-Addon {
     $files | Set-Content $manifest
 }
 
+# The probe is a ForeverProbe module (#35): the host deploys first, from the
+# sibling checkout ($env:FOREVERPROBE, else ..\ForeverProbe), and a refusal
+# leaves the probe untouched.
+$ForeverProbe = if ($env:FOREVERPROBE) { $env:FOREVERPROBE } else { Join-Path (Split-Path -Parent $RepoRoot) "ForeverProbe" }
+
 function Deploy-Probe {
+    if (-not (Test-Path -LiteralPath (Join-Path $ForeverProbe "Tools\deploy.ps1"))) {
+        Write-Error "ForeverProbe checkout not found at $ForeverProbe (or set `$env:FOREVERPROBE)"; exit 1
+    }
+    & pwsh -NoProfile -File (Join-Path $ForeverProbe "Tools\deploy.ps1") -AddOnsPath $AddOnsPath
+    if ($LASTEXITCODE -ne 0) { Write-Error "ForeverProbe deploy refused; OneTwoThreeProbe was not touched"; exit 1 }
     $src = Join-Path $RepoRoot "Tools\OneTwoThreeProbe"
     $dest = Join-Path $AddOnsPath "OneTwoThreeProbe"
     Write-Host "Deploying OneTwoThreeProbe -> $dest" -ForegroundColor Cyan
@@ -127,5 +137,5 @@ if (-not $ProbeOnly) { Deploy-Addon }
 if ($Probe -or $ProbeOnly) { Deploy-Probe }
 
 Write-Host ""
-Write-Host "Done. In game:  /console scriptErrors 1  then  /reload (a new addon folder needs a client restart)" -ForegroundColor Green
+Write-Host "Done. In game:  /console scriptErrors 1  then  /reload" -ForegroundColor Green
 Write-Host "Check the AddOn list: enabled AND not flagged out of date." -ForegroundColor Green

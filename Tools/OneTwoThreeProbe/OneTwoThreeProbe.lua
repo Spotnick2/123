@@ -2,137 +2,67 @@
 -- OneTwoThreeProbe - dev-only API probe for 123 on WoW: Forever 1.60.1.
 --
 -- Measures what the Warlock features stand on before code relies on it
--- (issues #1 and #2; ledger in docs/FOREVER-PROBE.md).
+-- (issues #1 and #2; ledger in docs/FOREVER-PROBE.md). A ForeverProbe module
+-- (..\ForeverProbe, docs/GUIDE.md): its lines go to the ForeverProbe console
+-- (/fp), never to chat, and to OneTwoThreeProbeDB.log (SavedVariables). It
+-- never logs what other players said: chat payloads by shape only.
 --
---   /123probe book               candidate Warlock spell IDs: exist / known / name
---   /123probe pet                active pet: GUID npc id, family, pet bar
---   /123probe stones             shards, healthstones, soulstones: count, cooldown, spell
---   /123probe watch on|off       log ritual casts, summon and trade events
---   /123probe secure <unit>      a secure button: left = Ritual of Summoning on
---                                <unit>, right = best soulstone on <unit>
---   /123probe trade <unit>       a button: click = InitiateTrade(<unit>); on
---                                TRADE_SHOW, records who the trade is with
---   /123probe tradeitem <id>     a button: click = put item <id> in the first
---                                empty trade slot; also tries once from TRADE_SHOW
---   /123probe say <chan> [text]  send to PARTY / RAID / INSTANCE_CHAT now (typed)
---                                and again 1 s later from a timer (not typed)
---   /123probe range              per group member: position, distance, map, range
---   /123probe auras              the player's buffs: name, spell ID, duration
---                                (Demonic Sacrifice's buff per demon, #20)
---   /123probe report | reset
+--   /fp 123 book               candidate Warlock spell IDs: exist / known / name,
+--                              then the spellbook as the client lists it
+--   /fp 123 pet                active pet: GUID npc id, family, pet bar
+--   /fp 123 stones             shards, healthstones, soulstones: count, cooldown, spell
+--   /fp 123 watch on|off       log ritual casts, summon and trade events, chat
+--                              payload shapes
+--   /fp 123 secure <unit>      a secure button: left = Ritual of Summoning on
+--                              <unit>, right = best soulstone on <unit>
+--   /fp 123 trade <unit>       a button: click = InitiateTrade(<unit>); on
+--                              TRADE_SHOW, records who the trade is with
+--   /fp 123 tradeitem <id>     a button: click = put item <id> in the first
+--                              empty trade slot; also tries once from TRADE_SHOW
+--   /fp 123 say <chan> [text]  send to PARTY / RAID / INSTANCE_CHAT now (typed)
+--                              and again 1 s later from a timer (not typed)
+--   /fp 123 range              per group member: position, distance, map, range
+--   /fp 123 auras              the player's buffs: name, spell ID, duration
+--                              (Demonic Sacrifice's buff per demon, #20)
+--   /fp 123 clear              empty the saved log
 --
--- Results are printed and kept in OneTwoThreeProbeDB.runs (one entry per
--- session, older sessions kept), written on /reload or logout to
--- _classic_beta_\WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua.
--- `reset` clears this session's run only.
---
--- Every client global is read with rawget, so an API this client lacks is
--- recorded as missing rather than throwing. Every touch of a returned value
--- happens inside pcall: a secret throws when compared or truth-tested.
---
--- Nothing here ships (.pkgmeta ignores Tools).
+-- Every client call goes through Probe:Call (the whole return tuple, ABSENT
+-- or ERROR), so one refusal can't stop the rest. Nothing here ships
+-- (.pkgmeta ignores Tools).
 -- ============================================================================
 
-local C = "|cff9482c9[123probe]|r "
+local ADDON, NS = ...
+local MAX_LOG = 3000
+
+local Probe = ForeverProbe:Module("OneTwoThreeProbe", { api = 1, cmd = "123" })
+
+local function say(msg) Probe:Say(msg) end
+local show = function(v) return Probe.Show(v, true) end
 
 local function G(name) return rawget(_G, name) end
 
-local function Say(text)
-    local chat = G("DEFAULT_CHAT_FRAME")
-    if chat then chat:AddMessage(C .. text) end
-end
-
-OneTwoThreeProbe = {}
-
--- One run per session, appended to OneTwoThreeProbeDB.runs: a measurement
--- belongs to the session and build it was taken in, and a /reload between
--- probe commands must not lose the earlier ones. SavedVariables load AFTER
--- this file, so the run is attached to the saved table at ADDON_LOADED.
-local DB = { results = {}, log = {} }
-
-local function Attach()
-    local saved = G("OneTwoThreeProbeDB")
-    if type(saved) ~= "table" then saved = {} end
-    if type(saved.runs) ~= "table" then
-        -- Files written before runs existed held one session at the top.
-        local legacy = saved.results and { build = saved.build, results = saved.results, log = saved.log, book = saved.book }
-        saved = { runs = { legacy } }
+-- A client function by dotted name ("C_Spell.GetSpellName"), nil when absent.
+local function resolve(path)
+    local fn
+    for part in path:gmatch("[^%.]+") do
+        if fn == nil then fn = G(part) else fn = type(fn) == "table" and fn[part] or nil end
     end
-    DB.started = G("date") and date("%Y-%m-%d %H:%M:%S") or nil
-    saved.runs[#saved.runs + 1] = DB
-    OneTwoThreeProbeDB = saved
+    return fn
 end
 
-local loader = CreateFrame("Frame")
-local okReg, registered = pcall(loader.RegisterEvent, loader, "ADDON_LOADED")
-if not okReg or registered == false then
-    Say("|cffff6060cannot watch ADDON_LOADED: results will not be saved|r")
+-- Logs the whole return tuple of a client function, by name.
+local function call(label, path, ...)
+    Probe:Call(label, resolve(path), ...)
 end
-loader:SetScript("OnEvent", function(self, _, name)
-    if name ~= "OneTwoThreeProbe" then return end
-    Attach()
-    self:UnregisterEvent("ADDON_LOADED")
-end)
 
-local function IsSecret(v)
+local function isSecret(v)
     local test = G("issecretvalue")
     if not test then return false end
     local ok, is = pcall(test, v)
     return not ok or is == true
 end
 
--- A value as text, never comparing a secret.
-local function Show(v)
-    if IsSecret(v) then return "<secret>" end
-    if type(v) == "table" then
-        local parts = {}
-        for k, x in pairs(v) do parts[#parts + 1] = tostring(k) .. "=" .. (IsSecret(x) and "<secret>" or tostring(x)) end
-        table.sort(parts)
-        return "{" .. table.concat(parts, ", ") .. "}"
-    end
-    return tostring(v)
-end
-
-local function Record(key, ...)
-    local parts = {}
-    for i = 1, select("#", ...) do parts[i] = Show((select(i, ...))) end
-    local text = table.concat(parts, " | ")
-    DB.results[key] = text
-    Say(key .. ": |cffffffff" .. text .. "|r")
-end
-
--- Call a client function by name (or a function), recording what it
--- returns or that it is missing / threw.
-local function Try(key, fn, ...)
-    if type(fn) == "string" then
-        local name = fn
-        local path = {}
-        for part in name:gmatch("[^%.]+") do path[#path + 1] = part end
-        fn = G(path[1])
-        for i = 2, #path do fn = type(fn) == "table" and fn[path[i]] or nil end
-        if type(fn) ~= "function" then
-            Record(key, "MISSING " .. name)
-            return
-        end
-    end
-    local function finish(ok, ...)
-        if not ok then
-            Record(key, "THREW " .. tostring((...)))
-            return
-        end
-        if select("#", ...) == 0 then Record(key, "(no values)") else Record(key, ...) end
-        return ...
-    end
-    return finish(pcall(fn, ...))
-end
-
-local function Log(text)
-    local now = G("GetTime") and G("GetTime")() or 0
-    DB.log[#DB.log + 1] = string.format("%.2f %s", now, text)
-    Say(text)
-end
-
-local function InCombat()
+local function inCombat()
     local f = G("InCombatLockdown")
     return f and f() and true or false
 end
@@ -179,63 +109,60 @@ local SOULSTONES = { 16896, 16895, 16893, 16892, 5232 }
 -- book, pet, stones
 ------------------------------------------------------------
 
-local function Book()
+local function book()
     for _, s in ipairs(SPELLS) do
         local id, label = s[1], s[2]
-        Try("spell " .. id .. " " .. label .. " exists", "C_Spell.DoesSpellExist", id)
-        Try("spell " .. id .. " known", "C_SpellBook.IsSpellKnown", id)
-        Try("spell " .. id .. " player", "IsPlayerSpell", id)
-        Try("spell " .. id .. " name", "C_Spell.GetSpellName", id)
+        call("spell " .. id .. " " .. label .. " exists", "C_Spell.DoesSpellExist", id)
+        call("spell " .. id .. " known", "C_SpellBook.IsSpellKnown", id)
+        call("spell " .. id .. " player", "IsPlayerSpell", id)
+        call("spell " .. id .. " name", "C_Spell.GetSpellName", id)
     end
     -- The spellbook as the client lists it, to catch Forever-only spells.
-    local lines = G("C_SpellBook") and G("C_SpellBook").GetNumSpellBookSkillLines
-    if not lines then Record("book", "MISSING C_SpellBook.GetNumSpellBookSkillLines") return end
-    local ok, n = pcall(lines)
-    if not ok or IsSecret(n) or type(n) ~= "number" then Record("book", "unreadable", n) return end
-    local book = {}
+    local ok, n = Probe:Try("GetNumSpellBookSkillLines", resolve("C_SpellBook.GetNumSpellBookSkillLines"))
+    if not ok or isSecret(n) or type(n) ~= "number" then say("book: unreadable " .. show(n)) return end
+    local count = 0
     for line = 1, n do
         local okL, info = pcall(C_SpellBook.GetSpellBookSkillLineInfo, line)
-        if okL and type(info) == "table" and not IsSecret(info.numSpellBookItems) then
+        if okL and type(info) == "table" and not isSecret(info.numSpellBookItems) then
             for i = info.itemIndexOffset + 1, info.itemIndexOffset + info.numSpellBookItems do
                 local okI, item = pcall(C_SpellBook.GetSpellBookItemInfo, i, Enum.SpellBookSpellBank.Player)
                 if okI and type(item) == "table" then
-                    book[#book + 1] = Show(item.spellID) .. " " .. Show(item.name) .. " (" .. Show(info.name) .. ")"
+                    count = count + 1
+                    say("book " .. show(item.spellID) .. " " .. show(item.name) .. " (" .. show(info.name) .. ")")
                 end
             end
         end
     end
-    DB.book = book
-    Say(#book .. " spellbook entries saved to this run's book")
+    say(count .. " spellbook entries")
 end
 
-local function Pet()
-    Try("pet exists", "UnitExists", "pet")
-    Try("pet guid", "UnitGUID", "pet")
-    Try("pet name", "UnitName", "pet")
-    Try("pet family", "UnitCreatureFamily", "pet")
-    Try("pet HasPetUI", "HasPetUI")
-    Try("pet PetHasActionBar", "PetHasActionBar")
+local function pet()
+    call("pet exists", "UnitExists", "pet")
+    call("pet guid", "UnitGUID", "pet")
+    call("pet name", "UnitName", "pet")
+    call("pet family", "UnitCreatureFamily", "pet")
+    call("pet HasPetUI", "HasPetUI")
+    call("pet PetHasActionBar", "PetHasActionBar")
     for i = 1, 10 do
-        Try("pet action " .. i, "GetPetActionInfo", i)
+        call("pet action " .. i, "GetPetActionInfo", i)
     end
 end
 
-local function Stones()
+local function stones()
     for _, it in ipairs(ITEMS) do
         local id, label = it[1], it[2]
-        Try("item " .. id .. " " .. label .. " count", "C_Item.GetItemCount", id)
-        Try("item " .. id .. " cooldown", "C_Container.GetItemCooldown", id)
-        Try("item " .. id .. " spell", "C_Item.GetItemSpell", id)
-        Try("item " .. id .. " name", "C_Item.GetItemNameByID", id)
+        call("item " .. id .. " " .. label .. " count", "C_Item.GetItemCount", id)
+        call("item " .. id .. " cooldown", "C_Container.GetItemCooldown", id)
+        call("item " .. id .. " spell", "C_Item.GetItemSpell", id)
+        call("item " .. id .. " name", "C_Item.GetItemNameByID", id)
     end
 end
 
 ------------------------------------------------------------
--- watch: ritual casts, incoming summons, trade events
+-- watch: ritual casts, incoming summons, trade events, chat shapes
 ------------------------------------------------------------
 
 local watcher = CreateFrame("Frame")
-OneTwoThreeProbe.watcher = watcher
 local WATCHED = {
     "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_SUCCEEDED",
     "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
@@ -247,70 +174,73 @@ local WATCHED = {
     "CHAT_MSG_INSTANCE_CHAT", "CHAT_MSG_WHISPER",
 }
 
-local function Watch(on)
-    for _, e in ipairs(WATCHED) do
-        local ok, res = pcall(on and watcher.RegisterEvent or watcher.UnregisterEvent, watcher, e)
-        if on and (not ok or res == false) then Log("cannot watch " .. e .. ": " .. Show(res)) end
+local function watch(on)
+    if on then
+        Probe:RegisterEvents(watcher, WATCHED)
+    else
+        watcher:UnregisterAllEvents()
     end
-    Say("watch " .. (on and "on" or "off"))
+    say("watch " .. (on and "on" or "off"))
 end
 
-local tradeItem -- set by /123probe tradeitem
+local tradeItem -- set by /fp 123 tradeitem
 
 -- Bag and slot holding itemID, re-resolved at use time.
-local function FindItem(itemID)
+local function findItem(itemID)
     for bag = 0, 5 do
         local okN, slots = pcall(C_Container.GetContainerNumSlots, bag)
-        if okN and not IsSecret(slots) and type(slots) == "number" then
+        if okN and not isSecret(slots) and type(slots) == "number" then
             for slot = 1, slots do
                 local okI, id = pcall(C_Container.GetContainerItemID, bag, slot)
-                if okI and not IsSecret(id) and id == itemID then return bag, slot end
+                if okI and not isSecret(id) and id == itemID then return bag, slot end
             end
         end
     end
 end
 
-local function FirstEmptyTradeSlot()
+local function firstEmptyTradeSlot()
     local f = G("GetTradePlayerItemInfo")
     for i = 1, 6 do
         local ok, name = pcall(f, i)
-        if ok and not IsSecret(name) and name == nil then return i end
+        if ok and not isSecret(name) and name == nil then return i end
     end
 end
 
-local function PlaceTradeItem(source)
+local function placeTradeItem(source)
     if not tradeItem then return end
-    local bag, slot = FindItem(tradeItem)
-    local target = FirstEmptyTradeSlot()
+    local bag, slot = findItem(tradeItem)
+    local target = firstEmptyTradeSlot()
     if not bag or not target then
-        Log("tradeitem (" .. source .. "): item " .. tradeItem .. " bag " .. Show(bag) .. ", empty trade slot " .. Show(target))
+        say("tradeitem (" .. source .. "): item " .. tradeItem .. " bag " .. show(bag) .. ", empty trade slot " .. show(target))
         return
     end
     local okP, errP = pcall(C_Container.PickupContainerItem, bag, slot)
     local okH, cursor = pcall(G("CursorHasItem"))
     local okC, errC = pcall(G("ClickTradeButton"), target)
     local okR, placed = pcall(G("GetTradePlayerItemInfo"), target)
-    Log("tradeitem (" .. source .. "): pickup " .. Show(okP and "ok" or errP) .. ", cursor " .. Show(cursor)
-        .. ", click slot " .. target .. " " .. Show(okC and "ok" or errC) .. ", slot now " .. Show(okR and placed or "?"))
+    say("tradeitem (" .. source .. "): pickup " .. show(okP and "ok" or errP) .. ", cursor " .. show(okH and cursor)
+        .. ", click slot " .. target .. " " .. show(okC and "ok" or errC) .. ", slot now " .. show(okR and placed or "?"))
 end
 
 watcher:SetScript("OnEvent", function(_, event, ...)
-    local args = { ... }
-    local parts = {}
-    for i = 1, select("#", ...) do parts[i] = Show(args[i]) end
+    local args = Probe.Pack(...)
     if event:find("^UNIT_SPELLCAST") and args[1] ~= "player" then return end
     if event:find("^CHAT_MSG") then
-        -- text, sender, ..., lineID (11), guid (12)
-        Log(event .. ": text=" .. Show(args[1]) .. " sender=" .. Show(args[2]) .. " guid=" .. Show(args[12]))
+        -- text, sender, ..., lineID (11), guid (12): shapes only, never
+        -- what another player wrote.
+        say(event .. ": text=" .. Probe.Shape(args[1]) .. " sender=" .. Probe.Shape(args[2])
+            .. " lineID=" .. Probe.Shape(args[11]) .. " guid=" .. Probe.Shape(args[12]))
         return
     end
-    Log(event .. " " .. table.concat(parts, ", "))
+    local parts = {}
+    for i = 1, args.n do parts[i] = show(args[i]) end
+    say(event .. " " .. table.concat(parts, ", "))
     if event == "INCOMING_SUMMON_CHANGED" and args[1] then
-        Try("summon status " .. Show(args[1]), "C_IncomingSummon.IncomingSummonStatus", args[1])
+        call("summon status " .. show(args[1]), "C_IncomingSummon.IncomingSummonStatus", args[1])
     elseif event == "TRADE_SHOW" then
-        Try("trade with (NPC unit)", "UnitName", "NPC")
-        Try("trade with guid", "UnitGUID", "NPC")
-        PlaceTradeItem("from TRADE_SHOW, no click")
+        call("trade with (NPC unit)", "UnitName", "NPC")
+        call("trade with guid", "UnitGUID", "NPC")
+        placeTradeItem("from TRADE_SHOW, no click")
     end
 end)
 
@@ -318,8 +248,10 @@ end)
 -- Buttons: secure targeting, trade
 ------------------------------------------------------------
 
-local function ProbeButton(name, label, template, y)
-    local b = OneTwoThreeProbe[name]
+local buttons = {}
+
+local function probeButton(name, label, template, y)
+    local b = buttons[name]
     if not b then
         b = CreateFrame("Button", "OneTwoThreeProbe" .. name, UIParent, template)
         b:SetSize(220, 28)
@@ -329,17 +261,17 @@ local function ProbeButton(name, label, template, y)
         bg:SetColorTexture(0.2, 0.1, 0.3, 0.85)
         b.text = b:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
         b.text:SetPoint("CENTER")
-        OneTwoThreeProbe[name] = b
+        buttons[name] = b
     end
     b.text:SetText(label)
     b:Show()
     return b
 end
 
-local function Secure(unit)
-    if InCombat() then Say("out of combat only") return end
+local function secure(unit)
+    if inCombat() then say("secure: out of combat only") return end
     unit = unit ~= "" and unit or "target"
-    local b = ProbeButton("Secure", "Ritual (L) / Soulstone (R) on " .. unit, "SecureActionButtonTemplate", 120)
+    local b = probeButton("Secure", "Ritual (L) / Soulstone (R) on " .. unit, "SecureActionButtonTemplate", 120)
     b:RegisterForClicks("AnyUp", "AnyDown")
     b:SetAttribute("type1", "spell")
     b:SetAttribute("spell1", 698)
@@ -347,7 +279,7 @@ local function Secure(unit)
     local stone
     for _, id in ipairs(SOULSTONES) do
         local ok, n = pcall(C_Item.GetItemCount, id)
-        if ok and not IsSecret(n) and type(n) == "number" and n > 0 then stone = id break end
+        if ok and not isSecret(n) and type(n) == "number" and n > 0 then stone = id break end
     end
     if stone then
         b:SetAttribute("type2", "item")
@@ -355,52 +287,54 @@ local function Secure(unit)
         b:SetAttribute("unit2", unit)
     end
     b:SetScript("PostClick", function(_, button, down)
-        Log("secure click " .. Show(button) .. " down=" .. Show(down) .. " unit=" .. unit
-            .. " -> " .. Show(UnitName(unit)) .. " (watch on to see the cast)")
+        say("secure click " .. show(button) .. " down=" .. show(down) .. " unit=" .. unit
+            .. " -> " .. show(UnitName(unit)) .. " (watch on to see the cast)")
     end)
-    Say("secure button ready: unit " .. unit .. ", soulstone " .. Show(stone)
+    say("secure button ready: unit " .. unit .. ", soulstone " .. show(stone)
         .. ". Try both click edges, in combat, and after a roster change.")
 end
 
-local function Trade(unit)
+local function trade(unit)
     unit = unit ~= "" and unit or "target"
-    local b = ProbeButton("Trade", "Trade with " .. unit, nil, 80)
+    local b = probeButton("Trade", "Trade with " .. unit, nil, 80)
     b:SetScript("OnClick", function()
-        Try("InitiateTrade " .. unit, "InitiateTrade", unit)
+        call("InitiateTrade " .. unit, "InitiateTrade", unit)
     end)
-    Say("click the button to open a trade with " .. unit .. " (watch on to see TRADE_SHOW)")
+    say("click the button to open a trade with " .. unit .. " (watch on to see TRADE_SHOW)")
 end
 
-local function TradeItem(arg)
+local function tradeItemCmd(arg)
     tradeItem = tonumber(arg)
-    if not tradeItem then Say("usage: /123probe tradeitem <itemID>") return end
-    local b = ProbeButton("TradeItem", "Put item " .. tradeItem .. " in trade", nil, 40)
-    b:SetScript("OnClick", function() PlaceTradeItem("from a click") end)
-    Say("item " .. tradeItem .. " armed: tried once at TRADE_SHOW, and on each button click")
+    if not tradeItem then say("usage: /fp 123 tradeitem <itemID>") return end
+    local b = probeButton("TradeItem", "Put item " .. tradeItem .. " in trade", nil, 40)
+    b:SetScript("OnClick", function() placeTradeItem("from a click") end)
+    say("item " .. tradeItem .. " armed: tried once at TRADE_SHOW, and on each button click")
 end
 
 ------------------------------------------------------------
 -- Chat sends, range
 ------------------------------------------------------------
 
-local function SayTo(arg)
+-- The sends are chat test stimuli (GUIDE.md section 5): the probe writes
+-- them to group chat on purpose; what it learns goes through say.
+local function sayTo(arg)
     local chan, text = arg:match("^(%S+)%s*(.*)$")
     chan = chan and chan:upper()
-    if not chan then Say("usage: /123probe say PARTY|RAID|INSTANCE_CHAT [text]") return end
+    if not chan then say("usage: /fp 123 say PARTY|RAID|INSTANCE_CHAT [text]") return end
     text = text ~= "" and text or "123 probe test"
-    local send = G("C_ChatInfo") and G("C_ChatInfo").SendChatMessage or G("SendChatMessage")
+    local send = resolve("C_ChatInfo.SendChatMessage") or G("SendChatMessage")
     local ok, err = pcall(send, text .. " (typed)", chan)
-    Log("say " .. chan .. " typed: " .. Show(ok and "sent" or err))
+    say("say " .. chan .. " typed: " .. show(ok and "sent" or err))
     C_Timer.After(1, function()
         local okT, errT = pcall(send, text .. " (timer)", chan)
-        Log("say " .. chan .. " timer: " .. Show(okT and "sent" or errT) .. " - did the other player see both?")
+        say("say " .. chan .. " timer: " .. show(okT and "sent" or errT) .. " - did the other player see both?")
     end)
 end
 
-local function GroupUnits()
+local function groupUnits()
     local units = {}
     local n = G("GetNumGroupMembers") and GetNumGroupMembers() or 0
-    if IsSecret(n) then n = 0 end
+    if isSecret(n) then n = 0 end
     local raid = G("IsInRaid") and IsInRaid()
     for i = 1, raid and n or math.max(n - 1, 0) do
         units[#units + 1] = (raid and "raid" or "party") .. i
@@ -408,46 +342,34 @@ local function GroupUnits()
     return units
 end
 
-local function Range()
-    Try("player map", "C_Map.GetBestMapForUnit", "player")
-    Try("player position", "UnitPosition", "player")
-    Try("instance", "GetInstanceInfo")
-    local units = GroupUnits()
-    if #units == 0 then Say("not in a group: nothing to measure") end
+local function range()
+    call("player map", "C_Map.GetBestMapForUnit", "player")
+    call("player position", "UnitPosition", "player")
+    call("instance", "GetInstanceInfo")
+    local units = groupUnits()
+    if #units == 0 then say("range: not in a group, nothing to measure") end
     for _, u in ipairs(units) do
-        Try(u .. " name", "GetUnitName", u, false)
-        Try(u .. " connected", "UnitIsConnected", u)
-        Try(u .. " visible", "UnitIsVisible", u)
-        Try(u .. " position", "UnitPosition", u)
-        Try(u .. " distanceSq", "UnitDistanceSquared", u)
-        Try(u .. " interact 4", "CheckInteractDistance", u, 4)
-        Try(u .. " inRange", "UnitInRange", u)
-        Try(u .. " map", "C_Map.GetBestMapForUnit", u)
-        Try(u .. " spell range 5697", "C_Spell.IsSpellInRange", 5697, u)
-        Try(u .. " summon status", "C_IncomingSummon.IncomingSummonStatus", u)
+        call(u .. " name", "GetUnitName", u, false)
+        call(u .. " connected", "UnitIsConnected", u)
+        call(u .. " visible", "UnitIsVisible", u)
+        call(u .. " position", "UnitPosition", u)
+        call(u .. " distanceSq", "UnitDistanceSquared", u)
+        call(u .. " interact 4", "CheckInteractDistance", u, 4)
+        call(u .. " inRange", "UnitInRange", u)
+        call(u .. " map", "C_Map.GetBestMapForUnit", u)
+        call(u .. " spell range 5697", "C_Spell.IsSpellInRange", 5697, u)
+        call(u .. " summon status", "C_IncomingSummon.IncomingSummonStatus", u)
     end
 end
 
-------------------------------------------------------------
--- Slash command
-------------------------------------------------------------
-
-local function Report()
-    local keys = {}
-    for k in pairs(DB.results) do keys[#keys + 1] = k end
-    table.sort(keys)
-    for _, k in ipairs(keys) do Say(k .. ": " .. DB.results[k]) end
-    Say(#keys .. " results, " .. #DB.log .. " log lines")
-end
-
 -- The player's buffs, each read inside pcall (secret in combat).
-local function Auras()
-    local list = {}
+local function auras()
+    local n = 0
     for i = 1, 40 do
-        local auras = G("C_UnitAuras")
-        local ok, aura = pcall(auras and auras.GetAuraDataByIndex, "player", i, "HELPFUL")
+        local lib = G("C_UnitAuras")
+        local ok, aura = pcall(lib and lib.GetAuraDataByIndex, "player", i, "HELPFUL")
         if not ok then
-            Record("auras", "blocked (combat?): " .. tostring(aura))
+            say("auras: blocked (combat?): " .. show(aura))
             return
         end
         if not aura then break end
@@ -455,31 +377,41 @@ local function Auras()
             return string.format("%s  spell %s  duration %s", tostring(aura.name), tostring(aura.spellId),
                 tostring(aura.duration))
         end)
-        list[#list + 1] = okF and line or "unreadable"
-        Say("aura " .. i .. ": " .. list[#list])
+        n = n + 1
+        say("aura " .. i .. ": " .. (okF and line or "unreadable"))
     end
-    Record("auras", #list > 0 and table.concat(list, " | ") or "none")
+    say("auras: " .. n)
 end
 
-local COMMANDS = {
-    book = Book, pet = Pet, stones = Stones, range = Range, report = Report, auras = Auras,
-    secure = Secure, trade = Trade, tradeitem = TradeItem, say = SayTo,
-    watch = function(arg) Watch(arg ~= "off") end,
-    reset = function()
-        DB.results, DB.log, DB.book = {}, {}, nil
-        Say("cleared")
-    end,
-}
+------------------------------------------------------------
+-- Commands
+------------------------------------------------------------
 
-SLASH_ONETWOTHREEPROBE1 = "/123probe"
-SlashCmdList.ONETWOTHREEPROBE = function(msg)
-    local cmd, arg = (msg or ""):match("^%s*(%S*)%s*(.-)%s*$")
-    local fn = COMMANDS[(cmd or ""):lower()]
-    if not fn then
-        Say("book | pet | stones | watch on|off | secure <unit> | trade <unit> | tradeitem <id> | say <chan> [text] | range | report | reset")
-        return
-    end
-    DB.build = DB.build or select(2, GetBuildInfo())
-    local ok, err = pcall(fn, arg or "")
-    if not ok then Say("|cffff6060" .. cmd .. " failed: " .. tostring(err) .. "|r") end
-end
+Probe:Command("book", book, "candidate Warlock spell IDs, then the spellbook")
+Probe:Command("pet", pet, "the active pet: GUID, family, pet bar")
+Probe:Command("stones", stones, "shards, healthstones, soulstones: count, cooldown, spell")
+Probe:Command("watch", function(arg) watch(arg ~= "off") end, "on|off: casts, summons, trades, chat shapes")
+Probe:Command("secure", secure, "<unit>: Ritual (left) / soulstone (right) secure button")
+Probe:Command("trade", trade, "<unit>: a button that opens a trade")
+Probe:Command("tradeitem", tradeItemCmd, "<itemID>: put the item in the trade window")
+Probe:Command("say", sayTo, "<PARTY|RAID|INSTANCE_CHAT> [text]: typed, then from a timer")
+Probe:Command("range", range, "per group member: position, distance, map, range")
+Probe:Command("auras", auras, "the player's buffs (Demonic Sacrifice's, #20)")
+Probe:Command("clear", function() Probe:ClearLog(); say("log cleared") end, "empty the saved log")
+
+-- Saved tables only at our own ADDON_LOADED (they load after this file).
+-- Earlier sessions' `runs` (before ForeverProbe) are left as they were.
+local boot = CreateFrame("Frame")
+Probe:RegisterEvents(boot, { "ADDON_LOADED" })
+boot:SetScript("OnEvent", function(self, _, name)
+    if name ~= ADDON then return end
+    self:UnregisterEvent("ADDON_LOADED")
+    Probe:Ready()
+    if type(OneTwoThreeProbeDB) ~= "table" then OneTwoThreeProbeDB = {} end
+    if type(OneTwoThreeProbeDB.log) ~= "table" then OneTwoThreeProbeDB.log = {} end
+    Probe:UseLog(OneTwoThreeProbeDB.log, MAX_LOG)
+    OneTwoThreeProbeDB.loads = (OneTwoThreeProbeDB.loads or 0) + 1
+    say("loaded (" .. OneTwoThreeProbeDB.loads .. " loads). /fp 123 for the commands")
+end)
+
+NS._test = { Probe = Probe, buttons = buttons }
