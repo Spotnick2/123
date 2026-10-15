@@ -387,6 +387,10 @@ function showTooltip(button)
     elseif button.action then
         GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
         if button.short then addNeeds(button.action) end
+        local waiting = button.key == "summoning" and #ns.Queue.entries or 0
+        if waiting > 0 then
+            GameTooltip:AddLine(waiting .. " waiting for a summon", 0.75, 0.8, 0.9)
+        end
     else
         GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
     end
@@ -554,6 +558,20 @@ function Bar:StopMoving()
     self.frame:StopMovingOrSizing()
     local point, _, _, x, y = self.frame:GetPoint()
     ns.db.bar.point, ns.db.bar.x, ns.db.bar.y = point, x, y
+    self:Moved()
+end
+
+-- The summon queue's list follows the Summoning button (#9).
+function Bar:Moved()
+    if ns.QueueList then ns.QueueList:Refresh() end
+end
+
+-- A bar button by key ("summoning"), or nil.
+function Bar:Button(key)
+    for _, button in ipairs(self.buttons or {}) do
+        if button.key == key then return button end
+    end
+    return nil
 end
 
 function Bar:CreateShards()
@@ -581,6 +599,7 @@ function Bar:ApplyPosition()
     local pos = ns.db.bar
     self.frame:ClearAllPoints()
     self.frame:SetPoint(pos.point or "CENTER", UIParent, pos.point or "CENTER", pos.x or 0, pos.y or 0)
+    self:Moved()
 end
 
 function Bar:Initialize()
@@ -662,6 +681,7 @@ end
 function Bar:ApplyScale()
     if not self.frame or InCombatLockdown() then return false end
     self.frame:SetScale(tonumber(ns.db.bar.scale) or 1)
+    self:Moved()
     return true
 end
 

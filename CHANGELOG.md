@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- Summon queue (#9): anyone in the group who types "123" (or one of your keywords) in party,
+  raid or instance chat joins a list above the Summoning button, with a sound. Exact matching,
+  one place per person, dropped on leaving the group, after a timeout or by hand. Keywords and
+  timeout in the options; `/123 queue test` tries it alone.
+
 ## v0.2.0 (2026-10-15)
 Smart stones, an options page and a minimap button, on LibGlass's clean glass.
 - Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a

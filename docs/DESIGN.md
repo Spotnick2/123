@@ -90,8 +90,18 @@ trade and to place the stone; the player accepts. Whispers from outside the grou
 explicit policy (option).
 
 ## Summon queue
-- Intake: "123" plus an editable keyword list in PARTY / RAID / INSTANCE_CHAT, exact matching,
-  deduplicated by GUID, manual remove / retry, timeout.
+- Intake (#9, `Core/Queue.lua`): "123" plus an editable keyword list in PARTY / RAID /
+  INSTANCE_CHAT (and their _LEADER events). The whole message must be a keyword, compared lower
+  case, trimmed, trailing `! ? .` dropped. The sender must be a group member, found by the chat
+  GUID (12th payload) among `partyN` / `raidN`; the player and an unreadable GUID are skipped.
+  Keyed on GUID, oldest first; asking again keeps the place and refreshes the time. Dropped on
+  `GROUP_ROSTER_UPDATE` when gone from the group, after `db.queue.timeout` minutes (a 10 s
+  ticker, only while someone waits), or by the row's x. "Retry" belongs with execution (#10).
+- List (`UI/QueueList.lua`): a glass list above the Summoning button, under UIParent at
+  coordinates read off the button (never anchored to the bar, which is protected), so it updates
+  in combat. Name in class colour, wait time, x; eight rows, then "and N more".
+- Solo test: `/123 queue test` runs "123", "123!" and "1234" from made-up members through the
+  same matching; test entries skip the roster check.
 - Execution: Ritual of Summoning on the next queued member. Members drop off only on measured
   signals (summon accepted and arrived, left the group); "unknown" keeps them.
 - Announcements: "summoning X, click the portal" / "need clickers", configurable and throttled.

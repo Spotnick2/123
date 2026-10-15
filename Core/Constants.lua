@@ -22,6 +22,13 @@ ns.Constants = {
             summonRequest = 3081,
             stoneRequest = 880,
         },
+        -- Summon queue (#9): who typed a keyword in group chat; minutes
+        -- before a request drops off.
+        queue = {
+            enabled = true,
+            keywords = { "123" },
+            timeout = 10,
+        },
         -- Minimap button (LibDBIcon) and Addon Compartment entry (#15).
         showMinimapButton = true,
         showCompartment = true,
