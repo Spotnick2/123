@@ -1,6 +1,7 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 (2026-10-15)
+Smart stones, an options page and a minimap button, on LibGlass's clean glass.
 - Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a
   traded higher-level stone is skipped until you reach its level), else create the best rank known.
 - The bar uses LibGlass's clean glass (thin rims, no grain, a softer shadow), like the other Glass
@@ -12,6 +13,7 @@
   or hide the bar, right-click for options.
 - Alert sounds (#14): a sound per alert (summon request, healthstone request), picked by ear on
   the options page. They sound once those features land.
+- The licence file now lists exactly the libraries that ship, with their licence texts.
 
 ## v0.1.0 (2026-10-10)
 First public release: the compact bar, the armor reminder and the demon wheel. Group utilities
