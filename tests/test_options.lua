@@ -121,5 +121,4 @@ local saved = { bar = { shown = false, scale = 1.2 } }
 ns = H.loadAddon({ savedDB = saved })
 H.check(not ns.Bar.frame:IsShown(), "hidden after a reload")
 H.eq(ns.Bar.frame:GetScale(), 1.2, "scaled after a reload")
-
 H.done("test_options")

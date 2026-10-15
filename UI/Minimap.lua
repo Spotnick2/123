@@ -49,7 +49,12 @@ function Minimap:Initialize()
             text = TITLE,
             icon = icon,
             notCheckable = true,
-            func = function(_, _, _, _, mouseButton) onClick(nil, mouseButton) end,
+            -- The menu calls func(data, menuInputData, menu): the mouse
+            -- button is menuInputData.buttonName (Blizzard_Minimap
+            -- AddonCompartment.lua, Codex on #32).
+            func = function(_, menuInputData)
+                onClick(nil, type(menuInputData) == "table" and menuInputData.buttonName or nil)
+            end,
             funcOnEnter = function(button)
                 GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
                 onTooltip(GameTooltip)
