@@ -420,7 +420,10 @@ local function names()
     return okU and unitName or nil, okU and realm or nil, okG and short or nil, okR and full or nil
 end
 
-local function playerName() return (names()) end
+-- The character as Blizzard's AddOns list names it: the player's GUID
+-- (Blizzard_AddOnList/AddonList.lua:16). UnitName ("Kaleid") was accepted
+-- and did nothing (owner, 70374, run #9).
+local function playerName() return (G("UnitGUID")("player")) end
 
 local function states()
     local me = playerName()
@@ -431,6 +434,7 @@ end
 
 Probe:Steps("disable", {
     title = "123 turns itself off for one character (#39)",
+    rev = 2,
     { text = "On a NON-Warlock alt, out of combat, with 123 enabled for all characters in the AddOns list. "
         .. "Reading the names and 123's enable state.", auto = true, run = function()
           local unitName, realm, short, full = names()
@@ -438,7 +442,7 @@ Probe:Steps("disable", {
               .. show(short) .. ", full " .. show(full))
           return unitName, realm, short, full, states()
       end },
-    { text = "Turn 123 off for THIS character only (DisableAddOn with UnitName).", button = "Disable here",
+    { text = "Turn 123 off for THIS character only (DisableAddOn with the player's GUID, as the AddOns list does).", button = "Disable here",
       run = function()
           local me = playerName()
           local ok, err = pcall(resolve("C_AddOns.DisableAddOn"), "123", me)

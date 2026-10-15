@@ -66,8 +66,8 @@ fp("123 say PARTY hello")
 WoW.runTimers(2)
 H.eq(#WoW.chat, 2, "the typed and the timer send")
 
--- #39's procedure, walked with the host's own controls. UnitName is
--- "Testcase Surname" in the stubs.
+-- #39's procedure, walked with the host's own controls, by the player's
+-- GUID (WoW.playerGUID in the stubs).
 local S = ForeverProbe.Steps
 fp("123 disable")
 H.check(S.IsShown(), "/fp 123 disable starts the procedure")
