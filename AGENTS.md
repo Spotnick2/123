@@ -69,5 +69,5 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
 - Options use the Settings canvas API. There is no UIDropDownMenu.
 - Sounds: in-game kits (`PlaySound`, vanilla-era kits) or FileDataIDs; `PlaySoundFile` refuses
   built-in paths. Models: `ModelScene` + `SetModelByCreatureDisplayID`.
-- Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r7,
+- Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r8,
   LibShowcase-1.0 r4); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.
