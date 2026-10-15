@@ -89,6 +89,7 @@ function WoW.reset()
     WoW.popups       = {}
     WoW.itemsUsed    = {}        -- names passed to C_Item.UseItemByName
     WoW.curvesRefused = false    -- simulate a client that refuses colour curves
+    WoW.kits, WoW.refusedKits = {}, {}  -- sound kits played / refused
 end
 
 function WoW.AddItem(bag, slot, itemID, count, name)
@@ -812,6 +813,14 @@ function PlaySoundFile(path, channel)
     return true, WoW.soundHandle
 end
 function StopSound(handle) WoW.stopped[#WoW.stopped + 1] = handle end
+-- Sound kits: WoW.kits records each played; WoW.refusedKits[kit] = true
+-- makes the client refuse one (willPlay false).
+function PlaySound(kit, channel)
+    if WoW.refusedKits[kit] then return false end
+    WoW.kits[#WoW.kits + 1] = kit
+    WoW.soundHandle = WoW.soundHandle + 1
+    return true, WoW.soundHandle
+end
 -- Spell tooltips: WoW.spellTips[id] = { lines... }; missing -> no data yet.
 WoW.spellTips = {}
 function C_TooltipInfo.GetSpellByID(id)

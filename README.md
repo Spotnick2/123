@@ -20,7 +20,8 @@ soulstone, healthstones and summoning, one click away.
 - **Summoning** is Ritual of Summoning.
 - Out of Soul Shards, the Demon button falls back to the Imp and the buttons that would spend
   one grey out, until shards come back.
-- Shift-drag the "123" handle to move it. Names under the icons with `/123 labels`.
+- Shift-drag the "123" handle to move it. Scale, names under the icons and the rest are in
+  **Options > AddOns > 123** (or `/123 options`, or right-click the minimap button).
 
 ![In the game](docs/screenshots/ui.jpg)
 
@@ -44,6 +45,7 @@ soulstone, healthstones and summoning, one click away.
 
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)
+- `/123 options`: the options page (Options > AddOns > 123)
 - `/123 wheel`: open the demon wheel (also the bar's "Demons" button, and a key binding)
 - `/123 preview`: the wheel with every demon shown and nothing cast; click a demon to put it in
   the centre (screenshots, any level)
@@ -52,6 +54,8 @@ soulstone, healthstones and summoning, one click away.
 - `/123 labels`: show the names under the bar's icons (off: the tooltips say it)
 - `/123 confirm`: ask (or stop asking) before re-summoning the demon that is out
 - `/123 debug`: client build, load state and what each bar button is armed with
+- Minimap button: click for the demon wheel, shift-click to show or hide the bar, right-click for
+  options (also in the Addon Compartment)
 - Key bindings (Key Bindings > 123): the wheel, summon, Sacrifice-or-summon, Armor, Soulstone,
   Healthstone, Ritual of Summoning
 
@@ -66,7 +70,8 @@ summon queue: everyone who types **123** in group chat, with help calls for clic
 ## Requirements
 WoW: Forever (1.60.1), a Warlock (other classes get nothing). Uses
 [LibGlass-1.0](https://github.com/Spotnick2/LibGlass) and
-[LibShowcase-1.0](https://github.com/Spotnick2/LibShowcase), embedded.
+[LibShowcase-1.0](https://github.com/Spotnick2/LibShowcase), embedded, and LibDataBroker /
+LibDBIcon for the minimap button.
 
 ## Development
 See `AGENTS.md`. Tests: `pwsh tests/run.ps1`. Deploy: `pwsh Tools/deploy.ps1 [-Probe]`.
