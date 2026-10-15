@@ -54,15 +54,43 @@ local function login(addonName)
     WoW.runTimers(0)
 end
 
--- The dev-only probe addon, then the client's login sequence.
+-- The ForeverProbe host from the sibling checkout ($FOREVERPROBE, else
+-- ../ForeverProbe), as GlassChat's harness loads it. It is private, so CI
+-- can't fetch it: with FOREVERPROBE_OPTIONAL=1 a missing checkout skips the
+-- probe's test; locally it is an error.
+function H.loadForeverProbe()
+    local root = (os.getenv("FOREVERPROBE") or "../ForeverProbe"):gsub("\\", "/"):gsub("/$", "")
+    local toc = io.open(root .. "/ForeverProbe.toc", "rb")
+    if not toc then
+        if os.getenv("FOREVERPROBE_OPTIONAL") == "1" then
+            io.write("SKIPPED: ForeverProbe isn't here (private, local only); the probe tests run locally\n")
+            os.exit(0)
+        end
+        error("ForeverProbe checkout not found at " .. root .. ": clone it there or set FOREVERPROBE", 0)
+    end
+    for line in toc:read("*a"):gmatch("[^\r\n]+") do
+        if line:match("%.lua$") and not line:match("^#") then
+            assert(loadfile(root .. "/" .. line:gsub("\\", "/")))("ForeverProbe", {})
+        end
+    end
+    toc:close()
+    WoW.fire("ADDON_LOADED", "ForeverProbe")
+    return ForeverProbe
+end
+
+-- The dev-only probe module on the ForeverProbe host, then the client's
+-- login sequence. Returns the module's namespace (its _test seam).
 function H.loadProbe(savedDB)
+    H.loadForeverProbe()
+    local ns = {}
     for _, f in ipairs(H.tocFiles("Tools/OneTwoThreeProbe/OneTwoThreeProbe.toc")) do
         local chunk, err = loadfile(f)
         if not chunk then error(err) end
-        chunk("OneTwoThreeProbe", {})
+        chunk("OneTwoThreeProbe", ns)
     end
     if savedDB then rawset(_G, "OneTwoThreeProbeDB", savedDB) end
     login("OneTwoThreeProbe")
+    return ns
 end
 
 -- 123 itself. Libs\ lines load only LibStub: LibGlass comes from a sibling
