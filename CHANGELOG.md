@@ -3,6 +3,8 @@
 ## Unreleased
 - Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a
   traded higher-level stone is skipped until you reach its level), else create the best rank known.
+- The bar uses LibGlass's clean glass (thin rims, no grain, a softer shadow), like the other Glass
+  addons. Embeds LibGlass-1.0 r8 (was r5).
 - Options page (#15) in Options > AddOns > 123: show, scale and reset the bar, names under the
   icons, the demon wheel's camera and confirm, demon voices, alert sounds, the minimap button.
   `/123 options` opens it. The bar's shown or hidden state and its scale are saved.

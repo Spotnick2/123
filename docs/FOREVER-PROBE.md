@@ -9,8 +9,8 @@ from before the migration stay under `runs`. Chat payloads are logged by shape o
 
 Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
-API reference: `forever-api-1.60.1.70338.md` (2026-10-10). Against 70291 its documented API is
-identical (6604 functions); the `_G` walks differ only by Blizzard UI and addons loaded at dump
+API reference: `forever-api-1.60.1.70374.md` (2026-10-15). Against 70338 (and 70291 before it)
+its documented API is identical (6604 functions, 1810 events); the `_G` walks differ only by Blizzard UI and addons loaded at dump
 time. Every global 123 uses is unchanged.
 
 | # | Question | Probe | Issue | Status |
