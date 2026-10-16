@@ -23,6 +23,7 @@ time. Every global 123 uses is unchanged.
 | 6 | Trade: `InitiateTrade` from a click, `TRADE_SHOW` recipient, placing a stone from the event vs. from a click | `trade <unit>`, `tradeitem <id>` | #2 | PARTIAL (run 2) |
 | 7 | Chat: PARTY / RAID / INSTANCE_CHAT sent typed vs. from a timer, seen by another player; incoming sender name / GUID, group and non-group whispers | `say <chan>`, `watch on` | #2 | PARTIAL (run 1) |
 | 8 | Range and position for group members (near, far, offline, instanced): `UnitPosition`, `UnitDistanceSquared`, `CheckInteractDistance`, `UnitIsVisible`, `UnitInRange`, map, spell range | `range` | #2 | PARTIAL (runs 1–2: far and near, open world) |
+| 9 | Turning 123 off for one character (#39): which character form `C_AddOns.DisableAddOn` takes | `/fp steps 123 disable` | #39 | **MEASURED** (70374, 2026-10-15): the player's **GUID** (as Blizzard's AddOns list passes it) sets this character to 0 and all to 1; `EnableAddOn` restores 2/2. A name (`UnitName`, "Kaleid") is accepted and does nothing. Not used: 123 skips itself at load instead (every file stops on another class). |
 
 ## Run 1 — build 70334, 2026-10-09, open world, party of 2
 

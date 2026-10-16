@@ -7,6 +7,7 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 ns.Data = {
     -- Best known first is the Demon button's pick until a demon has been out

@@ -27,6 +27,7 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 local Portrait = {}
 ns.Portrait = Portrait

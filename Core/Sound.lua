@@ -7,6 +7,7 @@
 -- a healthstone request (#8). The demons' voices stay in UI/Wheel.lua.
 
 local _, ns = ...
+if ns.skip then return end
 
 local Sound = {
     lastPlayedAt = {},
