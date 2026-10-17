@@ -123,4 +123,19 @@ box:SetText("123, summ")
 box:GetScript("OnEnterPressed")(box)
 H.eq(table.concat(ns.db.queue.keywords, "|"), "123|summ", "Enter saves them")
 
+-- The first list after a /reload arrives in combat, and the client refuses
+-- the button's position: the spot remembered when the bar was set up is
+-- used (Codex on #38).
+WoW.reset()
+local ns2 = H.loadAddon()
+local button = ns2.Bar:Button("summoning")
+button.GetCenter = function() error("refused in combat") end
+WoW.enterCombat()
+ns2.Queue:Add("Test-9", "Late Comer", "MAGE", true)
+local p2 = ns2.QueueList.frame._points[1]
+H.check(p2 and p2[1] == "BOTTOM" and p2[4] == 960 and p2[5] == 540 + 18 + 22,
+    "the first list in combat still goes above Summoning")
+H.check(ns2.QueueList.frame:IsShown(), "and shows")
+WoW.leaveCombat()
+
 H.done("test_queue")

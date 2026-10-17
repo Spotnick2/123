@@ -563,7 +563,10 @@ end
 
 -- The summon queue's list follows the Summoning button (#9).
 function Bar:Moved()
-    if ns.QueueList then ns.QueueList:Refresh() end
+    if ns.QueueList then
+        ns.QueueList:Remember()
+        ns.QueueList:Refresh()
+    end
 end
 
 -- A bar button by key ("summoning"), or nil.

@@ -75,19 +75,30 @@ function QueueList:Create()
 end
 
 -- Above the Summoning button, in UIParent's coordinates.
--- Reading a protected button's position in combat is unmeasured: a refused
--- read keeps the list where it was.
-function QueueList:Place()
+-- Where the list goes: above the Summoning button, in UIParent's
+-- coordinates. Reading a protected button's position in combat is
+-- unmeasured, so the spot is also remembered whenever the bar is set up or
+-- moved (out of combat): a refused read, even for the first list after a
+-- /reload, falls back to it (Codex on #38).
+function QueueList:Remember()
     local button = ns.Bar:Button("summoning")
-    if not button then return end
+    if not button then return nil end
     local ok, x, top, scale = pcall(function()
         local cx = button:GetCenter()
         return cx, button:GetTop(), button:GetEffectiveScale() / UIParent:GetEffectiveScale()
     end)
-    x, top = ok and API.Number(x), ok and API.Number(top)
-    if not (x and top) then return end
+    x, top, scale = ok and API.Number(x), ok and API.Number(top), ok and API.Number(scale)
+    if x and top and scale then
+        self.spot = { x * scale, top * scale + 22 }
+    end
+    return self.spot
+end
+
+function QueueList:Place()
+    local spot = self:Remember()
+    if not spot then return end
     self.frame:ClearAllPoints()
-    self.frame:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", x * scale, top * scale + 22)
+    self.frame:SetPoint("BOTTOM", UIParent, "BOTTOMLEFT", spot[1], spot[2])
 end
 
 function QueueList:Refresh()
