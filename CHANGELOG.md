@@ -1,6 +1,7 @@
 # Changelog
 
 ## Unreleased
+- Embeds LibGlass-1.0 r9 (opt-in additions only; 123's look is unchanged).
 - On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
   there's no frame, event or command, and its key bindings do nothing.
 
