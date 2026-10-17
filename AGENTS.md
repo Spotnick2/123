@@ -7,12 +7,12 @@ for the bar, `C:\Projects\WoW\Apotheca`.
 
 Read before changing code:
 - `C:\Projects\WoW\References\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
-- `C:\Projects\WoW\References\forever-api-1.60.1.70374.md`: the client's API (grep it; it is huge). Always the
+- `C:\Projects\WoW\References\forever-api-1.60.1.70450.md`: the client's API (grep it; it is huge). Always the
   newest `forever-api-*.md`: a new client build gets a new dump.
 - `C:\Projects\WoW\References\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
 - `C:\Projects\WoW\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
 - `C:\Projects\WoW\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
-- `C:\Projects\WoW\wow-ui-source`: FrameXML (build 70374, `version.txt`).
+- `C:\Projects\WoW\wow-ui-source`: FrameXML (build 70450, `version.txt`).
 - `docs/DESIGN.md`: what 123 does. `docs/FOREVER-PROBE.md`: what has been measured for it.
 - Sibling addons have already answered a lot (secure buttons, roster, range, sounds, models):
   look there before writing a probe. `docs/DESIGN.md` lists where.
@@ -72,5 +72,5 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
 - Options use the Settings canvas API. There is no UIDropDownMenu.
 - Sounds: in-game kits (`PlaySound`, vanilla-era kits) or FileDataIDs; `PlaySoundFile` refuses
   built-in paths. Models: `ModelScene` + `SetModelByCreatureDisplayID`.
-- Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r8,
+- Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r9,
   LibShowcase-1.0 r4); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.
