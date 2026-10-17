@@ -25,6 +25,18 @@ H.check(order["Core/Compat.lua"] < order["Core/Events.lua"], "Compat before Even
 H.eq(files[#files], "Core/Init.lua", "Init loads last")
 H.check(not order["Tools/OneTwoThreeProbe/OneTwoThreeProbe.lua"], "the probe is not shipped")
 
+-- #39: every 123 file stops on its first line on another class.
+for _, f in ipairs(files) do
+    if f:find("%.lua$") and not f:find("^Libs/") then
+        local src = assert(io.open(f)):read("*a")
+        local head = src:match("^.-ns = %.%.%.\r?\n([^\n]*)")
+        H.check(head and head:find("if ns.skip then return end", 1, true) or f == "Core/Constants.lua",
+            f .. " stops at once on another class")
+    end
+end
+local constants = assert(io.open("Core/Constants.lua")):read("*a")
+H.check(constants:find("if ns.skip then return end", 1, true), "Constants decides, then stops too")
+
 local pkg = assert(io.open(".pkgmeta")):read("*a"):gsub("\r", "")
 H.check(pkg:find("package%-as: 123\n"), ".pkgmeta packages as 123")
 for _, ignored in ipairs({ "tests", "Tools", "docs", "AGENTS.md", "CLAUDE.md", ".claude", ".github" }) do

@@ -1,4 +1,5 @@
 local _, ns = ...
+if ns.skip then return end
 
 local DB = {}
 ns.DB = DB

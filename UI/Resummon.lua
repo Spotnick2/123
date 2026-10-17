@@ -11,6 +11,7 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 local Resummon = {}
 ns.Resummon = Resummon

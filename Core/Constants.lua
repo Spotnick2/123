@@ -1,5 +1,14 @@
 local addonName, ns = ...
 
+-- Not a Warlock: nothing of 123 runs (#39). The client reads an enabled
+-- addon's files whatever the class, so each file stops on its first line
+-- (`if ns.skip then return end`; test_manifest checks every one). A class
+-- not readable yet at load leaves skip false: the login gate in Init still
+-- stops 123 there.
+local okClass, _, classFile = pcall(UnitClass, "player")
+ns.skip = okClass and type(classFile) == "string" and classFile ~= "WARLOCK"
+if ns.skip then return end
+
 ns.AddonName = addonName
 ns.MediaRoot = "Interface\\AddOns\\" .. addonName .. "\\Media\\"
 

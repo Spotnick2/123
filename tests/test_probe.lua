@@ -66,6 +66,35 @@ fp("123 say PARTY hello")
 WoW.runTimers(2)
 H.eq(#WoW.chat, 2, "the typed and the timer send")
 
+-- #39's procedure, walked with the host's own controls, by the player's
+-- GUID (WoW.playerGUID in the stubs).
+local S = ForeverProbe.Steps
+fp("123 disable")
+H.check(S.IsShown(), "/fp 123 disable starts the procedure")
+local rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/disable"]
+H.check(rec.results[1] and rec.results[1].status == "done", "step 1 read the names on arrival")
+S.Run()   -- step 2 (step 1 ran on arrival and moved on); Run completes it
+H.eq(rec.results[2].check, "PASS", "disabled for this character only: PASS")
+H.eq(C_AddOns.GetAddOnEnableState("123", nil), 1, "still on for the others")
+S.Answer(true)
+S.Run()
+H.eq(rec.results[4].check, "PASS", "enabled again: PASS")
+H.eq(C_AddOns.GetAddOnEnableState("123", nil), 2, "on for everyone")
+S.Stop("test")
+
+-- The danger: a client that ignores the character disables 123 everywhere;
+-- the step puts it back at once and the check fails.
+local real = C_AddOns.DisableAddOn
+C_AddOns.DisableAddOn = function() WoW.addonOffAll = true end
+fp("123 disable")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/disable"]
+S.Run()
+H.eq(rec.results[2].check, "FAIL", "disabled everywhere: FAIL")
+H.eq(C_AddOns.GetAddOnEnableState("123", nil), 2, "and re-enabled for every character at once")
+H.check(logged("disabled for EVERY character"), "and says so")
+S.Stop("test")
+C_AddOns.DisableAddOn = real
+
 fp("123 clear")
 H.eq(#DB.log, 1, "clear empties the log in place (then says so)")
 H.check(ns._test.Probe ~= nil, "the test seam")

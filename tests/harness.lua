@@ -112,6 +112,7 @@ function H.loadAddon(opts)
         chunk("123")
     end
     if opts.savedDB then rawset(_G, "OneTwoThreeDB", opts.savedDB) end
+    if opts.beforeLogin then opts.beforeLogin() end
     login("123")
     return ns
 end

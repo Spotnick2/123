@@ -5,6 +5,8 @@
   raid or instance chat joins a list above the Summoning button, with a sound. Exact matching,
   one place per person, dropped on leaving the group, after a timeout or by hand. Keywords and
   timeout in the options; `/123 queue test` tries it alone.
+- On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
+  there's no frame, event or command, and its key bindings do nothing.
 
 ## v0.2.0 (2026-10-15)
 Smart stones, an options page and a minimap button, on LibGlass's clean glass.

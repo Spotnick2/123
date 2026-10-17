@@ -1,9 +1,9 @@
 <Bindings>
     <Binding name="ONETWOTHREE_TOGGLE" category="123">
-        OneTwoThree_Toggle()
+        if OneTwoThree_Toggle then OneTwoThree_Toggle() end
     </Binding>
     <Binding name="ONETWOTHREE_WHEEL" category="123">
-        OneTwoThree_Wheel()
+        if OneTwoThree_Wheel then OneTwoThree_Wheel() end
     </Binding>
     <Binding name="CLICK OneTwoThreeBarButton1:LeftButton" category="123"/>
     <Binding name="CLICK OneTwoThreeBarButton1:RightButton" category="123"/>

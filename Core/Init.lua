@@ -1,4 +1,5 @@
 local _, ns = ...
+if ns.skip then return end
 
 local function printMessage(message)
     if DEFAULT_CHAT_FRAME then

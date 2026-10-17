@@ -18,6 +18,7 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 local Bar = {}
 ns.Bar = Bar

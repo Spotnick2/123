@@ -34,6 +34,7 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 local API = ns.API
 local SA = ns.SecureAction
