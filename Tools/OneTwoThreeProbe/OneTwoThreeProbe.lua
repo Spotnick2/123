@@ -478,6 +478,38 @@ Probe:Steps("disable", {
 
 Probe:Command("disable", function() Probe:StartSteps("disable") end, "#39: can 123 turn itself off for one character?")
 
+------------------------------------------------------------
+-- queue (#9, Codex on #38): does a group member's "123" reach the queue?
+------------------------------------------------------------
+
+-- The event steps log each payload by shape (shapeOnly): the GUID's
+-- readability is what the queue stands on, never what was said.
+Probe:Steps("queue", {
+    title = "Summon queue: another player's 123 (#9)",
+    { text = "In a PARTY with a second player, outside instances, out of combat. 123 (the queue build) "
+        .. "and this probe loaded. Press Next when ready." },
+    { text = "Ask the other player to type 123 in PARTY chat.", event = "CHAT_MSG_PARTY", shapeOnly = true },
+    { text = "Did their name appear in 123's Summons list above the Summoning button, with a sound?",
+      ask = true, screenshot = "queue: party request" },
+    { text = "Click the x on their row. Did the row go away and the list hide?", ask = true },
+    { text = "Type /reload, so the next list is the first one after a reload.", reload = true },
+    { text = "Get into combat and stay in it (a mob or a training dummy), then ask them to type 123 in party "
+        .. "chat again.", event = "CHAT_MSG_PARTY", shapeOnly = true },
+    { text = "Still in combat: did they join, and does the list sit above the Summoning button?", ask = true,
+      screenshot = "queue: first list in combat" },
+    { text = "Out of combat: shift-drag the bar elsewhere, then change the bar scale in Options > AddOns > 123. "
+        .. "Did the list follow both times?", ask = true, screenshot = "queue: after moving" },
+    { text = "Optional (Skip if not now): convert to a raid, then ask them to type 123 in RAID chat.",
+      event = "CHAT_MSG_RAID", shapeOnly = true },
+    { text = "Did they join from raid chat? (Skip if you skipped the last step.)", ask = true },
+    { text = "Optional (Skip if not now): inside a dungeon, ask them to type 123 in party chat "
+        .. "(or instance chat in a dungeon-finder group).", event = "CHAT_MSG_PARTY", shapeOnly = true },
+    { text = "Did they join inside the dungeon? (Skip if you skipped the last step.)", ask = true },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("queue", function() Probe:StartSteps("queue") end, "#9: does a group member's 123 reach the queue?")
+
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.
 local boot = CreateFrame("Frame")

@@ -95,6 +95,16 @@ H.check(logged("disabled for EVERY character"), "and says so")
 S.Stop("test")
 C_AddOns.DisableAddOn = real
 
+-- #9's procedure: a chat step logs the payload by shape only.
+fp("123 queue")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/queue"]
+H.check(S.IsShown() and rec ~= nil, "/fp 123 queue starts the procedure")
+S.Next()
+WoW.fire("CHAT_MSG_PARTY", "123", "Ashka Vale", "", "", "", "", 0, 0, "", 0, 9, "Player-1-AAA")
+H.eq(rec.results[2] and rec.results[2].status, "event", "the party line completes step 2")
+H.check(not logged("Ashka Vale"), "never the sender's name")
+S.Stop("test")
+
 fp("123 clear")
 H.eq(#DB.log, 1, "clear empties the log in place (then says so)")
 H.check(ns._test.Probe ~= nil, "the test seam")
