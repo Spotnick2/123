@@ -9,8 +9,9 @@ from before the migration stay under `runs`. Chat payloads are logged by shape o
 
 Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
-API reference: `forever-api-1.60.1.70374.md` (2026-10-15). Against 70338 (and 70291 before it)
-its documented API is identical (6604 functions, 1810 events); the `_G` walks differ only by Blizzard UI and addons loaded at dump
+API reference: `forever-api-1.60.1.70450.md` (2026-10-17). Against 70374: +16 / -3 functions,
++6 / -2 events, none that 123 uses except `PLAYER_LEVEL_UP`, which gains `spiritDelta` (123 reads
+no argument). 70374 was identical to 70338 and 70291 (6604 functions, 1810 events); the `_G` walks differ only by Blizzard UI and addons loaded at dump
 time. Every global 123 uses is unchanged.
 
 | # | Question | Probe | Issue | Status |
