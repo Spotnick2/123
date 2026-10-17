@@ -43,9 +43,20 @@ soulstone, healthstones and summoning, one click away.
   Escape, a summon or combat closes it.
 - `/123 preview` shows every demon without casting: click one to put it in the centre.
 
+## The summon queue
+Anyone in your party or raid who types **123** in group chat joins a small list above the
+Summoning button, with a sound, in the order they asked.
+- The whole message must be the keyword: "123" or "123!" asks; "1234" or "123 dps" doesn't. Add
+  your own keywords in the options.
+- Asking again keeps your place. You drop off when you leave the group, after 10 minutes
+  (adjustable), or when the Warlock clicks the x.
+- `/123 queue test` adds two made-up requests, to see it alone.
+- Coming next: casting Ritual of Summoning on the next in line, and help calls for clickers.
+
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)
 - `/123 options`: the options page (Options > AddOns > 123)
+- `/123 queue`: how many wait; `/123 queue test` adds test requests, `/123 queue clear` empties it
 - `/123 wheel`: open the demon wheel (also the bar's "Demons" button, and a key binding)
 - `/123 preview`: the wheel with every demon shown and nothing cast; click a demon to put it in
   the centre (screenshots, any level)
@@ -60,8 +71,8 @@ soulstone, healthstones and summoning, one click away.
   Healthstone, Ritual of Summoning
 
 ## Coming next
-Healthstone requests (a player-initiated trade when someone asks), a soulstone target, and the
-summon queue: everyone who types **123** in group chat, with help calls for clickers. See the
+Healthstone requests (a player-initiated trade when someone asks), a soulstone target, and
+summoning straight from the queue, with help calls for clickers. See the
 [issues](https://github.com/Spotnick2/123/issues).
 
 ## Download

@@ -95,6 +95,41 @@ H.check(logged("disabled for EVERY character"), "and says so")
 S.Stop("test")
 C_AddOns.DisableAddOn = real
 
+-- #9's procedure, walked to the end: each chat step completes from the
+-- event its text asks for (a party leader's line and instance chat are their
+-- own events, Codex on #38), and logs the payload by shape only.
+local function chat(event, sender)
+    WoW.fire(event, "123", sender, "", "", "", "", 0, 0, "", 0, 9, "Player-1-AAA")
+end
+-- A step's screenshot holds the next step until the host's OnUpdate driver
+-- has settled and taken it (here it fails: no Screenshot() in the stubs).
+local function settle() for _ = 1, 12 do WoW.tick(0.5) end end
+fp("123 queue")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/queue"]
+H.check(S.IsShown() and rec ~= nil, "/fp 123 queue starts the procedure")
+S.Next()                                             -- 1 ready
+chat("CHAT_MSG_PARTY_LEADER", "Wrong Step")          -- 2 waits for a member's PARTY line
+H.check(rec.results[2] == nil or rec.results[2].status ~= "event", "a leader's line doesn't complete the member step")
+chat("CHAT_MSG_PARTY", "Ashka Vale")                 -- 2
+S.Answer(true); settle(); S.Answer(true)    -- 3 (its screenshot), 4
+S.Skip()                                             -- 5 the /reload
+chat("CHAT_MSG_PARTY", "Ashka Vale")                 -- 6 in combat
+S.Answer(true); settle()                     -- 7 (its screenshot)
+S.Answer(true); settle()                     -- 8 (its screenshot)
+chat("CHAT_MSG_PARTY_LEADER", "Ashka Vale")          -- 9 them as leader
+S.Answer(true)                                       -- 10
+chat("CHAT_MSG_RAID", "Ashka Vale")                  -- 11
+S.Answer(true)                                       -- 12
+chat("CHAT_MSG_PARTY", "Ashka Vale")                 -- 13 dungeon
+S.Answer(true)                                       -- 14
+chat("CHAT_MSG_INSTANCE_CHAT", "Ashka Vale")         -- 15 dungeon finder
+S.Answer(true)                                       -- 16
+for _, i in ipairs({ 2, 6, 9, 11, 13, 15 }) do
+    H.eq(rec.results[i] and rec.results[i].status, "event", "chat step " .. i .. " completes from its event")
+end
+H.check(not logged("Ashka Vale"), "never the sender's name")
+S.Stop("test")
+
 fp("123 clear")
 H.eq(#DB.log, 1, "clear empties the log in place (then says so)")
 H.check(ns._test.Probe ~= nil, "the test seam")

@@ -26,12 +26,14 @@ local APPLY = {
     showMinimapButton = function() ns.Minimap:RefreshVisibility() end,
 }
 
--- Where a key is saved: ns.db, except the bar's own and the alert kits.
+-- Where a key is saved: ns.db, except the bar's own, the alert kits and
+-- the summon queue's.
 local function path(key)
     local tbl, field = ns.db, key
     if key == "barShown" then tbl, field = ns.db.bar, "shown"
     elseif key == "barScale" then tbl, field = ns.db.bar, "scale"
-    elseif key:find("^alerts%.") then tbl, field = ns.db.alerts, key:sub(8) end
+    elseif key:find("^alerts%.") then tbl, field = ns.db.alerts, key:sub(8)
+    elseif key:find("^queue%.") then tbl, field = ns.db.queue, key:sub(7) end
     return tbl, field
 end
 
@@ -148,6 +150,29 @@ local function stepper(parent, anchor, key, label, minV, maxV, step, fmt)
     return minus
 end
 
+-- The summon queue's keywords, comma-separated, saved on Enter or when the
+-- box loses focus (an empty box goes back to "123").
+local function keywords(parent, anchor)
+    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    box:SetSize(150, 20)
+    box:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 6, -8)
+    box:SetAutoFocus(false)
+    local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
+    fs:SetPoint("LEFT", box, "RIGHT", 8, 0)
+    fs:SetText("Keywords")
+    local function refresh() box:SetText(table.concat(ns.db.queue.keywords, ", ")) end
+    local function save()
+        ns.db.queue.keywords = ns.Queue.ParseKeywords(box:GetText())
+        refresh()
+    end
+    box:SetScript("OnEnterPressed", function(self) save(); self:ClearFocus() end)
+    box:SetScript("OnEditFocusLost", save)
+    box:SetScript("OnEscapePressed", function(self) refresh(); self:ClearFocus() end)
+    controls[#controls + 1] = refresh
+    box.save = save
+    return box
+end
+
 local function build()
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
@@ -193,6 +218,12 @@ local function build()
         end)
     end
     a = note(panel, "Picking a sound plays it. Requests arrive with the summon queue and healthstone requests.", a)
+
+    h = heading(panel, "Summon queue", a)
+    a = toggle(panel, h, "queue.enabled", "Queue group members who type a keyword")
+    local box = keywords(panel, a)
+    a = stepper(panel, box, "queue.timeout", "Minutes before a request drops", 2, 30, 1, "%d")
+    a = note(panel, "The whole message must be a keyword: \"123\" asks, \"1234\" or \"123 dps\" don't. /123 queue test tries it alone.", a)
 
     h = heading(panel, "Minimap", a)
     a = toggle(panel, h, "showMinimapButton", "Minimap button")

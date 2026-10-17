@@ -20,6 +20,7 @@ Core\DB.lua
 Core\Events.lua
 Core\SecureAction.lua
 Core\Sound.lua
+Core\Queue.lua
 UI\Skin.lua
 UI\Presentation.lua
 UI\Portrait.lua
@@ -27,6 +28,7 @@ UI\Resummon.lua
 UI\Bar.lua
 UI\WheelEffects.lua
 UI\Wheel.lua
+UI\QueueList.lua
 UI\Minimap.lua
 Options\Options.lua
 Core\Init.lua
