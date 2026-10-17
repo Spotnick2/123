@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+- On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
+  there's no frame, event or command, and its key bindings do nothing.
+
 ## v0.2.0 (2026-10-15)
 Smart stones, an options page and a minimap button, on LibGlass's clean glass.
 - Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a

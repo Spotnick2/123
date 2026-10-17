@@ -3,6 +3,7 @@
 -- db.minimap = { minimapPos, hide } belongs to LibDBIcon.
 
 local _, ns = ...
+if ns.skip then return end
 
 local Minimap = {}
 ns.Minimap = Minimap

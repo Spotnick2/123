@@ -6,6 +6,7 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 local Skin = {}
 ns.Skin = Skin

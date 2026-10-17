@@ -45,7 +45,10 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
 - Slash: `/123` and `/onetwothree`. Chat prefix `123:` in Warlock purple (`9482c9`).
 
 ## Technical guardrails (from Portal Roulette, measured)
-- Warlock only: other classes get no UI and no commands.
+- Warlock only: on another class nothing of 123 runs. `Core/Constants.lua` reads the class at load
+  and sets `ns.skip`; every addon file's first line after `local _, ns = ...` is
+  `if ns.skip then return end` (test_manifest checks it). The login gate in `Init.lua` still
+  covers a class not readable at load.
 - Secure casting:
   - `SecureActionButtonTemplate` with `RegisterForClicks("AnyUp", "AnyDown")`.
   - Numbered attribute families only (`typeN` + `spellN`/`itemN`/`unitN`). Never unnumbered `type`,

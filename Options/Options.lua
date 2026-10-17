@@ -7,6 +7,7 @@
 -- so choices cycle on a button and numbers use - / + steppers.
 
 local _, ns = ...
+if ns.skip then return end
 
 local Options = {}
 ns.Options = Options

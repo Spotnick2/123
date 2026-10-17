@@ -533,6 +533,20 @@ end
 
 C_AddOns = {}
 function C_AddOns.GetAddOnMetadata(_, field) if field == "Version" then return "dev" end end
+-- Per-character enable state (#39): WoW.addonOff[character] = true, or
+-- WoW.addonOffAll. Enum.AddOnEnableState: 0 None, 1 Some, 2 All.
+WoW.addonOff, WoW.addonOffAll = {}, false
+function C_AddOns.DisableAddOn(_, character)
+    if character == nil then WoW.addonOffAll = true else WoW.addonOff[character] = true end
+end
+function C_AddOns.EnableAddOn(_, character)
+    if character == nil then WoW.addonOffAll, WoW.addonOff = false, {} else WoW.addonOff[character] = nil end
+end
+function C_AddOns.GetAddOnEnableState(_, character)
+    if WoW.addonOffAll then return 0 end
+    if character ~= nil then return WoW.addonOff[character] and 0 or 2 end
+    return next(WoW.addonOff) and 1 or 2
+end
 
 C_CVar = {}
 function C_CVar.GetCVar() return "1" end
