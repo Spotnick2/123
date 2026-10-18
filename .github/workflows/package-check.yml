@@ -10,7 +10,7 @@ on:
   push:
     branches: [main]
   pull_request:
-  workflow_dispatch:   # run on a tag: the zip for the GitHub release (References/RELEASING.md)
+  workflow_dispatch:   # run on a tag: the zip for the GitHub release (References/Docs/RELEASING.md)
 
 permissions:
   contents: read
