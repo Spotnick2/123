@@ -8,6 +8,8 @@
 - Embeds LibGlass-1.0 r9 (opt-in additions only; 123's look is unchanged).
 - On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
   there's no frame, event or command, and its key bindings do nothing.
+- Stone upgrade (#31): when you know a better rank than the stone you carry, a green + marks the
+  Healthstone or Soulstone button and its right click creates the better stone.
 
 ## v0.2.0 (2026-10-15)
 Smart stones, an options page and a minimap button, on LibGlass's clean glass.
