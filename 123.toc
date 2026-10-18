@@ -5,6 +5,7 @@
 ## Version: @project-version@
 ## SavedVariables: OneTwoThreeDB
 ## X-Curse-Project-ID: 1735903
+## X-Wago-ID: qGYBAONg
 
 Libs\LibStub\LibStub.lua
 Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
