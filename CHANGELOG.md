@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Summon queue (#9): anyone in the group who types "123" (or one of your keywords) in party,
+  raid or instance chat joins a list above the Summoning button, with a sound. Exact matching,
+  one place per person, dropped on leaving the group, after a timeout or by hand. Keywords and
+  timeout in the options; `/123 queue test` tries it alone.
 - Embeds LibGlass-1.0 r9 (opt-in additions only; 123's look is unchanged).
 - On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
   there's no frame, event or command, and its key bindings do nothing.
