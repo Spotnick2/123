@@ -1,6 +1,7 @@
 # Changelog
 
-## Unreleased
+## v0.3.0 (2026-10-18)
+The summon queue, and releases on GitHub and Wago Addons as well as CurseForge.
 - Summon queue (#9): anyone in the group who types "123" (or one of your keywords) in party,
   raid or instance chat joins a list above the Summoning button, with a sound. Exact matching,
   one place per person, dropped on leaving the group, after a timeout or by hand. Keywords and
@@ -8,6 +9,8 @@
 - Embeds LibGlass-1.0 r10 (opt-in additions only; 123's look is unchanged).
 - On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
   there's no frame, event or command, and its key bindings do nothing.
+- Every version is now also on Wago Addons (the Wago app installs and updates it) and a GitHub
+  release with `release.json`, which addon managers such as WowUp read (#42).
 
 ## v0.2.0 (2026-10-15)
 Smart stones, an options page and a minimap button, on LibGlass's clean glass.
