@@ -8,6 +8,8 @@ H.check(toc:find("## Interface: 16001\n"), "Interface is 16001")
 H.check(toc:find("## Version: @project%-version@\n"), "Version stays the packager token")
 H.check(toc:find("## SavedVariables: OneTwoThreeDB\n"), "OneTwoThreeDB is the saved table")
 H.check(toc:find("## X%-Curse%-Project%-ID: 1735903\n"), "the CurseForge project ID")
+-- The `wago` job uploads to the project the packaged TOC names (#42).
+H.check(toc:find("## X%-Wago%-ID: qGYBAONg\n"), "the Wago project ID")
 
 local files = H.tocFiles("123.toc")
 for _, f in ipairs(files) do

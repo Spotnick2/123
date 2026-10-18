@@ -37,7 +37,17 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
   high effort), iterated to consensus. Adopt what is simpler or safer; avoid overengineering.
 - Art and animation are Codex handoffs (`codex-handoff` label), on the model of
   `docs/handoffs/issue-13/START-HERE.txt`.
-- Releases: tag `vX.Y.Z` after main's CI is green; CurseForge packages from `.pkgmeta`.
+- Releases (`C:\Projects\WoW\References\Docs\RELEASING.md`): tag `vX.Y.Z` after main's CI is
+  green. The tag publishes three ways:
+  - CurseForge (project 1735903) builds its own file from `.pkgmeta` through the tag webhook;
+  - the tag's CI run publishes the zip `check` built as a GitHub Release, with `release.json`
+    and the tag's `CHANGELOG.md` section as the notes;
+  - the same run uploads that zip to Wago Addons (project `qGYBAONg`, the TOC's `X-Wago-ID`;
+    `WAGO_API_TOKEN` secret).
+
+  `vX.Y.Z-alpha1` / `-beta1` publish as alpha/beta (a GitHub pre-release); try a packaging change
+  on an alpha first. Publish a failed target again with Actions > Package check > Run workflow
+  from `main` (`tag`, `publish`). No CurseForge key lives in the repo.
 
 ## Naming
 - Addon folder and TOC: `123`. Lua identifiers can't start with a digit, so globals, frames and
