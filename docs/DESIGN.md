@@ -14,10 +14,10 @@ Every button is a stationary secure button; visuals refresh in combat, attribute
 - **Armor**: the highest learned rank of the preferred armor spell (Demon Armor over Demon Skin;
   any Forever armor only once measured). Spell choice refreshes on `SPELLS_CHANGED`; the "missing"
   glow comes from the player's auras, checked at login and on aura updates.
-- **Stones** (#6): left uses the best stone carried, else creates the best rank known; right
-  creates the best rank known when it beats the stone carried (stones are unique per rank), marked
-  by a green "+". `Data.HEALTHSTONE_TIERS` / `SOULSTONE_TIERS` pair each create spell with its
-  items. Trading a healthstone is #8.
+- **Stones** (#6): use the best stone carried (that the player can use), else create the best
+  rank known. `Data.HEALTHSTONE_TIERS` / `SOULSTONE_TIERS` pair each create spell with its items.
+  Creating a better rank while carrying a lesser one (right click) waits for a measurement, #31.
+  Trading a healthstone is #8.
 
 ## Demon wheel
 The owner's "Fel concept" mockup (`docs/mockups/wheel-fel.png`): very close to Portal Roulette, fel
@@ -90,8 +90,18 @@ trade and to place the stone; the player accepts. Whispers from outside the grou
 explicit policy (option).
 
 ## Summon queue
-- Intake: "123" plus an editable keyword list in PARTY / RAID / INSTANCE_CHAT, exact matching,
-  deduplicated by GUID, manual remove / retry, timeout.
+- Intake (#9, `Core/Queue.lua`): "123" plus an editable keyword list in PARTY / RAID /
+  INSTANCE_CHAT (and their _LEADER events). The whole message must be a keyword, compared lower
+  case, trimmed, trailing `! ? .` dropped. The sender must be a group member, found by the chat
+  GUID (12th payload) among `partyN` / `raidN`; the player and an unreadable GUID are skipped.
+  Keyed on GUID, oldest first; asking again keeps the place and refreshes the time. Dropped on
+  `GROUP_ROSTER_UPDATE` when gone from the group, after `db.queue.timeout` minutes (a 10 s
+  ticker, only while someone waits), or by the row's x. "Retry" belongs with execution (#10).
+- List (`UI/QueueList.lua`): a glass list above the Summoning button, under UIParent at
+  coordinates read off the button (never anchored to the bar, which is protected), so it updates
+  in combat. Name in class colour, wait time, x; eight rows, then "and N more".
+- Solo test: `/123 queue test` runs "123", "123!" and "1234" from made-up members through the
+  same matching; test entries skip the roster check.
 - Execution: Ritual of Summoning on the next queued member. Members drop off only on measured
   signals (summon accepted and arrived, left the group); "unknown" keeps them.
 - Announcements: "summoning X, click the portal" / "need clickers", configurable and throttled.
@@ -99,6 +109,18 @@ explicit policy (option).
 ## Portal of Summoning
 Grimoire of Portal of Summoning (item 216748; its use-spell 402265 is the generic "Learning" teach spell, not the portal) is in the database; whether it is
 live is unknown (its IDs look like Season of Discovery leftovers in Forever's database). Everything about it is hidden unless the spell is known; its own spell ID is still to be measured.
+
+## Options, minimap, sounds (#14, #15)
+- **Options > AddOns > 123** (`Options/Options.lua`): a Settings canvas category, built on first
+  show, Portal Roulette's widgets (checkboxes, cycling buttons, steppers; no dropdown). A bar
+  change (shown, scale, labels) is refused in combat and the page re-reads the saved value.
+  The bar's shown state and scale are saved in `db.bar`.
+- **Minimap** (`UI/Minimap.lua`): LibDataBroker + LibDBIcon (vendored) and the Addon
+  Compartment. Click: the wheel; shift-click: the bar; right-click: options.
+- **Sounds** (`Core/Sound.lua`): only what the game doesn't already announce. Spells (a summon,
+  the Ritual, a stone) sound in game, so they get none; a summon request and a healthstone request
+  do, each a client sound kit picked by ear on the options page (a refused kit says so),
+  throttled to one per burst. The demons' voices stay with the wheel.
 
 ## Already answered by sibling addons
 | Topic | Where |

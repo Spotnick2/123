@@ -1,9 +1,28 @@
 # Changelog
 
 ## Unreleased
-- Smart stones (#6): Healthstone and Soulstone use the best stone carried (or create the best rank
-  known); when a better rank is known than the stone carried, a green + marks the button and its
-  right click creates the better stone.
+- Summon queue (#9): anyone in the group who types "123" (or one of your keywords) in party,
+  raid or instance chat joins a list above the Summoning button, with a sound. Exact matching,
+  one place per person, dropped on leaving the group, after a timeout or by hand. Keywords and
+  timeout in the options; `/123 queue test` tries it alone.
+- Embeds LibGlass-1.0 r9 (opt-in additions only; 123's look is unchanged).
+- On any class but Warlock, nothing of 123 runs (#39): every file stops on its first line, so
+  there's no frame, event or command, and its key bindings do nothing.
+
+## v0.2.0 (2026-10-15)
+Smart stones, an options page and a minimap button, on LibGlass's clean glass.
+- Smart stones (#6): Healthstone and Soulstone use the best stone carried that you can use (a
+  traded higher-level stone is skipped until you reach its level), else create the best rank known.
+- The bar uses LibGlass's clean glass (thin rims, no grain, a softer shadow), like the other Glass
+  addons. Embeds LibGlass-1.0 r8 (was r5).
+- Options page (#15) in Options > AddOns > 123: show, scale and reset the bar, names under the
+  icons, the demon wheel's camera and confirm, demon voices, alert sounds, the minimap button.
+  `/123 options` opens it. The bar's shown or hidden state and its scale are saved.
+- Minimap button and Addon Compartment entry (#15): click for the demon wheel, shift-click to show
+  or hide the bar, right-click for options.
+- Alert sounds (#14): a sound per alert (summon request, healthstone request), picked by ear on
+  the options page. They sound once those features land.
+- The licence file now lists exactly the libraries that ship, with their licence texts.
 
 ## v0.1.0 (2026-10-10)
 First public release: the compact bar, the armor reminder and the demon wheel. Group utilities

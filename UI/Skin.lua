@@ -6,11 +6,14 @@
 -- ============================================================
 
 local _, ns = ...
+if ns.skip then return end
 
 local Skin = {}
 ns.Skin = Skin
 
-local NEEDS_MINOR = 5
+-- r6: the clean preset (thin rims, no grain, a softer shadow), as the
+-- other Glass addons use it.
+local NEEDS_MINOR = 6
 local WHITE = ns.Media.WHITE
 
 -- The LibGlass instance, or nil when the library is missing or too old.
@@ -26,7 +29,7 @@ function Skin:Glass()
         lib, minor = stub:GetLibrary("LibGlass-1.0", true)
     end
     if lib and minor and minor >= NEEDS_MINOR and lib.ready == minor then
-        local ok, instance = pcall(lib.New, lib, { font = "arial" })
+        local ok, instance = pcall(lib.New, lib, { font = "arial", preset = "clean" })
         if ok and instance then
             self.glass = instance
         end

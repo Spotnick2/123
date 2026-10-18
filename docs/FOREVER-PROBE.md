@@ -1,14 +1,17 @@
 # 123 — what is measured on WoW: Forever
 
-Run the probe on a Warlock: `pwsh Tools/deploy.ps1 -Probe`, restart the client (a new addon folder),
-`/console scriptErrors 1`, then the `/123probe` commands below. Results print in chat and are saved
-to `WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua` on `/reload` or logout, one entry per
-session under `runs` (earlier sessions are kept).
+The probe is a ForeverProbe module (#35; `References/Docs/PROBES.md`). Run it on a Warlock:
+`pwsh Tools/deploy.ps1 -Probe` (it deploys the `..\ForeverProbe` host first), `/reload`,
+`/console scriptErrors 1`, then `/fp 123 <command>` (the commands below; `/fp 123` lists them).
+Lines go to the ForeverProbe console (`/fp`), never to chat, and to
+`WTF\Account\<id>\SavedVariables\OneTwoThreeProbe.lua` (`log`) on `/reload` or logout. Sessions
+from before the migration stay under `runs`. Chat payloads are logged by shape only.
 
 Status: **OPEN** (not measured), **MEASURED** (build + date), **PARTIAL**.
 
-API reference: `forever-api-1.60.1.70338.md` (2026-10-10). Against 70291 its documented API is
-identical (6604 functions); the `_G` walks differ only by Blizzard UI and addons loaded at dump
+API reference: `forever-api-1.60.1.70450.md` (2026-10-17). Against 70374: +16 / -3 functions,
++6 / -2 events, none that 123 uses except `PLAYER_LEVEL_UP`, which gains `spiritDelta` (123 reads
+no argument). 70374 was identical to 70338 and 70291 (6604 functions, 1810 events); the `_G` walks differ only by Blizzard UI and addons loaded at dump
 time. Every global 123 uses is unchanged.
 
 | # | Question | Probe | Issue | Status |
@@ -21,6 +24,7 @@ time. Every global 123 uses is unchanged.
 | 6 | Trade: `InitiateTrade` from a click, `TRADE_SHOW` recipient, placing a stone from the event vs. from a click | `trade <unit>`, `tradeitem <id>` | #2 | PARTIAL (run 2) |
 | 7 | Chat: PARTY / RAID / INSTANCE_CHAT sent typed vs. from a timer, seen by another player; incoming sender name / GUID, group and non-group whispers | `say <chan>`, `watch on` | #2 | PARTIAL (run 1) |
 | 8 | Range and position for group members (near, far, offline, instanced): `UnitPosition`, `UnitDistanceSquared`, `CheckInteractDistance`, `UnitIsVisible`, `UnitInRange`, map, spell range | `range` | #2 | PARTIAL (runs 1–2: far and near, open world) |
+| 9 | Turning 123 off for one character (#39): which character form `C_AddOns.DisableAddOn` takes | `/fp steps 123 disable` | #39 | **MEASURED** (70374, 2026-10-15): the player's **GUID** (as Blizzard's AddOns list passes it) sets this character to 0 and all to 1; `EnableAddOn` restores 2/2. A name (`UnitName`, "Kaleid") is accepted and does nothing. Not used: 123 skips itself at load instead (every file stops on another class). |
 
 ## Run 1 — build 70334, 2026-10-09, open world, party of 2
 
@@ -42,6 +46,10 @@ Still open: near (same spot), offline, inside an instance.
 
 **Chat (row 7):** `C_ChatInfo.SendChatMessage(..., "PARTY")` raised no error either typed or from a
 1 s timer. Still open: whether the other player received both.
+**Incoming payloads** (GlassChat's ChatProbe, item 5, in `PORTING-TBC-TO-FOREVER.md`): text, sender,
+lineID and GUID are **plain** in the open world, in and out of combat, and
+`C_ChatInfo.InChatMessagingLockdown()` is false. Measured on SAY and LOOT; PARTY / RAID /
+INSTANCE_CHAT and inside a dungeon are still open (`/fp 123 watch on`, shapes).
 
 ## Run 2 — build 70334, 2026-10-09, low-level Warlock, open world, party of 2
 
@@ -56,7 +64,7 @@ Still open: near (same spot), offline, inside an instance.
   - Create Soulstone 20752 / 20755 / 20756 / 20757
 - **Fel Armor 28176 does not exist.** The armor line is Demon Skin, then Demon Armor. Fel Armor **403619** is in Forever's database (Wowhead), probably a Season of Discovery leftover, as the Grimoire's 402265 may be; it may never ship. `book` now lists it; the bar uses it only once it is measured known and castable.
 - **The spellbook has a "Summon Demon" entry with a nil spell ID** (Demonology), next to the individual summons. It is probably a flyout; to be checked before the wheel relies on it.
-- **Stones are unique per item** in Forever's client data (`forever-consumables-1.60.1.70009.tsv`: every healthstone and soulstone "Unique"). Still to confirm in game: creating a higher rank while carrying a lower one (#6, the stone buttons' right click). Heal values from the same data: the base stone ties the best Improved Healthstone variant (Major 1440 / 1440 / 1320).
+- **Stones are unique per item** in Forever's client data (`forever-consumables-1.60.1.70009.tsv`: every healthstone and soulstone "Unique"). Still to confirm in game: creating a higher rank while carrying a lower one (#31, the stone buttons' right click; not shipped until measured). Heal values from the same data: the base stone ties the best Improved Healthstone variant (Major 1440 / 1440 / 1320).
 - **Demonic Sacrifice is 18788 on Forever** (owner, 2026-10-10): with the talent taken, the wheel's right-click on the centre (spell 18788) sacrificed the demon. Its buff IDs per demon: `/123probe auras` after a sacrifice (#20).
 - **Incubus (Forever):** Summon Incubus 713, level 20 from the quest "The Binding", summons NPC 185317 (Wowhead's Forever database). `book` lists 713; the NPC id is confirmed with `pet` once it is learned.
 - **402265 is "Learning"**, the Grimoire's teach spell (item 216748 uses it). The Portal of Summoning spell ID itself is still unknown.
@@ -86,4 +94,4 @@ Still open: near (same spot), offline, inside an instance.
 - Same map (1453). `UnitInRange` is still secret.
 
 Already measured elsewhere (do not re-probe): see `docs/DESIGN.md` and
-`C:\Projects\References\PORTING-TBC-TO-FOREVER.md`.
+`C:\Projects\WoW\References\Docs\PORTING-TBC-TO-FOREVER.md`.

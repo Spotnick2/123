@@ -1,5 +1,14 @@
 local addonName, ns = ...
 
+-- Not a Warlock: nothing of 123 runs (#39). The client reads an enabled
+-- addon's files whatever the class, so each file stops on its first line
+-- (`if ns.skip then return end`; test_manifest checks every one). A class
+-- not readable yet at load leaves skip false: the login gate in Init still
+-- stops 123 there.
+local okClass, _, classFile = pcall(UnitClass, "player")
+ns.skip = okClass and type(classFile) == "string" and classFile ~= "WARLOCK"
+if ns.skip then return end
+
 ns.AddonName = addonName
 ns.MediaRoot = "Interface\\AddOns\\" .. addonName .. "\\Media\\"
 
@@ -15,6 +24,24 @@ ns.Constants = {
         barLabels = false,
         -- The demons' voices on the wheel (hover, click). /123 sounds.
         sounds = true,
+        -- Alert sounds (#14): a sound kit per alert, picked on the options
+        -- page (Core/Sound.lua lists the choices).
+        alertSounds = true,
+        alerts = {
+            summonRequest = 3081,
+            stoneRequest = 880,
+        },
+        -- Summon queue (#9): who typed a keyword in group chat; minutes
+        -- before a request drops off.
+        queue = {
+            enabled = true,
+            keywords = { "123" },
+            timeout = 10,
+        },
+        -- Minimap button (LibDBIcon) and Addon Compartment entry (#15).
+        showMinimapButton = true,
+        showCompartment = true,
+        minimap = {},
         -- Opening the demon wheel (LibShowcase-1.0): hide the game UI and
         -- run the cinematic camera, as Portal Roulette does. /123 camera.
         cinematicCamera = true,
@@ -25,6 +52,8 @@ ns.Constants = {
             point = "CENTER",
             x = 0,
             y = -180,
+            shown = true,
+            scale = 1,
         },
     },
 }

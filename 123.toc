@@ -7,6 +7,9 @@
 ## X-Curse-Project-ID: 1735903
 
 Libs\LibStub\LibStub.lua
+Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua
+Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua
+Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua
 Libs\LibGlass-1.0\LibGlass-1.0.xml
 Libs\LibShowcase-1.0\LibShowcase-1.0.xml
 
@@ -16,6 +19,8 @@ Core\Data.lua
 Core\DB.lua
 Core\Events.lua
 Core\SecureAction.lua
+Core\Sound.lua
+Core\Queue.lua
 UI\Skin.lua
 UI\Presentation.lua
 UI\Portrait.lua
@@ -23,4 +28,7 @@ UI\Resummon.lua
 UI\Bar.lua
 UI\WheelEffects.lua
 UI\Wheel.lua
+UI\QueueList.lua
+UI\Minimap.lua
+Options\Options.lua
 Core\Init.lua

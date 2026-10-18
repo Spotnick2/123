@@ -3,6 +3,7 @@
 -- Roulette's Disc: hiding UIParent for the camera must not freeze the fire.
 -- Assets: Tools/make_wheel_art.py. Widget APIs checked in the 70338 dump.
 local _, ns = ...
+if ns.skip then return end
 local FX = {}
 ns.WheelEffects = FX
 local M = ns.Media

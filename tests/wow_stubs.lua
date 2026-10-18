@@ -7,7 +7,7 @@
 --
 -- The important rule: READING AN UNSTUBBED GLOBAL IS AN ERROR. This file is
 -- the list of APIs verified present on the client's build: the newest dump,
--- C:\Projects\References\forever-api-1.60.1.70338.md. Stub a global only
+-- C:\Projects\WoW\References\Forever\api\forever-api-1.60.1.70450.md. Stub a global only
 -- after confirming it there, with the client's signature. Names the client
 -- does NOT have go in KNOWN_ABSENT, so the addon has to cope without them.
 -- A forgiving stub quietly certifies calls the client will reject.
@@ -89,6 +89,8 @@ function WoW.reset()
     WoW.popups       = {}
     WoW.itemsUsed    = {}        -- names passed to C_Item.UseItemByName
     WoW.curvesRefused = false    -- simulate a client that refuses colour curves
+    WoW.kits, WoW.refusedKits = {}, {}  -- sound kits played / refused
+    WoW.group, WoW.inRaid = {}, false
 end
 
 function WoW.AddItem(bag, slot, itemID, count, name)
@@ -219,6 +221,7 @@ function Frame:GetSize() return self._w, self._h end
 function Frame:GetLeft() return 600 end
 function Frame:GetBottom() return 200 end
 function Frame:GetCenter() return 960, 540 end
+function Frame:GetTop() return 540 + (self._h or 0) / 2 end
 function Frame:GetEffectiveScale() return 1 end
 function Frame:GetScale() return self._scale or 1 end
 function Frame:SetFrameLevel(l) self._level = l end
@@ -227,6 +230,8 @@ function Frame:IsMouseOver() return false end
 function Frame:IsProtected() return protected(self), false end
 function Frame:GetChecked() return self._checked end
 function Frame:SetChecked(v) self._checked = v end
+function Frame:SetAutoFocus(v) self._autoFocus = v end
+function Frame:ClearFocus() self._focus = false end
 function Frame:GetValue() return self._value or 0 end
 function Frame:SetValue(v) self._value = v end
 function Frame:GetMinMaxValues() return 0, 1 end
@@ -286,6 +291,7 @@ local TEMPLATE_REGIONS = {
     InterfaceOptionsCheckButtonTemplate = { "Text" },
     UICheckButtonTemplate               = { "Text" },
     UIPanelButtonTemplate               = { "Text" },
+    InputBoxTemplate                    = {},
     UIDropDownMenuTemplate              = { "Text" },
     OptionsSliderTemplate               = { "Low", "High", "Text" },
 }
@@ -387,12 +393,29 @@ function GetPetActionInfo(slot)
     return a.name, 136235, false, false, false, false, a.spellID
 end
 WoW.playerGUID = "Player-4613-00ABCDEF"
+-- The group: WoW.group = { { guid =, name =, class = }, ... } (others, not
+-- the player), as party1.. or raid1.. (WoW.inRaid).
+WoW.group = {}
+local function member(unit)
+    local i = tonumber(unit:match("^party(%d+)$") or unit:match("^raid(%d+)$"))
+    return i and WoW.group[i]
+end
+function GetNumGroupMembers() return #WoW.group > 0 and #WoW.group + 1 or 0 end
 function UnitGUID(unit)
     if unit == "pet" then return WoW.petGUID end
     if unit == "player" then return WoW.playerGUID end
-    return nil
+    local m = member(unit)
+    return m and m.guid or nil
 end
-function UnitClass() return WoW.class:sub(1, 1) .. WoW.class:sub(2):lower(), WoW.class, 5 end
+function UnitClass(unit)
+    local m = unit and member(unit)
+    local class = m and m.class or WoW.class
+    return class:sub(1, 1) .. class:sub(2):lower(), class, 5
+end
+function GetUnitName(unit)
+    local m = member(unit)
+    return m and m.name or "Testcase Surname"
+end
 -- Outdoors this client returns the CONTINENT, not an empty name.
 function GetInstanceInfo() return WoW.instanceName, WoW.instanceType, 0, "", 0, 0, false, WoW.instanceMap end
 -- Temporary weapon enchants by slot: { has, exp (ms), charges, id }. The
@@ -532,6 +555,20 @@ end
 
 C_AddOns = {}
 function C_AddOns.GetAddOnMetadata(_, field) if field == "Version" then return "dev" end end
+-- Per-character enable state (#39): WoW.addonOff[character] = true, or
+-- WoW.addonOffAll. Enum.AddOnEnableState: 0 None, 1 Some, 2 All.
+WoW.addonOff, WoW.addonOffAll = {}, false
+function C_AddOns.DisableAddOn(_, character)
+    if character == nil then WoW.addonOffAll = true else WoW.addonOff[character] = true end
+end
+function C_AddOns.EnableAddOn(_, character)
+    if character == nil then WoW.addonOffAll, WoW.addonOff = false, {} else WoW.addonOff[character] = nil end
+end
+function C_AddOns.GetAddOnEnableState(_, character)
+    if WoW.addonOffAll then return 0 end
+    if character ~= nil then return WoW.addonOff[character] and 0 or 2 end
+    return next(WoW.addonOff) and 1 or 2
+end
 
 C_CVar = {}
 function C_CVar.GetCVar() return "1" end
@@ -812,6 +849,14 @@ function PlaySoundFile(path, channel)
     return true, WoW.soundHandle
 end
 function StopSound(handle) WoW.stopped[#WoW.stopped + 1] = handle end
+-- Sound kits: WoW.kits records each played; WoW.refusedKits[kit] = true
+-- makes the client refuse one (willPlay false).
+function PlaySound(kit, channel)
+    if WoW.refusedKits[kit] then return false end
+    WoW.kits[#WoW.kits + 1] = kit
+    WoW.soundHandle = WoW.soundHandle + 1
+    return true, WoW.soundHandle
+end
 -- Spell tooltips: WoW.spellTips[id] = { lines... }; missing -> no data yet.
 WoW.spellTips = {}
 function C_TooltipInfo.GetSpellByID(id)
@@ -899,7 +944,7 @@ setmetatable(_G, {
     __index = function(_, k)
         if KNOWN_ABSENT[k] then return nil end
         error("read of undefined global '" .. tostring(k) .. "': stub it only if "
-              .. "forever-api-1.60.1.70338.md confirms it exists, or list it in KNOWN_ABSENT", 2)
+              .. "forever-api-1.60.1.70450.md confirms it exists, or list it in KNOWN_ABSENT", 2)
     end,
 })
 

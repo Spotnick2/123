@@ -2,23 +2,23 @@
 
 123 ("123 — Warlock Summons, Demons & Stones") is a Warlock-only smart bar for **WoW: Forever**:
 Vanilla content on the Retail (Mainline) API, client 1.60.1, `## Interface: 16001`. It is built on
-the architecture and conventions of `C:\Projects\PortalRoulette` (the Mage teleport wheel) and,
-for the bar, `C:\Projects\Apotheca`.
+the architecture and conventions of `C:\Projects\WoW\PortalRoulette` (the Mage teleport wheel) and,
+for the bar, `C:\Projects\WoW\Apotheca`.
 
 Read before changing code:
-- `C:\Projects\References\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
-- `C:\Projects\References\forever-api-1.60.1.70338.md`: the client's API (grep it; it is huge). Always the
+- `C:\Projects\WoW\References\Docs\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
+- `C:\Projects\WoW\References\Forever\api\forever-api-1.60.1.70450.md`: the client's API (grep it; it is huge). Always the
   newest `forever-api-*.md`: a new client build gets a new dump.
-- `C:\Projects\References\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
-- `C:\Projects\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
-- `C:\Projects\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
-- `C:\Projects\wow-ui-source`: FrameXML (build 70338, `version.txt`).
+- `C:\Projects\WoW\References\Docs\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
+- `C:\Projects\WoW\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
+- `C:\Projects\WoW\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
+- `C:\Projects\WoW\wow-ui-source`: FrameXML (build 70450, `version.txt`).
 - `docs/DESIGN.md`: what 123 does. `docs/FOREVER-PROBE.md`: what has been measured for it.
 - Sibling addons have already answered a lot (secure buttons, roster, range, sounds, models):
   look there before writing a probe. `docs/DESIGN.md` lists where.
 
 The rule is **measured beats reasoned**. Anything spell-, item-, trade-, chat- or combat-dependent
-is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before code relies on it.
+is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module: `/fp 123`; `C:\Projects\WoW\References\Docs\PROBES.md`) before code relies on it.
 
 ## Build, test, deploy
 - Tests: `pwsh tests/run.ps1` (Lua 5.1 at `C:\Program Files (x86)\Lua\5.1\`): `luac -p` over every
@@ -28,7 +28,7 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
   It deploys git-tracked files only (stage new files first) to
   `C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns`, and LibGlass from the
   sibling checkout `..\LibGlass`.
-- A brand-new addon folder needs a client restart; otherwise `/reload`. Enable `/console scriptErrors 1`.
+- `/reload` loads changed files and a brand-new addon folder (ForeverProbe GUIDE.md section 7); exit fully only to test persistence. Enable `/console scriptErrors 1`.
 
 ## Workflow
 - Issue → branch (`feature/<n>-slug`, `fix/<n>-slug`, `measure/<n>-slug`) → PR with `Closes #N`.
@@ -36,7 +36,7 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
 - Adversarial reviews with Codex, when the owner asks: `.claude/skills/codex-consult` (gpt-6-astra,
   high effort), iterated to consensus. Adopt what is simpler or safer; avoid overengineering.
 - Art and animation are Codex handoffs (`codex-handoff` label), on the model of
-  `C:\Projects\PortalRoulette-Codex-Handoff\START-HERE.txt`.
+  `docs/handoffs/issue-13/START-HERE.txt`.
 - Releases: tag `vX.Y.Z` after main's CI is green; CurseForge packages from `.pkgmeta`.
 
 ## Naming
@@ -45,7 +45,10 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
 - Slash: `/123` and `/onetwothree`. Chat prefix `123:` in Warlock purple (`9482c9`).
 
 ## Technical guardrails (from Portal Roulette, measured)
-- Warlock only: other classes get no UI and no commands.
+- Warlock only: on another class nothing of 123 runs. `Core/Constants.lua` reads the class at load
+  and sets `ns.skip`; every addon file's first line after `local _, ns = ...` is
+  `if ns.skip then return end` (test_manifest checks it). The login gate in `Init.lua` still
+  covers a class not readable at load.
 - Secure casting:
   - `SecureActionButtonTemplate` with `RegisterForClicks("AnyUp", "AnyDown")`.
   - Numbered attribute families only (`typeN` + `spellN`/`itemN`/`unitN`). Never unnumbered `type`,
@@ -69,5 +72,5 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, `/123probe`) before c
 - Options use the Settings canvas API. There is no UIDropDownMenu.
 - Sounds: in-game kits (`PlaySound`, vanilla-era kits) or FileDataIDs; `PlaySoundFile` refuses
   built-in paths. Models: `ModelScene` + `SetModelByCreatureDisplayID`.
-- Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r5,
+- Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r9,
   LibShowcase-1.0 r4); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.

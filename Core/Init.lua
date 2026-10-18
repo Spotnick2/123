@@ -1,4 +1,5 @@
 local _, ns = ...
+if ns.skip then return end
 
 local function printMessage(message)
     if DEFAULT_CHAT_FRAME then
@@ -66,6 +67,17 @@ local function registerSlashCommands()
             end
         elseif cmd == "preview" then
             ns.Wheel:SetPreview(not ns.Wheel.preview)
+        elseif cmd == "options" or cmd == "config" then
+            ns.Options:Open()
+        elseif cmd == "queue" then
+            local sub = string.lower((commandText or ""):match("^%s*%S+%s+(%S*)") or "")
+            if sub == "test" then
+                printMessage(ns.Queue:Test() .. " test requests joined the summon queue (\"1234\" didn't match).")
+            elseif sub == "clear" then
+                ns.Queue:Clear()
+            else
+                printMessage(#ns.Queue.entries .. " waiting. /123 queue test | clear")
+            end
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
         elseif cmd == "labels" then
@@ -91,7 +103,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
+            printMessage("/123 | options | queue (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
         end
     end
 end
@@ -107,5 +119,9 @@ ns.Events:Register("PLAYER_LOGIN", function()
     ns.SecureAction.Initialize()
     ns.Bar:Initialize()
     ns.Wheel:Initialize()
+    ns.Queue:Initialize()
+    ns.QueueList:Initialize()
+    ns.Minimap:Initialize()
+    ns.Options:Register()
     registerSlashCommands()
 end)

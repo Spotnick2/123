@@ -10,6 +10,7 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:   # run on a tag: the zip for the GitHub release (References/Docs/RELEASING.md)
 
 permissions:
   contents: read
@@ -48,6 +49,8 @@ jobs:
           find . -name '*.lua' -not -path './.git/*' -print0 | xargs -0 luac5.1 -p
 
       - name: Unit tests
+        env:
+          FOREVERPROBE_OPTIONAL: "1"   # ForeverProbe is private and local: probe tests run locally
         run: |
           for f in tests/test_*.lua; do
             echo "-- $f"
@@ -73,7 +76,7 @@ jobs:
 
           # What the client needs. Bindings.xml isn't in the TOC (the client finds
           # it by name), so nothing else would notice it missing.
-          for f in 123/123.toc                    123/Bindings.xml                    123/LICENSE                    123/Libs/LibStub/LibStub.lua; do
+          for f in 123/123.toc                    123/Bindings.xml                    123/LICENSE                    123/Libs/LibStub/LibStub.lua                    123/Libs/LibStub/LICENSE.txt 123/Libs/CallbackHandler-1.0/LICENSE.txt                    123/Libs/LibDBIcon-1.0/LICENSE.txt; do
             grep -qx "$f" files.txt || { echo "MISSING from the package: $f"; fail=1; }
           done
 
