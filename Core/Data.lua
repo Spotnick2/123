@@ -2,7 +2,7 @@
 -- Data: Warlock spell and item IDs. Every list is ordered best first.
 --
 -- Spell IDs measured on 70334 (docs/FOREVER-PROBE.md run 2: Forever keeps
--- Vanilla's IDs). Item IDs from References/forever-consumables-1.60.1.70009.tsv
+-- Vanilla's IDs). Item IDs from References/Forever/consumables/forever-consumables-1.60.1.70009.tsv
 -- and Apotheca's ApothecaItems.lua.
 -- ============================================================
 
@@ -117,7 +117,7 @@ ns.Data = {
 
     -- Stones by tier, strongest first (#6): the spell that creates the tier
     -- and the items it makes. Every stone is "Unique" per item in Forever's
-    -- client data (References/forever-consumables-1.60.1.70009.tsv), so a
+    -- client data (References/Forever/consumables/forever-consumables-1.60.1.70009.tsv), so a
     -- lower rank carried shouldn't stop a higher one being created; that the
     -- client allows it is still to confirm in game (FOREVER-PROBE.md).
     -- Within a tier, items are strongest first by that data's heal values:

@@ -1,6 +1,6 @@
 # 123 — what is measured on WoW: Forever
 
-The probe is a ForeverProbe module (#35; `References/PROBES.md`). Run it on a Warlock:
+The probe is a ForeverProbe module (#35; `References/Docs/PROBES.md`). Run it on a Warlock:
 `pwsh Tools/deploy.ps1 -Probe` (it deploys the `..\ForeverProbe` host first), `/reload`,
 `/console scriptErrors 1`, then `/fp 123 <command>` (the commands below; `/fp 123` lists them).
 Lines go to the ForeverProbe console (`/fp`), never to chat, and to
@@ -94,4 +94,4 @@ INSTANCE_CHAT and inside a dungeon are still open (`/fp 123 watch on`, shapes).
 - Same map (1453). `UnitInRange` is still secret.
 
 Already measured elsewhere (do not re-probe): see `docs/DESIGN.md` and
-`C:\Projects\WoW\References\PORTING-TBC-TO-FOREVER.md`.
+`C:\Projects\WoW\References\Docs\PORTING-TBC-TO-FOREVER.md`.
