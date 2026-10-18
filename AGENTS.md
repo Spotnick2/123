@@ -6,10 +6,10 @@ the architecture and conventions of `C:\Projects\WoW\PortalRoulette` (the Mage t
 for the bar, `C:\Projects\WoW\Apotheca`.
 
 Read before changing code:
-- `C:\Projects\WoW\References\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
-- `C:\Projects\WoW\References\forever-api-1.60.1.70450.md`: the client's API (grep it; it is huge). Always the
+- `C:\Projects\WoW\References\Docs\PORTING-TBC-TO-FOREVER.md`: what changed from TBC, measured.
+- `C:\Projects\WoW\References\Forever\api\forever-api-1.60.1.70450.md`: the client's API (grep it; it is huge). Always the
   newest `forever-api-*.md`: a new client build gets a new dump.
-- `C:\Projects\WoW\References\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
+- `C:\Projects\WoW\References\Docs\EMBEDDED-LIBRARIES.md`: rules for the embedded libraries.
 - `C:\Projects\WoW\LibGlass\docs\GLASS-MATERIAL.md`: the glass material.
 - `C:\Projects\WoW\LibShowcase\docs\DESIGN.md`: the camera presentation when the demon wheel opens.
 - `C:\Projects\WoW\wow-ui-source`: FrameXML (build 70450, `version.txt`).
@@ -18,7 +18,7 @@ Read before changing code:
   look there before writing a probe. `docs/DESIGN.md` lists where.
 
 The rule is **measured beats reasoned**. Anything spell-, item-, trade-, chat- or combat-dependent
-is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module: `/fp 123`; `C:\Projects\WoW\References\PROBES.md`) before code relies on it.
+is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module: `/fp 123`; `C:\Projects\WoW\References\Docs\PROBES.md`) before code relies on it.
 
 ## Build, test, deploy
 - Tests: `pwsh tests/run.ps1` (Lua 5.1 at `C:\Program Files (x86)\Lua\5.1\`): `luac -p` over every
