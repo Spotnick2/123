@@ -59,6 +59,12 @@ ns.Constants = {
 }
 
 ns.Media = {
+    -- Compact bar (#13, Tools/make_bar_art.py); neutral art tinted by Lua.
+    BAR_FRAME = ns.MediaRoot .. "Bar_Frame_64.tga",
+    BAR_RIM = ns.MediaRoot .. "Bar_RimLight_64.tga",
+    BAR_GLOW = ns.MediaRoot .. "Bar_Glow_128.tga",
+    BAR_GRIP = ns.MediaRoot .. "Bar_Grip_32.tga",
+    BAR_DIVIDER = ns.MediaRoot .. "Bar_Divider_8x64.tga",
     -- The fel wheel (#13, Tools/make_wheel_art.py). WHEEL_NODE's opaque band
     -- hides the portrait model's square edges (a 3D model can't be masked).
     WHEEL_SHADOW = ns.MediaRoot .. "Wheel_Shadow_512.tga",

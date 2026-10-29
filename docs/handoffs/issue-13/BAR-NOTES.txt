@@ -1,0 +1,57 @@
+123 — ISSUE 13 BAR ART AND ANIMATION
+2026-10-29, feature/13-bar-art
+
+IMPLEMENTATION
+Five deterministic TGAs from Tools/make_bar_art.py (104,538 bytes total):
+  Bar_Frame_64.tga         64 x 64     16,402 bytes
+  Bar_RimLight_64.tga      64 x 64     16,402 bytes
+  Bar_Glow_128.tga        128 x 128    65,554 bytes
+  Bar_Grip_32.tga          32 x 32      4,114 bytes
+  Bar_Divider_8x64.tga      8 x 64      2,066 bytes
+Uncompressed bottom-origin RGBA; neutral metal, white light layers.
+Regenerate with python Tools/make_bar_art.py; never hand-edit the TGAs.
+Uses the wheel toolchain's existing Pillow/numpy dependencies.
+
+TUNING
+UI/BarEffects.lua owns the palette and animation timings. Frame/rim are
+40 px around unchanged 36 px buttons; glow is 56 px. Armor bounces from
+1 to .35 over .8 s each way; summon breathes over 2.8 s total. Hover is
+instant: a rim on the overlay, shown by OnEnter/OnLeave hooks (the
+button's HIGHLIGHT layer sits under the overlay's frame; review of #47).
+No new frames, API reads or clocks.
+Precedence: unlearned, missing reagent, armor/queue glow, normal.
+The armor reminder retains its existing unknown-in-combat behavior.
+Queue changes update the summon visual in combat. Shard icon stays bare.
+No LibGlass changes required.
+PALETTE keeps the normal/armor accent purple and waiting fel green via
+ns.Colors. Missing reagent uses the wheel's red (1, .23, .12); unlearned
+uses (.40, .43, .37). Rim/hover/glow/grip alphas: .7/.9/.7/.45.
+TIMING owns both pulse half-cycles and alpha endpoints. Edit Lua to tune.
+
+VALIDATION
+Validation: pwsh tests/run.ps1; python Tools/preview_bar.py.
+.release/bar-preview.png shows each state, dark/bright, scale 1/1.5.
+This is an art study with placeholder icons, approximate glass and peak
+pulse opacity, not a game capture. Tests cover fallback, precedence,
+queue changes in combat and secret counts; the effects combat allocation
+spy excludes QueueList's existing lazy row creation.
+Local LibGlass/LibShowcase differ from release pins, as the runner warns.
+
+IN-GAME CHECKLIST (after 2026-11-04; client offline during this pass)
+- /reload and /console scriptErrors 1.
+- Check unlearned Ritual, no shards, armor off, and /123 queue test.
+- Hover in and out; verify highlight draw order with real icons/cooldowns.
+- Enter combat with armor glowing and people waiting. Armor should go out
+  when its aura state becomes unknown; eligible Summoning keeps pulsing.
+- Add/remove queue entries during combat; verify pulse starts/stops.
+- Set bar scale 1.5 in options; verify rim coverage and readable counts.
+- /123 labels on and off; check spacing and the unchanged drag handle.
+- Inspect over bright snow and dark ground, including the plain fallback.
+
+DELIVERY AND FOLLOW-UP
+CHANGELOG.md has the player-facing Unreleased entry. Preview remains in
+gitignored .release/bar-preview.png; attach it to the eventual PR.
+PR: feature/13-bar-art to main, body ending Closes #13; owner merges.
+No PR, deployment or release has been performed in this milestone.
+Ship in a beta first after the owner's in-game validation.
+Wheel, secure action resolution, queue logic, options and probe unchanged.

@@ -26,6 +26,7 @@ UI\Skin.lua
 UI\Presentation.lua
 UI\Portrait.lua
 UI\Resummon.lua
+UI\BarEffects.lua
 UI\Bar.lua
 UI\WheelEffects.lua
 UI\Wheel.lua

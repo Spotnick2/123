@@ -188,6 +188,7 @@ function Bar:RefreshButton(button)
     button.icon:SetTexture(actionIcon(action, button.key))
     button.icon:SetDesaturated(dim)
     button.icon:SetAlpha(dim and 0.45 or 1)
+    ns.BarEffects.Update(button)
     if action and action.itemID then
         setCount(button.count, API.ItemCountRaw(action.itemID))
         SA.ApplyItemCooldown(button.cooldown, action.itemID)
@@ -221,13 +222,7 @@ function Bar:UpdateArmor()
     if not button then return end
     local state = self:ReadArmor(button)
     button.armorState = state
-    local missing = state == "missing"
-    button.glow:SetShown(missing)
-    if not missing then
-        button.pulse:Stop()
-    elseif not button.pulse:IsPlaying() then
-        button.pulse:Play()
-    end
+    ns.BarEffects.Update(button)
     if GameTooltip:IsOwned(button) then showTooltip(button) end
     -- Unreadable out of combat (auras may stay secret a moment after it
     -- ends): look again shortly, since no UNIT_AURA may come.
@@ -402,24 +397,6 @@ local function hideTooltip(button)
     if GameTooltip:IsOwned(button) then GameTooltip:Hide() end
 end
 
--- A pulsing accent edge around the button, on its mouse-disabled overlay
--- (placeholder until the Codex art, #13).
-function Bar:CreateGlow(button, overlay)
-    local glow = overlay:CreateTexture(nil, "OVERLAY")
-    glow:SetAllPoints()
-    glow:SetTexture("Interface\\Buttons\\ButtonHilight-Square")
-    glow:SetBlendMode("ADD")
-    glow:SetVertexColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
-    glow:Hide()
-    local pulse = glow:CreateAnimationGroup()
-    pulse:SetLooping("BOUNCE")
-    local fade = pulse:CreateAnimation("Alpha")
-    fade:SetFromAlpha(1)
-    fade:SetToAlpha(0.35)
-    fade:SetDuration(0.8)
-    button.glow, button.pulse = glow, pulse
-end
-
 -- Above the glass's top layer, which draws over the host's children.
 function Bar:ContentLevel()
     return (self.glass.top or self.frame):GetFrameLevel() + 1
@@ -437,11 +414,6 @@ function Bar:CreateButton(index, spec, parent)
     icon:SetAllPoints()
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     button.icon = icon
-
-    local highlight = button:CreateTexture(nil, "HIGHLIGHT")
-    highlight:SetAllPoints()
-    highlight:SetTexture(ns.Media.WHITE)
-    highlight:SetVertexColor(1, 1, 1, 0.15)
 
     -- Cooldown and text sit on mouse-disabled children of the button.
     local cooldown = CreateFrame("Cooldown", nil, button, "CooldownFrameTemplate")
@@ -466,12 +438,13 @@ function Bar:CreateButton(index, spec, parent)
     button.label = label
 
     if spec.key == "armor" then
-        self:CreateGlow(button, overlay)
         self.armorButton = button
     end
 
     button:SetScript("OnEnter", showTooltip)
     button:SetScript("OnLeave", hideTooltip)
+    -- After the scripts: the hover rim hooks them (SetScript drops hooks).
+    ns.BarEffects.Attach(button, overlay)
     -- Insecure PostClick, after the secure action: a click on the Demon
     -- button that armed nothing because the demon is out asks first.
     if spec.key == "demon" then
@@ -498,10 +471,6 @@ function Bar:CreateWheelButton()
     icon:SetTexCoord(0.08, 0.92, 0.08, 0.92)
     icon:SetTexture(API.SpellIcon(Data.FEL_DOMINATION))
     button.icon = icon
-    local highlight = button:CreateTexture(nil, "HIGHLIGHT")
-    highlight:SetAllPoints()
-    highlight:SetTexture(ns.Media.WHITE)
-    highlight:SetVertexColor(1, 1, 1, 0.15)
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)
     label:SetText("Demons")
@@ -516,6 +485,7 @@ function Bar:CreateWheelButton()
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", hideTooltip)
+    ns.BarEffects.Attach(button, button, true)
     self.wheelButton = button
 end
 
@@ -548,6 +518,7 @@ function Bar:CreateHandle()
     label:SetPoint("CENTER", handle, "CENTER", 0, 0)
     label:SetText("123")
     label:SetTextColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
+    ns.BarEffects.Grip(handle)
     self.label = label
 end
 
@@ -581,9 +552,9 @@ end
 function Bar:CreateShards()
     local left = PAD + HANDLE_W + PITCH * SLOTS
     local divider = (self.glass.top or self.frame):CreateTexture(nil, "ARTWORK")
-    divider:SetTexture(ns.Media.WHITE)
+    divider:SetTexture(ns.Media.BAR_DIVIDER)
     divider:SetVertexColor(1, 1, 1, 0.18)
-    divider:SetSize(1, HEIGHT - PAD * 2)
+    divider:SetSize(8, HEIGHT - PAD * 2)
     self.divider = divider
     divider:SetPoint("LEFT", self.frame, "LEFT", left, 0)
 
@@ -628,6 +599,9 @@ function Bar:Initialize()
     self:ApplyScale()
     self:ApplyShown()
 
+    ns.Queue:OnChanged(function()
+        ns.BarEffects.Update(self:Button("summoning"))
+    end)
     SA.RegisterSync(function() self:Sync() end)
     local function rebuild() SA.MarkDirty() end
     local function refresh() self:Refresh() end

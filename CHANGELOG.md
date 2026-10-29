@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- The bar's buttons get framed icons with state colours: grey for unlearned abilities,
+  red for missing reagents, a purple pulse for missing armor, and a fel-green pulse
+  when people are waiting for a summon. Hover highlights, a dotted handle grip, and
+  a fading shard divider complete the bar's new look (#13).
+
 ## v0.3.0 (2026-10-18)
 The summon queue, and releases on GitHub and Wago Addons as well as CurseForge.
 - Summon queue (#9): anyone in the group who types "123" (or one of your keywords) in party,
