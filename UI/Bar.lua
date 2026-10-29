@@ -437,13 +437,14 @@ function Bar:CreateButton(index, spec, parent)
     label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
     button.label = label
 
-    ns.BarEffects.Attach(button, overlay)
     if spec.key == "armor" then
         self.armorButton = button
     end
 
     button:SetScript("OnEnter", showTooltip)
     button:SetScript("OnLeave", hideTooltip)
+    -- After the scripts: the hover rim hooks them (SetScript drops hooks).
+    ns.BarEffects.Attach(button, overlay)
     -- Insecure PostClick, after the secure action: a click on the Demon
     -- button that armed nothing because the demon is out asks first.
     if spec.key == "demon" then

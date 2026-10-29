@@ -57,10 +57,16 @@ function FX.Attach(button, overlay, wheel)
     local frame = texture(overlay, button, "ARTWORK", ns.Media.BAR_FRAME, 40, 1)
     tint(frame, FX.PALETTE.metal)
     button.barRim = texture(overlay, button, "OVERLAY", ns.Media.BAR_RIM, 40)
-    -- HIGHLIGHT on the button itself needs no hover scripts or clock.
-    local hover = texture(button, button, "HIGHLIGHT", ns.Media.BAR_RIM, 40)
+    -- Not the button's HIGHLIGHT layer: the overlay sits a frame level
+    -- above the button, so its frame would cover it (Codex, #47). The
+    -- button's own hover shows it, hooked after Bar sets its scripts.
+    local hover = texture(overlay, button, "OVERLAY", ns.Media.BAR_RIM, 40, 2)
     hover:SetBlendMode("ADD")
     tint(hover, FX.PALETTE.hover, FX.PALETTE.hoverAlpha)
+    hover:Hide()
+    button.barHover = hover
+    button:HookScript("OnEnter", function() hover:Show() end)
+    button:HookScript("OnLeave", function() hover:Hide() end)
     if button.key == "armor" or button.key == "summoning" then
         button.glow = texture(overlay, button, "BACKGROUND", ns.Media.BAR_GLOW, 56)
         button.glow:SetBlendMode("ADD")

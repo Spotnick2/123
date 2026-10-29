@@ -20,6 +20,16 @@ FX.Update(b)
 H.eq(b.barState, "unlearned", "unlearned beats reagent")
 b.action, b.short = action, false
 FX.Update(b)
+-- Hover: the rim on the overlay shows with the button's own hover, and the
+-- tooltip script still runs (the hook must not replace it).
+for _, button in ipairs({ bar.wheelButton, unpack(bar.buttons) }) do
+    H.check(not button.barHover:IsShown(), button:GetName() .. " hover rim starts hidden")
+    button:GetScript("OnEnter")(button)
+    H.check(button.barHover:IsShown(), button:GetName() .. " hover rim shows")
+    H.check(GameTooltip:IsOwned(button), button:GetName() .. " tooltip still shows")
+    button:GetScript("OnLeave")(button)
+    H.check(not button.barHover:IsShown(), button:GetName() .. " hover rim hides")
+end
 local originalCreate = CreateFrame
 -- QueueList lazily allocates rows; its behavior is outside this effects test.
 ns.QueueList.Refresh = function() end

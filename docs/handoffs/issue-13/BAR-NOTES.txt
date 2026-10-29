@@ -16,7 +16,9 @@ TUNING
 UI/BarEffects.lua owns the palette and animation timings. Frame/rim are
 40 px around unchanged 36 px buttons; glow is 56 px. Armor bounces from
 1 to .35 over .8 s each way; summon breathes over 2.8 s total. Hover is
-instant HIGHLIGHT. No new frames, mouse handlers, API reads or clocks.
+instant: a rim on the overlay, shown by OnEnter/OnLeave hooks (the
+button's HIGHLIGHT layer sits under the overlay's frame; review of #47).
+No new frames, API reads or clocks.
 Precedence: unlearned, missing reagent, armor/queue glow, normal.
 The armor reminder retains its existing unknown-in-combat behavior.
 Queue changes update the summon visual in combat. Shard icon stays bare.
