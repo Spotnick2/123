@@ -106,6 +106,17 @@ function API.SpellName(spellID)
     return nil
 end
 
+-- A creature family's name in the client's language ("Diablotin"), by its
+-- CreatureFamily ID (Data.WHEEL), or nil. Needs no demon out, unlike
+-- UnitCreatureFamily. In the 70532 dump; unmeasured in game (#22).
+function API.FamilyName(familyID)
+    if not familyID then return nil end
+    local ok, info = pcall(C_CreatureInfo.GetCreatureFamilyInfo, familyID)
+    local name = ok and type(info) == "table" and info.name
+    if type(name) == "string" and API.Readable(name) and name ~= "" then return name end
+    return nil
+end
+
 function API.SpellIcon(spellID)
     local ok, icon = pcall(C_Spell.GetSpellTexture, spellID)
     if ok and API.Readable(icon) and icon then return icon end

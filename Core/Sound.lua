@@ -9,6 +9,8 @@
 local _, ns = ...
 if ns.skip then return end
 
+local L = ns.L
+
 local Sound = {
     lastPlayedAt = {},
 }
@@ -17,17 +19,17 @@ ns.Sound = Sound
 -- Kit choices for every alert, picked by ear on the options page (each
 -- choice plays when picked). IDs from SOUNDKIT (wow-ui-source 70338).
 Sound.CHOICES = {
-    { 3081, "Whisper" },        -- TELL_MESSAGE
-    { 880, "Group invite" },    -- IG_PLAYER_INVITE
-    { 8960, "Ready check" },    -- READY_CHECK
-    { 8959, "Raid warning" },   -- RAID_WARNING
-    { 0, "None" },
+    { 3081, L["Whisper"] },         -- TELL_MESSAGE
+    { 880, L["Group invite"] },     -- IG_PLAYER_INVITE
+    { 8960, L["Ready check"] },     -- READY_CHECK
+    { 8959, L["Raid warning"] },    -- RAID_WARNING
+    { 0, L["None"] },
 }
 
 -- db.alerts key per alert, and the label the options page shows.
 Sound.ALERTS = {
-    { key = "summonRequest", label = "Summon request" },
-    { key = "stoneRequest", label = "Healthstone request" },
+    { key = "summonRequest", label = L["Summon request"] },
+    { key = "stoneRequest", label = L["Healthstone request"] },
 }
 
 -- A burst (several people typing "123" at once) plays one sound.

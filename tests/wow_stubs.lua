@@ -381,6 +381,22 @@ function UnitCreatureFamily(unit)
     if unit == "pet" and WoW.petFamily then return WoW.petFamily[1], WoW.petFamily[2] end
     return nil
 end
+-- Creature families by ID, as the client names them (#22; the 70532 dump:
+-- C_CreatureInfo.GetCreatureFamilyInfo -> { id, name, iconFile }). The
+-- English names from Forever's CreatureFamily table; a test swaps in another
+-- language or empties it.
+WoW.families = {
+    [15] = "Felhunter", [16] = "Voidwalker", [17] = "Succubus",
+    [19] = "Doomguard", [23] = "Imp", [302] = "Incubus",
+}
+C_CreatureInfo = {}
+function C_CreatureInfo.GetCreatureFamilyInfo(id)
+    local name = WoW.families[id]
+    return name and { id = id, name = name } or nil
+end
+-- The client's language (the 70532 dump: GetLocale() -> localeName).
+WoW.locale = "enUS"
+function GetLocale() return WoW.locale end
 -- The client's round 2D portrait of a creature display (TimeIsMoney's fallback).
 function SetPortraitTextureFromCreatureDisplayID(texture, display) texture._portrait = display end
 -- FrameXML's ClassColors.lua fills this at load.

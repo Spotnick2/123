@@ -9,15 +9,17 @@ end
 
 ns.Print = printMessage
 
-BINDING_NAME_ONETWOTHREE_TOGGLE = "Show or hide the 123 bar"
-BINDING_NAME_ONETWOTHREE_WHEEL = "Open or close the demon wheel"
+local L = ns.L
+
+BINDING_NAME_ONETWOTHREE_TOGGLE = L["Show or hide the 123 bar"]
+BINDING_NAME_ONETWOTHREE_WHEEL = L["Open or close the demon wheel"]
 -- Keys that click the bar's secure buttons (they cast, in combat too).
-_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:LeftButton"] = "Summon the last demon"
-_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:RightButton"] = "Demonic Sacrifice, or summon the last demon"
-_G["BINDING_NAME_CLICK OneTwoThreeBarButton2:LeftButton"] = "Armor"
-_G["BINDING_NAME_CLICK OneTwoThreeBarButton3:LeftButton"] = "Soulstone"
-_G["BINDING_NAME_CLICK OneTwoThreeBarButton4:LeftButton"] = "Healthstone"
-_G["BINDING_NAME_CLICK OneTwoThreeBarButton5:LeftButton"] = "Ritual of Summoning"
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:LeftButton"] = L["Summon the last demon"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton1:RightButton"] = L["Demonic Sacrifice, or summon the last demon"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton2:LeftButton"] = L["Armor"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton3:LeftButton"] = L["Soulstone"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton4:LeftButton"] = L["Healthstone"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton5:LeftButton"] = L["Ritual of Summoning"]
 
 function OneTwoThree_Wheel()
     if ns.Wheel and ns.isWarlock then
@@ -72,38 +74,38 @@ local function registerSlashCommands()
         elseif cmd == "queue" then
             local sub = string.lower((commandText or ""):match("^%s*%S+%s+(%S*)") or "")
             if sub == "test" then
-                printMessage(ns.Queue:Test() .. " test requests joined the summon queue (\"1234\" didn't match).")
+                printMessage(L["%d test requests joined the summon queue (\"1234\" didn't match)."]:format(ns.Queue:Test()))
             elseif sub == "clear" then
                 ns.Queue:Clear()
             else
-                printMessage(#ns.Queue.entries .. " waiting. /123 queue test | clear")
+                printMessage(L["%d waiting. /123 queue test | clear"]:format(#ns.Queue.entries))
             end
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
         elseif cmd == "labels" then
             if InCombatLockdown() then
-                printMessage("the bar can't change in combat.")
+                printMessage(L["the bar can't change in combat."])
             else
                 ns.db.barLabels = not ns.db.barLabels
                 ns.Bar:ApplyLabels()
             end
         elseif cmd == "sounds" then
             ns.db.sounds = not ns.db.sounds
-            printMessage(ns.db.sounds and "demon voices on." or "demon voices off.")
+            printMessage(ns.db.sounds and L["demon voices on."] or L["demon voices off."])
         elseif cmd == "camera" then
             local on = not ns.db.cinematicCamera
             ns.db.cinematicCamera, ns.db.hideGameUI = on, on
-            printMessage(on and "the demon wheel opens with the cinematic camera and hides the game UI."
-                or "the demon wheel opens over the game, no camera.")
+            printMessage(on and L["the demon wheel opens with the cinematic camera and hides the game UI."]
+                or L["the demon wheel opens over the game, no camera."])
         elseif cmd == "confirm" then
             ns.db.confirmResummon = not ns.db.confirmResummon
-            printMessage(ns.db.confirmResummon and "will ask before re-summoning the demon that is out."
-                or "won't ask before re-summoning the demon that is out.")
+            printMessage(ns.db.confirmResummon and L["will ask before re-summoning the demon that is out."]
+                or L["won't ask before re-summoning the demon that is out."])
             ns.SecureAction.MarkDirty()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage("/123 | options | queue (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug")
+            printMessage(L["/123 | options | queue (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"])
         end
     end
 end

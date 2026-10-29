@@ -40,7 +40,7 @@ thrown = {}
 
 local chatBefore = #WoW.messages
 local cmds = { "", "book", "pet", "stones", "watch on", "secure target", "trade target",
-    "tradeitem 5512", "range", "auras", "watch off" }
+    "tradeitem 5512", "range", "auras", "locale", "watch off" }
 for _, cmd in ipairs(cmds) do
     local before = failures()
     local ok, err = pcall(fp, "123 " .. cmd)

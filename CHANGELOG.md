@@ -5,6 +5,10 @@
   red for missing reagents, a purple pulse for missing armor, and a fel-green pulse
   when people are waiting for a summon. Hover highlights, a dotted handle grip, and
   a fading shard divider complete the bar's new look (#13).
+- French and German (#22): every text of 123 (bar, wheel, prompts, options, key bindings,
+  messages) follows the game's language. Demon names now come from the game, so the wheel
+  shows "Diablotin" or "Wichtel" instead of the whole summon spell, and Demonic Sacrifice's
+  effect line is found on every client. Other languages show English for now.
 
 ## v0.3.0 (2026-10-18)
 The summon queue, and releases on GitHub and Wago Addons as well as CurseForge.
