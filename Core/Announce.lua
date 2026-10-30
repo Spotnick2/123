@@ -55,18 +55,12 @@ function Announce:Send(kind, text)
     return API.SendGroup(text, channel)
 end
 
--- How many group members other than the summoned one are near enough to
--- click, or nil when someone's distance can't be read.
+-- How many group members other than the summoned one (`target`, a unit)
+-- are near enough to click, or nil when someone's distance can't be read.
 function Announce.ClickersNear(target)
-    local units, near = {}, 0
-    local n = API.Number(GetNumGroupMembers()) or 0
-    if IsInRaid() then
-        for i = 1, n do units[#units + 1] = "raid" .. i end
-    else
-        for i = 1, n - 1 do units[#units + 1] = "party" .. i end
-    end
+    local near = 0
     local me = API.UnitGUID("player")
-    for _, unit in ipairs(units) do
+    for _, unit in ipairs(ns.Queue.GroupUnits()) do
         if unit ~= target and API.UnitGUID(unit) ~= me then
             local yes = API.Near(unit, CLICK_RANGE)
             if yes == nil then return nil end
@@ -77,10 +71,11 @@ function Announce.ClickersNear(target)
 end
 
 -- ns.Summon: a ritual started on `name` (nil when unknown), at `target`
--- (their unit, or nil).
+-- (their unit, or nil). Who can click is unknown without the target: they
+-- may be standing near and would count (Codex on #50).
 function Announce:RitualStarted(name, target)
     if name then self:Send("summon", Announce.Text("summon", name)) end
-    if ns.db.announce.clickers then
+    if ns.db.announce.clickers and target then
         local near = Announce.ClickersNear(target)
         if near and near < CLICKERS then self:Send("clickers", Announce.Text("clickers", name)) end
     end

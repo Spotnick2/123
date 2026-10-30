@@ -179,6 +179,38 @@ WoW.runTimers(4)
 H.eq(stateOf(ASHKA), "waiting", "a refused cast changes nothing")
 H.eq(#WoW.chat, 0, "and announces nothing")
 
+-- Codex on #50: a retry within the settle time keeps the new ritual's state.
+WoW.runTimers(11)
+local first = ritual(nil, true)
+WoW.fire("UNIT_SPELLCAST_CHANNEL_STOP", "player", first, 698)
+WoW.runTimers(1)
+ritual("Ashka Vale")    -- recast on her (target or binding) a second later
+WoW.runTimers(3)
+H.eq(stateOf(ASHKA), "summoning", "the first ritual's timer leaves the retry alone")
+Q:SetState(ASHKA, nil)
+
+-- Codex on #50: a click aimed at Brom whose cast failed doesn't claim the
+-- next ritual, cast on Ashka from a binding; nor does a click when SENT
+-- names someone else.
+memberAt(BROM).distance = 500
+WoW.runTimers(11)
+H.eq(button.action.guid, BROM, "Brom walked off: the button is aimed at him (first in line)")
+button:GetScript("PostClick")(button, "LeftButton", false)
+WoW.fire("UNIT_SPELLCAST_SENT", "player", "Brom Hollow", "Cast-3-0-0-698-y", 698)
+WoW.fire("UNIT_SPELLCAST_FAILED", "player", "Cast-3-0-0-698-y", 698)
+ritual("Ashka Vale")
+H.eq(stateOf(ASHKA), "summoning", "the ritual after a failed click is on Ashka")
+H.eq(stateOf(BROM), "waiting", "not on Brom")
+Q:SetState(ASHKA, nil)
+WoW.runTimers(11)
+button:GetScript("PostClick")(button, "LeftButton", false)
+ritual("Ashka Vale")
+H.eq(stateOf(ASHKA), "summoning", "a click on Brom, but SENT names Ashka: Ashka")
+H.eq(stateOf(BROM), "waiting", "and Brom still waits")
+Q:SetState(ASHKA, nil)
+memberAt(BROM).distance = 5
+WoW.runTimers(11)
+
 -- Leaving the group drops her.
 local m = memberAt(ASHKA)
 for i, g in ipairs(WoW.group) do if g == m then table.remove(WoW.group, i) end end
@@ -231,6 +263,18 @@ Q:SetState(ASHKA, nil)
 ritual("Ashka Vale", true)
 H.eq(#WoW.chat, 1, "Cyra's distance unreadable: no guess, no call")
 memberAt(CYRA).distance = 8
+
+-- Codex on #50: a ritual on someone not queued (Brom, beside you) doesn't
+-- count him as a clicker: only Cyra can click.
+WoW.runTimers(11)
+WoW.chat = {}
+ritual("Brom Hollow")
+H.eq(WoW.chat[1] and WoW.chat[1][1], "Summoning Brom Hollow, please click the portal", "a manual ritual is announced")
+H.eq(lastChat(), "Need 2 clickers for the summon", "the summoned one isn't a clicker")
+WoW.runTimers(11)
+WoW.chat = {}
+ritual("")
+H.eq(#WoW.chat, 0, "nobody known to be summoned: no name, no clicker count")
 
 -- The player's own texts; {name} is who is summoned; % is plain text.
 ns.db.announce.summonText = "Portal up for {name}: 100% click it!"

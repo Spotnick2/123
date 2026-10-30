@@ -42,21 +42,35 @@ local function readable(v)
     return API.Readable(v) and v or nil
 end
 
--- The queued member a ritual is on, or nil.
-function Summon:EntryFor(targetName)
+-- A name as SENT gives it ("Name-Realm" or "Name") is `name`.
+local function sameName(name, sent)
+    return name == sent or name == (sent:match("^([^%-]+)") or sent)
+end
+
+-- The group member a ritual is on: their GUID and unit token, or nil. The
+-- Summoning button's click counts unless SENT names someone else (a click
+-- whose cast failed, then a ritual on another member from a binding,
+-- Codex on #50); then SENT's name, then the target.
+function Summon:TargetOf(targetName)
     local Queue = ns.Queue
+    local named = type(targetName) == "string" and targetName ~= ""
     local c = self.clicked
-    if c and GetTime() - c.at <= CLICK_WINDOW and Queue:Find(c.guid) then
-        return Queue:Find(c.guid)
+    local clicked = c and GetTime() - c.at <= CLICK_WINDOW and Queue:Find(c.guid)
+    if clicked and (not named or sameName(clicked.name, targetName)) then
+        return clicked.guid, Queue.UnitOf(clicked.guid)
     end
-    if type(targetName) == "string" and targetName ~= "" then
-        local short = targetName:match("^([^%-]+)") or targetName
-        for _, e in ipairs(Queue.entries) do
-            if e.name == targetName or e.name == short then return e end
+    if named then
+        for _, unit in ipairs(Queue.GroupUnits()) do
+            local name = GetUnitName(unit, false)
+            if API.Readable(name) and type(name) == "string" and sameName(name, targetName) then
+                return API.UnitGUID(unit), unit
+            end
         end
     end
     local guid = API.UnitGUID("target")
-    return guid and Queue:Find(guid) or nil
+    local unit = guid and Queue.UnitOf(guid)
+    if unit then return guid, unit end
+    return nil
 end
 
 -- UNIT_SPELLCAST_SENT: the cast's target name, for the start that follows.
@@ -84,24 +98,28 @@ function Summon:Started(castGUID)
     end
     local targetName = self:SentName(castGUID, now)
     self.sent = nil
-    local entry = self:EntryFor(targetName)
+    local guid, unit = self:TargetOf(targetName)
     self.clicked = nil
+    local entry = guid and ns.Queue:Find(guid)
     self.cast = { castGUID = castGUID, at = now, guid = entry and entry.guid }
     if entry then ns.Queue:SetState(entry.guid, "summoning") end
-    local name = entry and entry.name or targetName
-    ns.Announce:RitualStarted(name ~= "" and name or nil, entry and ns.Queue.UnitOf(entry.guid))
+    local name = entry and entry.name or (unit and GetUnitName(unit, false)) or targetName
+    -- Without the summoned one's unit, nobody can be counted as a clicker.
+    ns.Announce:RitualStarted(name ~= "" and name or nil, unit)
     return true
 end
 
--- The channel stopped, failed or was interrupted. If no prompt came, the
--- member waits again.
+-- The channel stopped, failed or was interrupted. A click whose cast never
+-- started is forgotten. If no prompt came, the member waits again, unless
+-- a newer ritual began meanwhile (a retry within SETTLE, Codex on #50).
 function Summon:Ended(castGUID)
+    self.clicked, self.sent = nil, nil
     local cast = self.cast
     if not cast or (castGUID and cast.castGUID and castGUID ~= cast.castGUID) then return end
-    local guid = cast.guid
     C_Timer.After(SETTLE, function()
-        local e = guid and ns.Queue:Find(guid)
-        if e and e.state == "summoning" then ns.Queue:SetState(guid, nil) end
+        if self.cast ~= cast then return end
+        local e = cast.guid and ns.Queue:Find(cast.guid)
+        if e and e.state == "summoning" then ns.Queue:SetState(cast.guid, nil) end
     end)
 end
 

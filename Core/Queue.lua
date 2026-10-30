@@ -86,6 +86,8 @@ local function groupUnits()
     return units
 end
 
+Queue.GroupUnits = groupUnits
+
 -- The unit token of a group member, by GUID, or nil.
 function Queue.UnitOf(guid)
     for _, unit in ipairs(groupUnits()) do
