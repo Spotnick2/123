@@ -189,6 +189,15 @@ WoW.runTimers(3)
 H.eq(stateOf(ASHKA), "summoning", "the first ritual's timer leaves the retry alone")
 Q:SetState(ASHKA, nil)
 
+-- Codex on #50: a ritual on someone else meanwhile doesn't keep her stuck.
+WoW.runTimers(11)
+first = ritual(nil, true)
+WoW.fire("UNIT_SPELLCAST_CHANNEL_STOP", "player", first, 698)
+WoW.runTimers(1)
+ritual("Cyra Dusk")     -- Cyra isn't queued: a ritual on her a second later
+WoW.runTimers(3)
+H.eq(stateOf(ASHKA), "waiting", "Ashka's stopped ritual still settles: waiting again")
+
 -- Codex on #50: a click aimed at Brom whose cast failed doesn't claim the
 -- next ritual, cast on Ashka from a binding; nor does a click when SENT
 -- names someone else.

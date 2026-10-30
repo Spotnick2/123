@@ -26,7 +26,7 @@ if ns.skip then return end
 local API = ns.API
 
 local Queue = {
-    entries = {},      -- { guid, name, class, at, test, state, here }, oldest first
+    entries = {},      -- { guid, name, class, at, test, state, here, ritual }, oldest first
     listeners = {},
 }
 ns.Queue = Queue

@@ -102,7 +102,11 @@ function Summon:Started(castGUID)
     self.clicked = nil
     local entry = guid and ns.Queue:Find(guid)
     self.cast = { castGUID = castGUID, at = now, guid = entry and entry.guid }
-    if entry then ns.Queue:SetState(entry.guid, "summoning") end
+    if entry then
+        -- The ritual that put them in "summoning": only its end resets them.
+        entry.ritual = self.cast
+        ns.Queue:SetState(entry.guid, "summoning")
+    end
     local name = entry and entry.name or (unit and GetUnitName(unit, false)) or targetName
     -- Without the summoned one's unit, nobody can be counted as a clicker.
     ns.Announce:RitualStarted(name ~= "" and name or nil, unit)
@@ -111,15 +115,15 @@ end
 
 -- The channel stopped, failed or was interrupted. A click whose cast never
 -- started is forgotten. If no prompt came, the member waits again, unless
--- a newer ritual began meanwhile (a retry within SETTLE, Codex on #50).
+-- a newer ritual on THEM began meanwhile (a retry within SETTLE); a ritual
+-- on someone else doesn't keep them (Codex on #50).
 function Summon:Ended(castGUID)
     self.clicked, self.sent = nil, nil
     local cast = self.cast
     if not cast or (castGUID and cast.castGUID and castGUID ~= cast.castGUID) then return end
     C_Timer.After(SETTLE, function()
-        if self.cast ~= cast then return end
         local e = cast.guid and ns.Queue:Find(cast.guid)
-        if e and e.state == "summoning" then ns.Queue:SetState(cast.guid, nil) end
+        if e and e.state == "summoning" and e.ritual == cast then ns.Queue:SetState(cast.guid, nil) end
     end)
 end
 
