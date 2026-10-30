@@ -124,6 +124,24 @@ ns.Resummon:Show(ns.Bar:Button("demon"), 688)
 H.eq(ns.Resummon.text:GetText(), "Diablotin est déjà là. L'invoquer à nouveau ?", "the question, in French")
 ns.Resummon:Hide()
 
+-- The names under the icons stay in their room, clear of their neighbours:
+-- a long one gets a smaller font (French here, German below).
+local labels = { ns.Bar.wheelButton.label }
+for _, button in ipairs(ns.Bar.buttons) do labels[#labels + 1] = button.label end
+for i = 2, #labels do
+    local a, b = labels[i - 1], labels[i]
+    H.check((a:GetUnboundedStringWidth() + b:GetUnboundedStringWidth()) / 2 <= 56,
+        a:GetText() .. " and " .. b:GetText() .. " don't run into each other")
+end
+local healthstone = labels[5]
+H.eq(healthstone:GetText(), "Pierre de soins", "the Healthstone's name, in French")
+H.check(select(2, healthstone:GetFont()) < select(2, labels[3]:GetFont()), "a long name shrinks, a short one doesn't")
+for _, name in ipairs({ "Seelenstein", "Gesundheitsstein", "Beschwörung" }) do
+    local fs = ns.Skin:Font(UIParent, 10, "CENTER")
+    ns.Bar.FitLabel(fs, name)
+    H.check(fs:GetUnboundedStringWidth() <= 56, name .. " fits under its icon")
+end
+
 -- Without the family API (unmeasured on Forever), nothing is nil: the
 -- bead shows the summon's whole name, the Doomguard its translated label.
 WoW.families = {}

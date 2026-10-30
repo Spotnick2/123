@@ -34,6 +34,7 @@ local PAD = 8
 local HANDLE_W = 34
 local SHARD_W = 56
 local LABEL_H = 12
+local LABEL_W = PITCH - 4     -- a name's room under its icon, clear of the next one
 local SLOTS = 6             -- the wheel's button, then the five secure ones
 local WIDTH = PAD + HANDLE_W + PITCH * SLOTS + 1 + SHARD_W + PAD
 -- The names under the icons are a setting, off by default (owner: the
@@ -138,6 +139,17 @@ Bar.BUTTONS = {
     { key = "healthstone", label = L["Healthstone"] },
     { key = "summoning", label = L["Summoning"] },
 }
+
+-- A name wider than its room (#22: "Gesundheitsstein", "Pierre de soins")
+-- gets a smaller font, so neighbours never run into each other.
+function Bar.FitLabel(label, text)
+    label:SetText(text)
+    local font, size, flags = label:GetFont()
+    local width = label:GetUnboundedStringWidth()
+    if font and size and width and width > LABEL_W then
+        label:SetFont(font, math.floor(size * LABEL_W / width * 10) / 10, flags)
+    end
+end
 
 local function actionIcon(action, key)
     if action then
@@ -434,7 +446,7 @@ function Bar:CreateButton(index, spec, parent)
 
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)
-    label:SetText(spec.label)
+    Bar.FitLabel(label, spec.label)
     label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
     button.label = label
 
@@ -474,7 +486,7 @@ function Bar:CreateWheelButton()
     button.icon = icon
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)
-    label:SetText(L["Demons"])
+    Bar.FitLabel(label, L["Demons"])
     label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
     button.label = label
     button:SetScript("OnClick", function() ns.Wheel:Toggle() end)

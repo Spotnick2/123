@@ -236,6 +236,15 @@ function Frame:GetValue() return self._value or 0 end
 function Frame:SetValue(v) self._value = v end
 function Frame:GetMinMaxValues() return 0, 1 end
 function Frame:GetStringWidth() return 50 end
+-- Fonts keep their size, and text is about half its font size wide per
+-- character (Arial Narrow), so a test can tell a name that fits from one
+-- that doesn't.
+function Frame:SetFont(file, size, flags) self._font, self._fontSize, self._fontFlags = file, size, flags; return true end
+function Frame:GetFont() return self._font or "Fonts\\ARIALN.TTF", self._fontSize or 12, self._fontFlags or "" end
+function Frame:GetUnboundedStringWidth()
+    local chars = select(2, (self._text or ""):gsub("[^\128-\191]", ""))
+    return chars * select(2, self:GetFont()) * 0.45
+end
 function Frame:GetStringHeight() return 12 end
 function Frame:GetText() return self._text end
 function Frame:SetText(t) self._text = t end
