@@ -130,6 +130,18 @@ end
 H.check(not logged("Ashka Vale"), "never the sender's name")
 S.Stop("test")
 
+-- #10, #11: the summon procedure turns watch on; a ritual's SENT logs its
+-- target's name by shape only.
+fp("123 summon")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/summon"]
+H.check(S.IsShown() and rec ~= nil, "/fp 123 summon starts the procedure")
+H.check(logged("watch on"), "and turns watch on")
+WoW.fire("UNIT_SPELLCAST_SENT", "player", "Ashka Vale", "Cast-3-0-0-698-1", 698)
+H.check(logged("UNIT_SPELLCAST_SENT player, target="), "SENT is logged")
+H.check(not logged("Ashka Vale"), "never the target's name")
+S.Stop("test")
+fp("123 watch off")
+
 fp("123 clear")
 H.eq(#DB.log, 1, "clear empties the log in place (then says so)")
 H.check(ns._test.Probe ~= nil, "the test seam")

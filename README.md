@@ -17,7 +17,7 @@ soulstone, healthstones and summoning, one click away.
 - **Armor** casts your best armor (Demon Armor over Demon Skin, highest rank) and glows while
   it is not on you.
 - **Soulstone / Healthstone** use the best stone you carry, or create the best one you know.
-- **Summoning** is Ritual of Summoning.
+- **Summoning** is Ritual of Summoning, on the next in the summon queue (or your target).
 - Out of Soul Shards, the Demon button falls back to the Imp and the buttons that would spend
   one grey out, until shards come back.
 - Shift-drag the "123" handle to move it. Scale, names under the icons and the rest are in
@@ -51,7 +51,14 @@ Summoning button, with a sound, in the order they asked.
 - Asking again keeps your place. You drop off when you leave the group, after 10 minutes
   (adjustable), or when the Warlock clicks the x.
 - `/123 queue test` adds two made-up requests, to see it alone.
-- Coming next: casting Ritual of Summoning on the next in line, and help calls for clickers.
+- The **Summoning** button casts Ritual of Summoning on the first in line who still needs it:
+  no targeting. Someone already beside you is marked "here" and skipped. In combat it casts on
+  your target instead.
+- Each row follows the summon: next, summoning, pending, accepted or declined. People leave the
+  list once they accepted and stand beside you; someone who declined stays until they ask again.
+- When the ritual starts, 123 tells the group "Summoning <name>, please click the portal".
+  It can also ask for clickers when fewer than two others are near (off by default). Both
+  texts are yours to change in the options.
 
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)

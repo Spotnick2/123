@@ -1,7 +1,8 @@
 -- ============================================================
 -- The summon queue on screen (#9): a small glass list above the bar's
 -- Summoning button, shown while someone waits. Each row: the name in its
--- class colour, how long they've waited, and an x to drop them.
+-- class colour, how long they've waited or where their summon is (#10),
+-- and an x to drop them.
 --
 -- Nothing here is secure, and the list hangs from UIParent at coordinates
 -- read off the Summoning button, never anchored to the bar (a frame
@@ -18,7 +19,7 @@ local L = ns.L
 local QueueList = {}
 ns.QueueList = QueueList
 
-local WIDTH, ROW, PAD, HEADER = 190, 18, 8, 18
+local WIDTH, ROW, PAD, HEADER = 220, 18, 8, 18
 local MAX_ROWS = 8
 
 local function age(seconds)
@@ -26,6 +27,17 @@ local function age(seconds)
     if seconds < 60 then return L["%ds"]:format(seconds) end
     return L["%dm"]:format(math.floor(seconds / 60))
 end
+
+-- Where a summon is, in place of the wait time (#10). "next" is whom the
+-- Summoning button is aimed at now.
+local STATE = {
+    next = L["next"],
+    summoning = L["summoning"],
+    pending = L["pending"],
+    accepted = L["accepted"],
+    declined = L["declined"],
+    here = L["here"],
+}
 
 local function classColor(class)
     local c = class and RAID_CLASS_COLORS[class]
@@ -41,7 +53,7 @@ function QueueList:CreateRow(i)
     row:SetFrameLevel(top:GetFrameLevel() + 1)
     row.name = ns.Skin:Font(row, 12, "LEFT")
     row.name:SetPoint("LEFT", 0, 0)
-    row.name:SetWidth(WIDTH - PAD * 2 - 56)
+    row.name:SetWidth(WIDTH - PAD * 2 - 90)  -- room for "angenommen" (#10)
     row.age = ns.Skin:Font(row, 11, "RIGHT")
     row.age:SetPoint("RIGHT", -20, 0)
     row.age:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
@@ -110,6 +122,8 @@ function QueueList:Refresh()
     end
     if not self.frame then self:Create() end
     local now, shown = GetTime(), math.min(#entries, MAX_ROWS)
+    local summoning = ns.Bar:Button("summoning")
+    local aimed = summoning and summoning.action and summoning.action.guid
     self.title:SetText(L["Summons (%d)"]:format(#entries))
     for i = 1, shown do
         local e = entries[i]
@@ -118,7 +132,13 @@ function QueueList:Refresh()
         row.guid = e.guid
         row.name:SetText(e.name or "?")
         row.name:SetTextColor(classColor(e.class))
-        row.age:SetText(age(now - e.at))
+        local state = e.state or (e.guid == aimed and "next") or (e.here and "here")
+        row.age:SetText(state and STATE[state] or age(now - e.at))
+        if state then
+            row.age:SetTextColor(ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
+        else
+            row.age:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
+        end
         row:Show()
     end
     for i = shown + 1, #self.rows do self.rows[i]:Hide(); self.rows[i].guid = nil end

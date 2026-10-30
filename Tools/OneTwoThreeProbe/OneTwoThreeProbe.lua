@@ -24,6 +24,8 @@
 --   /fp 123 range              per group member: position, distance, map, range
 --   /fp 123 auras              the player's buffs: name, spell ID, duration
 --                              (Demonic Sacrifice's buff per demon, #20)
+--   /fp 123 summon             guided: the Summoning button on a queued member,
+--                              the announcement, the summon's status (#10, #11)
 --   /fp 123 clear              empty the saved log
 --
 -- Every client call goes through Probe:Call (the whole return tuple, ABSENT
@@ -176,7 +178,7 @@ end
 
 local watcher = CreateFrame("Frame")
 local WATCHED = {
-    "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_SUCCEEDED",
+    "UNIT_SPELLCAST_SENT", "UNIT_SPELLCAST_START", "UNIT_SPELLCAST_STOP", "UNIT_SPELLCAST_SUCCEEDED",
     "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
     "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP",
     "INCOMING_SUMMON_CHANGED", "CONFIRM_SUMMON", "CANCEL_SUMMON",
@@ -242,6 +244,13 @@ watcher:SetScript("OnEvent", function(_, event, ...)
         -- what another player wrote.
         say(event .. ": text=" .. Probe.Shape(args[1]) .. " sender=" .. Probe.Shape(args[2])
             .. " lineID=" .. Probe.Shape(args[11]) .. " guid=" .. Probe.Shape(args[12]))
+        return
+    end
+    if event == "UNIT_SPELLCAST_SENT" then
+        -- unit, target NAME (another player's: shape only), castGUID, spellID
+        -- (#10 reads the name to know whom a ritual is on).
+        say(event .. " " .. show(args[1]) .. ", target=" .. Probe.Shape(args[2]) .. ", "
+            .. show(args[3]) .. ", " .. show(args[4]))
         return
     end
     local parts = {}
@@ -533,6 +542,45 @@ Probe:Steps("queue", {
 })
 
 Probe:Command("queue", function() Probe:StartSteps("queue") end, "#9: does a group member's 123 reach the queue?")
+
+------------------------------------------------------------
+-- summon (#10, #11): Ritual of Summoning on a queued member, end to end.
+-- watch on logs the ritual's events, each INCOMING_SUMMON_CHANGED with the
+-- status read at once, and the group chat lines by shape (ledger rows 4, 5
+-- and 7).
+------------------------------------------------------------
+
+Probe:Steps("summon", {
+    title = "Summoning the next in the queue, announcements (#10, #11)",
+    rev = 1,
+    { text = "In a group, out of combat, with Ritual of Summoning learned and a Soul Shard; 123 and this "
+        .. "probe loaded. The member to summon is far away (another zone is fine). Turning watch on.",
+      auto = true, run = function() watch(true) return true end },
+    { text = "Ask the far member to type 123 in group chat. Then hover the Summoning button: does its row "
+        .. "say \"next\", and the tooltip \"Click: Ritual of Summoning on <them>\"?", ask = true,
+      screenshot = "summon: aimed" },
+    { text = "Clear your target (Esc), then click the Summoning button.", event = "UNIT_SPELLCAST_SENT",
+      shapeOnly = true },
+    { text = "Did the ritual start on THEM, with no target selected (portal up, you channel), and does "
+        .. "their row say \"summoning\"?", ask = true, screenshot = "summon: ritual" },
+    { text = "Did group chat show \"Summoning <them>, please click the portal\" once? Ask them too: did "
+        .. "they get it? (A line sent from an event, row 7.)", ask = true },
+    { text = "Optional (Skip if fewer than two others are with you): have two members click the portal. "
+        .. "Their summon prompt should come up.", event = "INCOMING_SUMMON_CHANGED" },
+    { text = "Does their row say \"pending\"? (Skip if you skipped the last step.)", ask = true },
+    { text = "Ask them to accept. Once they stand beside you, wait 10 seconds: did they leave the list?",
+      ask = true },
+    { text = "Optional: summon someone again and have them decline. Does their row say \"declined\" and "
+        .. "stay, and is the Summoning button no longer aimed at them?", ask = true },
+    { text = "With someone waiting, get into combat and hover the Summoning button: no name in the tooltip "
+        .. "(it casts on your target in combat)? Then leave combat: is their name back?", ask = true },
+    { text = "In Options > AddOns > 123, turn on \"Ask for clickers\" and start a ritual with fewer than "
+        .. "two others near you: did \"Need 2 clickers for the summon\" follow the summon line?", ask = true },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("summon", function() Probe:StartSteps("summon") end,
+    "#10, #11: the Summoning button on a queued member, its announcement and status")
 
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.

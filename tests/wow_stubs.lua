@@ -325,6 +325,9 @@ UIParent = NewRegion("Frame", nil, "UIParent")
 GameTooltip = NewRegion("GameTooltip", UIParent, "GameTooltip")
 function GameTooltip:IsOwned(f) return self._owner == f end
 function GameTooltip:SetOwner(f) self._owner = f end
+-- The lines shown, title first, so a test can read a tooltip.
+function GameTooltip:SetText(t) self._text, self._lines = t, { t } end
+function GameTooltip:AddLine(t) self._lines = self._lines or {}; self._lines[#self._lines + 1] = t end
 GameFontNormal, GameFontHighlight = {}, {}
 
 ------------------------------------------------------------
@@ -441,6 +444,19 @@ function GetUnitName(unit)
     local m = member(unit)
     return m and m.name or "Testcase Surname"
 end
+-- A member's summon (`summon`, Enum.SummonStatus; "secret" for a secret)
+-- and distance (`distance` in yards; nil: the client can't tell).
+C_IncomingSummon = {}
+function C_IncomingSummon.IncomingSummonStatus(unit)
+    local m = member(unit)
+    if m and m.summon == "secret" then return WoW.Secret("status") end
+    return m and m.summon or 0
+end
+function UnitDistanceSquared(unit)
+    local m = member(unit)
+    if not (m and m.distance) then return 0, false end
+    return m.distance * m.distance, true
+end
 -- Outdoors this client returns the CONTINENT, not an empty name.
 function GetInstanceInfo() return WoW.instanceName, WoW.instanceType, 0, "", 0, 0, false, WoW.instanceMap end
 -- Temporary weapon enchants by slot: { has, exp (ms), charges, id }. The
@@ -469,7 +485,8 @@ function UnitPowerMax()  return WoW.powerMax end
 function issecretvalue(v) return WoW.IsSecret(v) end
 
 NUM_BAG_SLOTS = 4
-Enum = { BagIndex = { Backpack = 0, ReagentBag = 5 }, PowerType = { Mana = 0 } }
+Enum = { BagIndex = { Backpack = 0, ReagentBag = 5 }, PowerType = { Mana = 0 },
+    SummonStatus = { None = 0, Pending = 1, Accepted = 2, Declined = 3 } }
 
 C_Container = {}
 function C_Container.GetContainerNumSlots(bag)
@@ -862,6 +879,7 @@ LE_PARTY_CATEGORY_INSTANCE = 2
 WoW.chat = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) WoW.messages[#WoW.messages + 1] = msg end }
 function SendChatMessage(msg, channel) WoW.chat[#WoW.chat + 1] = { msg, channel } end
+C_ChatInfo = { SendChatMessage = SendChatMessage }
 function IsShiftKeyDown() return WoW.shiftDown or false end
 WoW.sounds = {}
 WoW.soundHandle = 0

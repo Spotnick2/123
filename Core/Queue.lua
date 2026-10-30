@@ -6,7 +6,14 @@
 -- (case, spaces and trailing ! ? . aside), so "1234" or "123 dps" don't
 -- count. People are keyed on GUID: asking again keeps their place. They
 -- drop off when they leave the group, after the timeout, or by hand.
--- Casting on the next one is #10; announcements are #11.
+--
+-- Execution (#10): the Summoning button aims Ritual of Summoning at
+-- Queue:Next(). Each entry follows its summon (`state`, set by ns.Summon):
+-- nil waiting, "summoning" (the ritual is on them), "pending" (their prompt
+-- is up), "accepted", "declined". Someone is dropped only on a measured
+-- signal: accepted and then near the player, or gone from the group. What
+-- can't be read keeps them. `here` marks someone already near: shown,
+-- never aimed at.
 --
 -- Chat payloads are plain in the open world, in and out of combat
 -- (GlassChat's ChatProbe, PORTING-TBC-TO-FOREVER.md); a sender GUID that
@@ -19,7 +26,7 @@ if ns.skip then return end
 local API = ns.API
 
 local Queue = {
-    entries = {},      -- { guid, name, class, at, test }, oldest first
+    entries = {},      -- { guid, name, class, at, test, state, here, ritual }, oldest first
     listeners = {},
 }
 ns.Queue = Queue
@@ -32,6 +39,10 @@ Queue.CHAT_EVENTS = {
 
 -- How often ages refresh and timeouts apply while someone is waiting.
 local TICK = 10
+
+-- Near enough to need no summon, or to have arrived from one: the portal
+-- brings them beside the Warlock.
+Queue.HERE = 30
 
 -- A message or keyword, compared: lower case, trimmed, trailing ! ? . gone.
 local function normalize(text)
@@ -75,6 +86,8 @@ local function groupUnits()
     return units
 end
 
+Queue.GroupUnits = groupUnits
+
 -- The unit token of a group member, by GUID, or nil.
 function Queue.UnitOf(guid)
     for _, unit in ipairs(groupUnits()) do
@@ -86,6 +99,32 @@ end
 local function indexOf(guid)
     for i, e in ipairs(Queue.entries) do
         if e.guid == guid then return i end
+    end
+    return nil
+end
+
+function Queue:Find(guid)
+    local i = indexOf(guid)
+    return i and self.entries[i] or nil
+end
+
+-- Where someone's summon is (ns.Summon). Returns true when it changed.
+function Queue:SetState(guid, state)
+    local e = self:Find(guid)
+    if not e or e.state == state then return false end
+    e.state = state
+    self:Changed()
+    return true
+end
+
+-- The first who still needs a summon: waiting, in the group, not already
+-- near. Returns the entry and their unit token, read now.
+function Queue:Next()
+    for _, e in ipairs(self.entries) do
+        if not e.test and not e.state and not e.here then
+            local unit = Queue.UnitOf(e.guid)
+            if unit then return e, unit end
+        end
     end
     return nil
 end
@@ -104,7 +143,10 @@ end
 function Queue:Add(guid, name, class, test)
     local i = indexOf(guid)
     if i then
-        self.entries[i].at = GetTime()
+        -- Asking again after declining puts them back in line.
+        local e = self.entries[i]
+        e.at = GetTime()
+        if e.state == "declined" then e.state = nil end
         self:Changed()
         return false
     end
@@ -128,19 +170,28 @@ function Queue:Clear()
     self:Changed()
 end
 
--- Drops whoever left the group or waited past the timeout. Test entries
--- (/123 queue test) aren't group members and only time out.
+-- Drops whoever left the group, waited past the timeout, or accepted and
+-- is now near (arrived); marks who is already near. Test entries (/123
+-- queue test) aren't group members and only time out. Distance the client
+-- can't read changes nothing.
 function Queue:Prune()
     local now, limit = GetTime(), (tonumber(ns.db.queue.timeout) or 10) * 60
-    local kept, dropped = {}, false
+    local kept, changed = {}, false
     for _, e in ipairs(self.entries) do
-        if now - e.at >= limit or (not e.test and not Queue.UnitOf(e.guid)) then
-            dropped = true
+        local unit = not e.test and Queue.UnitOf(e.guid)
+        local near = unit and API.Near(unit, Queue.HERE)
+        if now - e.at >= limit or (not e.test and not unit) or (e.state == "accepted" and near == true) then
+            changed = true
         else
+            local here = (near and not e.state) or nil
+            if near ~= nil and here ~= e.here then
+                e.here = here
+                changed = true
+            end
             kept[#kept + 1] = e
         end
     end
-    if dropped then
+    if changed then
         self.entries = kept
         self:Changed()
     end
@@ -166,7 +217,9 @@ function Queue:OnChat(text, guid)
     local unit = Queue.UnitOf(guid)
     if not unit then return false end
     local _, class = UnitClass(unit)
-    return self:Add(guid, GetUnitName(unit, false), API.Readable(class) and class or nil)
+    local new = self:Add(guid, GetUnitName(unit, false), API.Readable(class) and class or nil)
+    self:Prune()
+    return new
 end
 
 -- /123 queue test: three made-up members say "123", "123!" and "1234".

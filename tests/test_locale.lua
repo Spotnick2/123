@@ -57,6 +57,9 @@ for _, locale in ipairs(LOCALES) do
         H.check(used[key] ~= nil, locale .. ": " .. key .. " is used by the code")
         H.check(type(value) == "string" and value ~= "", locale .. ": " .. key .. " has text")
         H.eq(placeholders(value), placeholders(key), locale .. ": " .. key .. " keeps its placeholders")
+        if key:find("{name}", 1, true) then
+            H.check(value:find("{name}", 1, true) ~= nil, locale .. ": " .. key .. " keeps {name}")
+        end
     end
     for key in pairs(used) do
         H.check(L[key] ~= nil, locale .. " translates " .. key)
