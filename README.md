@@ -84,9 +84,10 @@ Summoning button, with a sound, in the order they asked.
   started. The Summoning button then casts on your target and the Demon button summons without
   asking. The demon wheel closes and can't open, and the bar can't be moved, shown or hidden
   until combat ends.
-- 123 sends one thing on its own: the summon announcement in group chat when your ritual starts
-  (on by default, off in the options). It reads party, raid and instance chat for the queue's
-  keywords; it doesn't read whispers.
+- 123 writes to group chat on its own only when your ritual starts: the summon announcement
+  (on by default) and, if you turn it on, a call for clickers when fewer than two others are
+  near. Each has its own switch in the options. It reads party, raid and instance chat for the
+  queue's keywords; it doesn't read whispers.
 - Spell, item and demon names come from the game, in its language. Other languages than
   English, French and German show 123's own text in English.
 
