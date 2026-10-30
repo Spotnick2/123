@@ -17,7 +17,7 @@ local Resummon = {}
 ns.Resummon = Resummon
 
 local SA = ns.SecureAction
-local API = ns.API
+local L = ns.L
 
 local WIDTH, HEIGHT = 300, 96
 
@@ -57,12 +57,12 @@ function Resummon:Create()
     summon.glass = ns.Skin:Pill(summon)
     local summonText = ns.Skin:Font(summon.glass.top or summon, 12, "CENTER")
     summonText:SetPoint("CENTER")
-    summonText:SetText("Summon")
+    summonText:SetText(L["Summon"])
     summon:SetScript("PostClick", function(_, _, down)
         if down then return end
         if self.dontAsk:GetChecked() then
             ns.db.confirmResummon = false
-            ns.Print("won't ask again before re-summoning (/123 confirm to ask again).")
+            ns.Print(L["won't ask again before re-summoning (/123 confirm to ask again)."])
             SA.MarkDirty()
         end
         local done = self.onSummon
@@ -71,7 +71,7 @@ function Resummon:Create()
     end)
     self.summon = summon
 
-    local cancel = choice(frame, "Cancel", 90)
+    local cancel = choice(frame, L["Cancel"], 90)
     cancel:SetFrameLevel(top:GetFrameLevel() + 1)
     cancel:SetPoint("BOTTOMLEFT", frame, "BOTTOM", 6, 10)
     cancel:SetScript("OnClick", function() self:Hide() end)
@@ -83,7 +83,7 @@ function Resummon:Create()
     dontAsk:SetPoint("TOPLEFT", text, "BOTTOMLEFT", 40, -4)
     local dontAskText = ns.Skin:Font(top, 12, "LEFT")
     dontAskText:SetPoint("LEFT", dontAsk, "RIGHT", 2, 0)
-    dontAskText:SetText("Don't ask again")
+    dontAskText:SetText(L["Don't ask again"])
     self.dontAsk = dontAsk
 
     frame:Hide()
@@ -99,9 +99,10 @@ function Resummon:Show(anchor, spellID, onSummon, parent)
     self.frame:SetParent(parent or UIParent)
     self.frame:SetFrameStrata("DIALOG")
     self.onSummon = onSummon
-    local name = API.SpellName(spellID) or "that demon"
-    local demon = name:gsub("^Summon ", "")
-    self.text:SetText("You already have your " .. demon .. " summoned. Summon it again?")
+    -- The demon's name in the client's language (#22).
+    local demon = ns.Wheel.DemonName(spellID)
+    if demon == "" then demon = L["that demon"] end
+    self.text:SetText(L["You already have your %s summoned. Summon it again?"]:format(demon))
     self.dontAsk:SetChecked(false)
     SA.Apply(self.summon, { { type = "spell", spell = spellID } })
     -- Tall enough for the question however it wraps (it overflowed in game):

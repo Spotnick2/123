@@ -9,6 +9,8 @@
 local _, ns = ...
 if ns.skip then return end
 
+local L = ns.L
+
 local Options = {}
 ns.Options = Options
 
@@ -49,7 +51,7 @@ local function set(key, value)
     local apply = APPLY[key]
     if apply and apply() == false then
         tbl[field] = old
-        ns.Print("the bar can't change in combat.")
+        ns.Print(L["the bar can't change in combat."])
     end
 end
 Options.Set = set
@@ -159,7 +161,7 @@ local function keywords(parent, anchor)
     box:SetAutoFocus(false)
     local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     fs:SetPoint("LEFT", box, "RIGHT", 8, 0)
-    fs:SetText("Keywords")
+    fs:SetText(L["Keywords"])
     local function refresh() box:SetText(table.concat(ns.db.queue.keywords, ", ")) end
     local function save()
         ns.db.queue.keywords = ns.Queue.ParseKeywords(box:GetText())
@@ -176,30 +178,30 @@ end
 local function build()
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
-    title:SetText("123 — Warlock Summons, Demons & Stones")
+    title:SetText(L["123 — Warlock Summons, Demons & Stones"])
     local sub = panel:CreateFontString(nil, "OVERLAY", "GameFontHighlightSmall")
     sub:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
     sub:SetWidth(620)
     sub:SetJustifyH("LEFT")
-    sub:SetText("/123 shows or hides the bar, /123 wheel opens the demon wheel, /123 options opens this page."
-        .. " Key bindings: Options > Keybindings > AddOns > 123.")
+    sub:SetText(L["/123 shows or hides the bar, /123 wheel opens the demon wheel, /123 options opens this page."]
+        .. " " .. L["Key bindings: Options > Keybindings > AddOns > 123."])
 
     -- Left column.
-    local h = heading(panel, "Bar", sub)
-    local a = toggle(panel, h, "barShown", "Show the bar")
-    a = toggle(panel, a, "barLabels", "Names under the icons")
-    a = stepper(panel, a, "barScale", "Bar scale", 0.6, 1.6, 0.05, "%.2f")
-    local reset = button(panel, "Reset position", 130)
+    local h = heading(panel, L["Bar"], sub)
+    local a = toggle(panel, h, "barShown", L["Show the bar"])
+    a = toggle(panel, a, "barLabels", L["Names under the icons"])
+    a = stepper(panel, a, "barScale", L["Bar scale"], 0.6, 1.6, 0.05, "%.2f")
+    local reset = button(panel, L["Reset position"], 130)
     reset:SetPoint("TOPLEFT", a, "BOTTOMLEFT", 0, -8)
     reset:SetScript("OnClick", function() ns.Bar:ResetPosition() end)
-    a = note(panel, "Shift-drag the 123 handle to move the bar.", reset)
+    a = note(panel, L["Shift-drag the 123 handle to move the bar."], reset)
 
-    h = heading(panel, "Demon wheel", a)
-    a = toggle(panel, h, "confirmResummon", "Ask before re-summoning the demon that is out")
-    a = toggle(panel, a, "cinematicCamera", "Cinematic camera")
-    a = toggle(panel, a, "cameraOrbit", "Slow camera orbit")
-    a = toggle(panel, a, "hideGameUI", "Hide the game UI while the wheel is open")
-    local preview = button(panel, "Preview the wheel", 150)
+    h = heading(panel, L["Demon wheel"], a)
+    a = toggle(panel, h, "confirmResummon", L["Ask before re-summoning the demon that is out"])
+    a = toggle(panel, a, "cinematicCamera", L["Cinematic camera"])
+    a = toggle(panel, a, "cameraOrbit", L["Slow camera orbit"])
+    a = toggle(panel, a, "hideGameUI", L["Hide the game UI while the wheel is open"])
+    local preview = button(panel, L["Preview the wheel"], 150)
     preview:SetPoint("TOPLEFT", a, "BOTTOMLEFT", 0, -8)
     preview:SetScript("OnClick", function() ns.Wheel:SetPreview(not ns.Wheel.preview) end)
 
@@ -207,27 +209,27 @@ local function build()
     local right = CreateFrame("Frame", nil, panel)
     right:SetSize(1, 1)
     right:SetPoint("TOPLEFT", sub, "BOTTOMLEFT", 340, 0)
-    h = heading(panel, "Sound", right)
-    a = toggle(panel, h, "sounds", "Demon voices on the wheel")
-    a = toggle(panel, a, "alertSounds", "Alert sounds")
+    h = heading(panel, L["Sound"], right)
+    a = toggle(panel, h, "sounds", L["Demon voices on the wheel"])
+    a = toggle(panel, a, "alertSounds", L["Alert sounds"])
     for _, alert in ipairs(ns.Sound.ALERTS) do
         a = cycle(panel, a, "alerts." .. alert.key, alert.label, ns.Sound.CHOICES, function(kit)
             if kit > 0 and not ns.Sound:PlayKit(kit) then
-                ns.Print("the game didn't play that sound; pick another.")
+                ns.Print(L["the game didn't play that sound; pick another."])
             end
         end)
     end
-    a = note(panel, "Picking a sound plays it. Requests arrive with the summon queue and healthstone requests.", a)
+    a = note(panel, L["Picking a sound plays it. Requests arrive with the summon queue and healthstone requests."], a)
 
-    h = heading(panel, "Summon queue", a)
-    a = toggle(panel, h, "queue.enabled", "Queue group members who type a keyword")
+    h = heading(panel, L["Summon queue"], a)
+    a = toggle(panel, h, "queue.enabled", L["Queue group members who type a keyword"])
     local box = keywords(panel, a)
-    a = stepper(panel, box, "queue.timeout", "Minutes before a request drops", 2, 30, 1, "%d")
-    a = note(panel, "The whole message must be a keyword: \"123\" asks, \"1234\" or \"123 dps\" don't. /123 queue test tries it alone.", a)
+    a = stepper(panel, box, "queue.timeout", L["Minutes before a request drops"], 2, 30, 1, "%d")
+    a = note(panel, L["The whole message must be a keyword: \"123\" asks, \"1234\" or \"123 dps\" don't. /123 queue test tries it alone."], a)
 
-    h = heading(panel, "Minimap", a)
-    a = toggle(panel, h, "showMinimapButton", "Minimap button")
-    a = toggle(panel, a, "showCompartment", "Addon compartment entry (after /reload)")
+    h = heading(panel, L["Minimap"], a)
+    a = toggle(panel, h, "showMinimapButton", L["Minimap button"])
+    a = toggle(panel, a, "showCompartment", L["Addon compartment entry (after /reload)"])
 end
 
 function Options.Refresh()
@@ -260,7 +262,7 @@ end
 -- The Settings panel is Blizzard's; opening it in combat is refused.
 function Options:Open()
     if InCombatLockdown() then
-        ns.Print("options can't open in combat.")
+        ns.Print(L["options can't open in combat."])
         return
     end
     if self.category and Settings and Settings.OpenToCategory then

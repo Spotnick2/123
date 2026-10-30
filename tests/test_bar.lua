@@ -75,6 +75,11 @@ local bare = Bar.frame:GetHeight()
 H.slash("ONETWOTHREE", "labels")
 H.check(byKey.armor.label:IsShown(), "/123 labels shows them")
 H.check(Bar.frame:GetHeight() > bare, "and the bar grows a row")
+-- English names fit their room under the icon: none is shrunk.
+local _, labelSize = byKey.armor.label:GetFont()
+for _, button in ipairs(Bar.buttons) do
+    H.eq(select(2, button.label:GetFont()), labelSize, button.label:GetText() .. " keeps its size")
+end
 H.slash("ONETWOTHREE", "labels")
 H.check(not byKey.armor.label:IsShown() and Bar.frame:GetHeight() == bare, "and back")
 

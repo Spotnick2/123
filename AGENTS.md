@@ -80,6 +80,11 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
 - SavedVariables load after the addon's files: read them at `PLAYER_LOGIN`, never at file scope.
 - Register events through `ns.API.RegisterEvents` (pcall; a false return is a failure).
 - Options use the Settings canvas API. There is no UIDropDownMenu.
+- Text players see goes through `ns.L["English text"]` (`Locales/Locale.lua`), with `%s`/`%d`
+  placeholders in order, never concatenated sentences. Add its French and German to
+  `Locales/frFR.lua` and `Locales/deDE.lua`: `tests/test_locale.lua` fails on a missing one.
+  Names the client localizes (spells, items, demon families) are read from it, never translated.
+  `/123 debug` and library warnings stay English.
 - Sounds: in-game kits (`PlaySound`, vanilla-era kits) or FileDataIDs; `PlaySoundFile` refuses
   built-in paths. Models: `ModelScene` + `SetModelByCreatureDisplayID`.
 - Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r10,

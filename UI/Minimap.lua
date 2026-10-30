@@ -10,6 +10,7 @@ ns.Minimap = Minimap
 
 local NAME = "OneTwoThree"
 local TITLE = "123"
+local L = ns.L
 
 local function onClick(_, mouseButton)
     if mouseButton == "RightButton" then
@@ -23,9 +24,9 @@ end
 
 local function onTooltip(tooltip)
     tooltip:AddLine(TITLE, ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
-    tooltip:AddLine("Click: the demon wheel", 1, 1, 1)
-    tooltip:AddLine("Shift-click: show or hide the bar", 1, 1, 1)
-    tooltip:AddLine("Right-click: options", 1, 1, 1)
+    tooltip:AddLine(L["Click: the demon wheel"], 1, 1, 1)
+    tooltip:AddLine(L["Shift-click: show or hide the bar"], 1, 1, 1)
+    tooltip:AddLine(L["Right-click: options"], 1, 1, 1)
 end
 
 function Minimap:Initialize()

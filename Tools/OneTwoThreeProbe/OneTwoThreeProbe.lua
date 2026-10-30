@@ -148,6 +148,18 @@ local function pet()
     end
 end
 
+-- #22: the client's language, the languages it ships, and the demons'
+-- family names by CreatureFamily ID (Data.WHEEL's `family`), which name
+-- the wheel's beads without a demon out.
+local FAMILIES = { 15, 16, 17, 19, 23, 302 }
+local function locale()
+    call("locale", "GetLocale")
+    call("locales available", "GetAvailableLocales")
+    for _, id in ipairs(FAMILIES) do
+        call("family " .. id, "C_CreatureInfo.GetCreatureFamilyInfo", id)
+    end
+end
+
 local function stones()
     for _, it in ipairs(ITEMS) do
         local id, label = it[1], it[2]
@@ -397,6 +409,7 @@ Probe:Command("tradeitem", tradeItemCmd, "<itemID>: put the item in the trade wi
 Probe:Command("say", sayTo, "<PARTY|RAID|INSTANCE_CHAT> [text]: typed, then from a timer")
 Probe:Command("range", range, "per group member: position, distance, map, range")
 Probe:Command("auras", auras, "the player's buffs (Demonic Sacrifice's, #20)")
+Probe:Command("locale", locale, "client language, shipped languages, demon family names (#22)")
 Probe:Command("clear", function() Probe:ClearLog(); say("log cleared") end, "empty the saved log")
 
 ------------------------------------------------------------

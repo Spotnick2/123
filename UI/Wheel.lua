@@ -41,6 +41,7 @@ local SA = ns.SecureAction
 local Data = ns.Data
 local Skin = ns.Skin
 local FX = ns.WheelEffects
+local L = ns.L
 
 local Wheel = { nodes = {}, open = false }
 ns.Wheel = Wheel
@@ -56,7 +57,7 @@ local BEAD = 76
 local MODEL = math.floor(BEAD * 0.695)
 local RADIUS = 162
 local CENTER = 170
-local HINT = "Select a demon to summon"
+local HINT = L["Select a demon to summon"]
 
 local function clockOffset(clock, radius)
     local angle = math.rad(90 - (clock % 12) * 30)
@@ -67,8 +68,17 @@ local function hex(c)
     return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
 end
 
--- "Summon Imp" -> "Imp".
+-- A demon's name in the client's language, from its summon (#22): its
+-- creature family's ("Diablotin"), else the bead's label, else the summon
+-- without "Summon " ("Summon Imp" -> "Imp"; Inferno is its own name).
 local function demonName(spellID)
+    for _, entry in ipairs(Data.WHEEL) do
+        if entry.spell == spellID then
+            local name = API.FamilyName(entry.family) or entry.label
+            if name then return name end
+            break
+        end
+    end
     local name = API.SpellName(spellID) or ""
     return (name:gsub("^Summon ", ""))
 end
@@ -247,10 +257,10 @@ function Wheel:CreateHeader()
     title:SetTextColor(0.92, 0.95, 0.88)
     local subtitle = Skin:Font(header, 12, "CENTER")
     subtitle:SetPoint("TOP", title, "BOTTOM", 0, -2)
-    subtitle:SetText("DEMON SUMMONING")
+    subtitle:SetText(L["DEMON SUMMONING"])
     local mark = Skin:Font(header, 11, "CENTER")
     mark:SetPoint("TOP", subtitle, "BOTTOM", 0, -2)
-    mark:SetText("PREVIEW")
+    mark:SetText(L["PREVIEW"])
     mark:SetTextColor(1, 0.82, 0.2)
     mark:Hide()
     self.previewMark = mark
@@ -414,13 +424,13 @@ function Wheel:Resolve()
         local demon = demonName(active)
         if API.IsKnown(Data.DEMONIC_SACRIFICE) then
             sac.action = { type = "spell", spell = Data.DEMONIC_SACRIFICE }
-            sac.text = API.SpellName(Data.DEMONIC_SACRIFICE) or "Demonic Sacrifice"
+            sac.text = API.SpellName(Data.DEMONIC_SACRIFICE) or L["Demonic Sacrifice"]
             sac.effectText = sacrificeEffect(demon)
         elseif active == Data.VOIDWALKER then
             local slot = sacrificeSlot()
             if slot then
                 sac.action = { type = "pet", action = slot }
-                sac.text = (API.SpellName(Data.VOIDWALKER_SACRIFICE) or "Sacrifice") .. " " .. demon
+                sac.text = (API.SpellName(Data.VOIDWALKER_SACRIFICE) or L["Sacrifice"]) .. " " .. demon
             end
         end
     end
@@ -452,12 +462,12 @@ end
 -- The centre's name in preview: a bead's label (the Doomguard) or demon name.
 function Wheel:ActiveName()
     local entry = self.active and entryOf(self.active)
-    return entry and (entry.label or demonName(entry.spell)) or self:PetFamily()
+    return entry and demonName(entry.spell) or self:PetFamily()
 end
 
 function Wheel:SetPreview(on)
     if InCombatLockdown() then
-        ns.Print("preview can't change in combat.")
+        ns.Print(L["preview can't change in combat."])
         return
     end
     self.preview = on and true or false
@@ -477,9 +487,9 @@ function Wheel:SetPreview(on)
         self:PaintPortraits()
         self:Hint()
     end
-    ns.Print(self.preview and "preview on: every demon is shown, nothing is cast. "
-        .. "Click a demon to put it in the centre; /123 preview again to stop."
-        or "preview off.")
+    ns.Print(self.preview
+        and L["preview on: every demon is shown, nothing is cast. Click a demon to put it in the centre; /123 preview again to stop."]
+        or L["preview off."])
 end
 
 -- A click on a bead in preview: that demon goes to the centre.
@@ -558,7 +568,7 @@ end
 function Wheel:Paint()
     if not self.root then return end
     for _, node in ipairs(self.nodes) do
-        node.label:SetText(node.entry.label or demonName(node.spellID))
+        node.label:SetText(demonName(node.spellID))
         self:PaintReagent(node)
         self:PaintEdge(node)
     end
@@ -566,14 +576,14 @@ function Wheel:Paint()
     if self.preview then
         self.centerName:SetText(self:ActiveName())
         self.centerSub:SetText("")
-        self.centerState:SetText(hex(FEL) .. "\226\151\143 Active|r")
+        self.centerState:SetText(hex(FEL) .. "\226\151\143 " .. L["Active"] .. "|r")
     elseif self.petOut then
         self.centerName:SetText(self.active and demonName(self.active) or self:PetFamily())
         local petName = UnitName("pet")
         self.centerSub:SetText(API.Readable(petName) and petName or "")
-        self.centerState:SetText(hex(FEL) .. "\226\151\143 Active|r")
+        self.centerState:SetText(hex(FEL) .. "\226\151\143 " .. L["Active"] .. "|r")
     else
-        self.centerName:SetText("No demon")
+        self.centerName:SetText(L["No demon"])
         self.centerSub:SetText("")
         self.centerState:SetText("")
     end
@@ -602,7 +612,7 @@ function Wheel:PaintReagent(node)
     if self.preview then
         node.missingReagent = false
         node.count:SetText("")
-        node.sub:SetText(node.isActive and (hex(FEL) .. "Active|r") or "")
+        node.sub:SetText(node.isActive and (hex(FEL) .. L["Active"] .. "|r") or "")
         node.subPlate:SetShown(node.isActive)
         return
     end
@@ -611,11 +621,11 @@ function Wheel:PaintReagent(node)
     node.missingReagent = node.known and itemID ~= nil and have == 0
     node.count:SetText(node.major and itemID and have or "")
     if not node.known then
-        node.sub:SetText("Not learned")
+        node.sub:SetText(L["Not learned"])
     elseif node.isActive then
-        node.sub:SetText(hex(FEL) .. "Active|r")
+        node.sub:SetText(hex(FEL) .. L["Active"] .. "|r")
     elseif itemID and have == 0 then
-        node.sub:SetText("|cffff6060No " .. self:ItemName(itemID) .. "|r")
+        node.sub:SetText("|cffff6060" .. L["No %s"]:format(self:ItemName(itemID)) .. "|r")
     else
         node.sub:SetText("")
     end
@@ -625,7 +635,7 @@ end
 function Wheel:ItemName(itemID)
     local name = API.ItemName(itemID)
     if not name then API.RequestItemData(itemID) end
-    return name or "reagent"
+    return name or L["reagent"]
 end
 
 ------------------------------------------------------------
@@ -652,36 +662,37 @@ end
 
 function Wheel:Hint(text)
     if self.strip then
-        self.strip.hint:SetText(text or (self.preview and "Preview: click a demon to put it in the centre" or HINT))
+        self.strip.hint:SetText(text or (self.preview and L["Preview: click a demon to put it in the centre"] or HINT))
     end
 end
 
 function Wheel:NodeHint(node)
     if self.preview then
-        return "Preview: put the " .. (node.entry.label or demonName(node.spellID)) .. " in the centre"
+        return L["Preview: put the %s in the centre"]:format(demonName(node.spellID))
     end
     if not node.known then
-        return (node.entry.label or demonName(node.spellID)) .. ": not learned yet"
+        return L["%s: not learned yet"]:format(demonName(node.spellID))
     end
     local name = API.SpellName(node.spellID) or ""
     if node.isActive then
-        return name .. " again (already out)"
+        return L["%s again (already out)"]:format(name)
     end
     local itemID = reagentOf(node.spellID)
     if itemID and API.ItemCount(itemID) == 0 then
-        return name .. ": needs " .. self:ItemName(itemID)
+        return L["%s: needs %s"]:format(name, self:ItemName(itemID))
     end
     if not node.major and API.IsKnown(Data.FEL_DOMINATION) then
-        return "Click: " .. name .. "    Shift: Fel Domination first"
+        local felDom = API.SpellName(Data.FEL_DOMINATION) or "Fel Domination"
+        return L["Click: %s"]:format(name) .. "    " .. L["Shift: %s first"]:format(felDom)
     end
-    return "Click: " .. name
+    return L["Click: %s"]:format(name)
 end
 
 function Wheel:SacrificeHint()
-    if self.preview then return "Preview: nothing is cast" end
+    if self.preview then return L["Preview: nothing is cast"] end
     local sac = self.sacrifice
     if not sac.action then return nil end
-    return "Right-click: " .. sac.text .. (sac.effectText and (" - " .. sac.effectText) or "")
+    return L["Right-click: %s"]:format(sac.text) .. (sac.effectText and (" - " .. sac.effectText) or "")
 end
 
 -- New state (pet, spells): resolve, re-arm (deferred in combat), repaint.
@@ -714,7 +725,7 @@ end
 
 function Wheel:Open()
     if InCombatLockdown() then
-        ns.Print("the demon wheel can't open in combat.")
+        ns.Print(L["the demon wheel can't open in combat."])
         return
     end
     self:Create()
@@ -780,7 +791,7 @@ function Wheel:FinishClose()
         -- Its buttons still cast until combat ends: shown with their
         -- portraits (hidden at OnCombatEnd), and said so.
         self.pendingHide = true
-        ns.Print("the demon wheel closes when combat ends.")
+        ns.Print(L["the demon wheel closes when combat ends."])
     else
         self.pendingHide = false
         self:HidePortraits()

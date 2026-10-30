@@ -13,6 +13,7 @@ local _, ns = ...
 if ns.skip then return end
 
 local API = ns.API
+local L = ns.L
 
 local QueueList = {}
 ns.QueueList = QueueList
@@ -22,8 +23,8 @@ local MAX_ROWS = 8
 
 local function age(seconds)
     seconds = math.max(0, math.floor(seconds))
-    if seconds < 60 then return seconds .. "s" end
-    return math.floor(seconds / 60) .. "m"
+    if seconds < 60 then return L["%ds"]:format(seconds) end
+    return L["%dm"]:format(math.floor(seconds / 60))
 end
 
 local function classColor(class)
@@ -109,7 +110,7 @@ function QueueList:Refresh()
     end
     if not self.frame then self:Create() end
     local now, shown = GetTime(), math.min(#entries, MAX_ROWS)
-    self.title:SetText("Summons (" .. #entries .. ")")
+    self.title:SetText(L["Summons (%d)"]:format(#entries))
     for i = 1, shown do
         local e = entries[i]
         local row = self.rows[i] or self:CreateRow(i)
@@ -123,7 +124,7 @@ function QueueList:Refresh()
     for i = shown + 1, #self.rows do self.rows[i]:Hide(); self.rows[i].guid = nil end
     local extra = #entries - shown
     self.more:SetShown(extra > 0)
-    self.more:SetText("and " .. extra .. " more")
+    self.more:SetText(L["and %d more"]:format(extra))
     self.more:ClearAllPoints()
     self.more:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD, -(PAD + HEADER + shown * ROW))
     self.frame:SetHeight(PAD * 2 + HEADER + shown * ROW + (extra > 0 and ROW or 0))

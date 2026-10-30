@@ -1,6 +1,8 @@
 ## Interface: 16001
 ## Title: 123
 ## Notes: Warlock summons, demons & stones on one small glass bar.
+## Notes-frFR: Invocations, démons et pierres du démoniste sur une petite barre de verre.
+## Notes-deDE: Hexenmeister-Beschwörungen, Dämonen & Steine auf einer kleinen Glasleiste.
 ## Author: Spotnick
 ## Version: @project-version@
 ## SavedVariables: OneTwoThreeDB
@@ -15,6 +17,9 @@ Libs\LibGlass-1.0\LibGlass-1.0.xml
 Libs\LibShowcase-1.0\LibShowcase-1.0.xml
 
 Core\Constants.lua
+Locales\Locale.lua
+Locales\frFR.lua
+Locales\deDE.lua
 Core\Compat.lua
 Core\Data.lua
 Core\DB.lua

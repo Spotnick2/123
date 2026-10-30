@@ -30,14 +30,18 @@ ns.Data = {
     -- (60) is a group ritual for a Doomguard. Both exist on Forever (run 2).
     -- `npc` is what each bead's live portrait shows: the DEMON_NPC ids, plus
     -- the Infernal (89) and the Doomguard (11859), Vanilla's.
+    -- `family` (CreatureFamily, Forever's client data 70532) names the demon
+    -- in the client's language (#22). The Infernal has no family: Inferno's
+    -- own spell name labels its bead. `label` is the English fallback where
+    -- the summon's name doesn't hold the demon's (Ritual of Doom).
     WHEEL = {
-        { spell = 697, npc = 1860 },                    -- Voidwalker
-        { spell = 691, npc = 417 },                     -- Felhunter
-        { spell = 1122, npc = 89, major = true },       -- Inferno
-        { spell = 18540, npc = 11859, major = true, label = "Doomguard" },
-        { spell = 688, npc = 416 },                     -- Imp
-        { spell = 712, npc = 1863 },                    -- Succubus
-        { spell = 713, npc = 185317 },                  -- Incubus
+        { spell = 697, npc = 1860, family = 16 },                      -- Voidwalker
+        { spell = 691, npc = 417, family = 15 },                       -- Felhunter
+        { spell = 1122, npc = 89, major = true },                      -- Inferno
+        { spell = 18540, npc = 11859, major = true, family = 19, label = ns.L["Doomguard"] },
+        { spell = 688, npc = 416, family = 23 },                       -- Imp
+        { spell = 712, npc = 1863, family = 17 },                      -- Succubus
+        { spell = 713, npc = 185317, family = 302 },                   -- Incubus
     },
 
     -- What a spell consumes (Wowhead's Forever database): a Soul Shard for

@@ -26,6 +26,7 @@ ns.Bar = Bar
 local API = ns.API
 local SA = ns.SecureAction
 local Data = ns.Data
+local L = ns.L
 
 local ICON = 36
 local PITCH = 60            -- button centre to centre (room for "Healthstone")
@@ -33,6 +34,7 @@ local PAD = 8
 local HANDLE_W = 34
 local SHARD_W = 56
 local LABEL_H = 12
+local LABEL_W = PITCH - 4     -- a name's room under its icon, clear of the next one
 local SLOTS = 6             -- the wheel's button, then the five secure ones
 local WIDTH = PAD + HANDLE_W + PITCH * SLOTS + 1 + SHARD_W + PAD
 -- The names under the icons are a setting, off by default (owner: the
@@ -131,12 +133,23 @@ local IDLE_ICON = {
 }
 
 Bar.BUTTONS = {
-    { key = "demon", label = "Demon" },
-    { key = "armor", label = "Armor" },
-    { key = "soulstone", label = "Soulstone" },
-    { key = "healthstone", label = "Healthstone" },
-    { key = "summoning", label = "Summoning" },
+    { key = "demon", label = L["Demon"] },
+    { key = "armor", label = L["Armor"] },
+    { key = "soulstone", label = L["Soulstone"] },
+    { key = "healthstone", label = L["Healthstone"] },
+    { key = "summoning", label = L["Summoning"] },
 }
+
+-- A name wider than its room (#22: "Gesundheitsstein", "Pierre de soins")
+-- gets a smaller font, so neighbours never run into each other.
+function Bar.FitLabel(label, text)
+    label:SetText(text)
+    local font, size, flags = label:GetFont()
+    local width = label:GetUnboundedStringWidth()
+    if font and size and width and width > LABEL_W then
+        label:SetFont(font, math.floor(size * LABEL_W / width * 10) / 10, flags)
+    end
+end
 
 local function actionIcon(action, key)
     if action then
@@ -150,9 +163,9 @@ end
 
 local function actionName(action)
     if action.itemID then
-        return "Use " .. (API.ItemName(action.itemID) or ("item " .. action.itemID))
+        return L["Use %s"]:format(API.ItemName(action.itemID) or L["item %d"]:format(action.itemID))
     end
-    return API.SpellName(action.spellID) or ("spell " .. action.spellID)
+    return API.SpellName(action.spellID) or L["spell %d"]:format(action.spellID)
 end
 
 ------------------------------------------------------------
@@ -363,32 +376,32 @@ end
 
 -- "Needs <reagent>" under a tooltip line whose spell lacks its reagent.
 local function addNeeds(action)
-    GameTooltip:AddLine("Needs " .. (API.ItemName(Data.REAGENT[action.spellID]) or "a reagent"), 1, 0.45, 0.45)
+    GameTooltip:AddLine(L["Needs %s"]:format(API.ItemName(Data.REAGENT[action.spellID]) or L["a reagent"]), 1, 0.45, 0.45)
 end
 
 function showTooltip(button)
     GameTooltip:SetOwner(button, "ANCHOR_TOP")
     GameTooltip:SetText(button.label:GetText(), 1, 1, 1)
     if button.armorState == "missing" then
-        GameTooltip:AddLine("Not on you", 1, 0.45, 0.45)
+        GameTooltip:AddLine(L["Not on you"], 1, 0.45, 0.45)
     end
     if button.key == "demon" and button.action then
-        GameTooltip:AddLine("Click: " .. actionName(button.action)
-            .. (button.held and " (already out: asks first)" or ""), 0.75, 0.8, 0.9)
+        GameTooltip:AddLine(L["Click: %s"]:format(actionName(button.action))
+            .. (button.held and (" " .. L["(already out: asks first)"]) or ""), 0.75, 0.8, 0.9)
         if button.sacrifice then
             local effect = ns.Wheel.SacrificeEffect(ns.Wheel.DemonName(petSummon()))
-            GameTooltip:AddLine("Right-click: " .. actionName(button.sacrifice), 0.75, 0.8, 0.9)
+            GameTooltip:AddLine(L["Right-click: %s"]:format(actionName(button.sacrifice)), 0.75, 0.8, 0.9)
             if effect then GameTooltip:AddLine(effect, 1, 1, 1, true) end
         end
     elseif button.action then
-        GameTooltip:AddLine("Click: " .. actionName(button.action), 0.75, 0.8, 0.9)
+        GameTooltip:AddLine(L["Click: %s"]:format(actionName(button.action)), 0.75, 0.8, 0.9)
         if button.short then addNeeds(button.action) end
         local waiting = button.key == "summoning" and #ns.Queue.entries or 0
         if waiting > 0 then
-            GameTooltip:AddLine(waiting .. " waiting for a summon", 0.75, 0.8, 0.9)
+            GameTooltip:AddLine(L["%d waiting for a summon"]:format(waiting), 0.75, 0.8, 0.9)
         end
     else
-        GameTooltip:AddLine("Nothing learned for this yet", 0.75, 0.8, 0.9)
+        GameTooltip:AddLine(L["Nothing learned for this yet"], 0.75, 0.8, 0.9)
     end
     GameTooltip:Show()
 end
@@ -433,7 +446,7 @@ function Bar:CreateButton(index, spec, parent)
 
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)
-    label:SetText(spec.label)
+    Bar.FitLabel(label, spec.label)
     label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
     button.label = label
 
@@ -473,15 +486,15 @@ function Bar:CreateWheelButton()
     button.icon = icon
     local label = ns.Skin:Font(self.glass.top or self.frame, 10, "CENTER")
     label:SetPoint("TOP", button, "BOTTOM", 0, -2)
-    label:SetText("Demons")
+    Bar.FitLabel(label, L["Demons"])
     label:SetTextColor(ns.Colors.MUTED[1], ns.Colors.MUTED[2], ns.Colors.MUTED[3], ns.Colors.MUTED[4])
     button.label = label
     button:SetScript("OnClick", function() ns.Wheel:Toggle() end)
     button:SetScript("OnEnter", function(b)
         GameTooltip:SetOwner(b, "ANCHOR_TOP")
-        GameTooltip:SetText("Demons", 1, 1, 1)
-        GameTooltip:AddLine(InCombatLockdown() and "The demon wheel can't open in combat"
-            or "Click: the demon wheel", 0.75, 0.8, 0.9)
+        GameTooltip:SetText(L["Demons"], 1, 1, 1)
+        GameTooltip:AddLine(InCombatLockdown() and L["The demon wheel can't open in combat"]
+            or L["Click: the demon wheel"], 0.75, 0.8, 0.9)
         GameTooltip:Show()
     end)
     button:SetScript("OnLeave", hideTooltip)
@@ -509,7 +522,7 @@ function Bar:CreateHandle()
     handle:SetScript("OnEnter", function(f)
         GameTooltip:SetOwner(f, "ANCHOR_TOP")
         GameTooltip:SetText("123", ns.Colors.ACCENT[1], ns.Colors.ACCENT[2], ns.Colors.ACCENT[3])
-        GameTooltip:AddLine("Shift-drag: move the bar", 0.75, 0.8, 0.9)
+        GameTooltip:AddLine(L["Shift-drag: move the bar"], 0.75, 0.8, 0.9)
         GameTooltip:Show()
     end)
     handle:SetScript("OnLeave", hideTooltip)
@@ -666,7 +679,7 @@ end
 function Bar:Toggle()
     if not self.frame then return end
     if InCombatLockdown() then
-        ns.Print("the bar can't be shown or hidden in combat.")
+        ns.Print(L["the bar can't be shown or hidden in combat."])
         return
     end
     ns.db.bar.shown = not self.frame:IsShown()
