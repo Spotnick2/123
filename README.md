@@ -1,12 +1,13 @@
 # 123 — Warlock Summons, Demons & Stones
 
 A small glass bar and a fel demon wheel for Warlocks on **WoW: Forever**: your demons, armor,
-soulstone, healthstones and summoning, one click away.
+soulstone, healthstones and summoning, one click away. In English, French and German, following
+the game's language.
 
-![The demon wheel](docs/screenshots/hero.jpg)
+![The demon wheel](https://raw.githubusercontent.com/Spotnick2/123/main/docs/screenshots/hero.jpg)
 
 ## The bar
-![The bar](docs/screenshots/bar.jpg)
+![The bar](https://raw.githubusercontent.com/Spotnick2/123/main/docs/screenshots/bar.jpg)
 
 **Demons** · **Demon** · **Armor** · **Soulstone** · **Healthstone** · **Summoning** | soul shards
 
@@ -23,14 +24,14 @@ soulstone, healthstones and summoning, one click away.
 - Shift-drag the "123" handle to move it. Scale, names under the icons and the rest are in
   **Options > AddOns > 123** (or `/123 options`, or right-click the minimap button).
 
-![In the game](docs/screenshots/ui.jpg)
+![In the game](https://raw.githubusercontent.com/Spotnick2/123/main/docs/screenshots/ui.jpg)
 
 ## The demon wheel
-![Hover, click: the Imp takes the centre](docs/screenshots/wheel.gif)
+![Hover, click: the Imp takes the centre](https://raw.githubusercontent.com/Spotnick2/123/main/docs/screenshots/wheel.gif)
 
 [The demon wheel in action, with sound (YouTube)](https://www.youtube.com/watch?v=IvxhJ4iC4Sc).
 
-![Three demons in the centre](docs/screenshots/wheels.jpg)
+![Three demons in the centre](https://raw.githubusercontent.com/Spotnick2/123/main/docs/screenshots/wheels.jpg)
 
 - Seven demons on a fel ring: Voidwalker, Felhunter, Inferno, Doomguard, Imp, Succubus and
   Forever's own **Incubus**, each a live animated portrait that speaks when you hover it.
@@ -77,13 +78,32 @@ Summoning button, with a sound, in the order they asked.
 - Key bindings (Key Bindings > 123): the wheel, summon, Sacrifice-or-summon, Armor, Soulstone,
   Healthstone, Ritual of Summoning
 
+## Good to know
+- Warlocks only: on any other class, 123 loads nothing.
+- In combat the game locks what a button does, so the bar keeps what it was armed with as combat
+  started. The Summoning button then casts on your target and the Demon button summons without
+  asking. The demon wheel closes and can't open, and the bar can't be moved, shown or hidden
+  until combat ends.
+- 123 sends one thing on its own: the summon announcement in group chat when your ritual starts
+  (on by default, off in the options). It reads party, raid and instance chat for the queue's
+  keywords; it doesn't read whispers.
+- Spell, item and demon names come from the game, in its language. Other languages than
+  English, French and German show 123's own text in English.
+
 ## Coming next
-Healthstone requests (a player-initiated trade when someone asks), a soulstone target, and
-summoning straight from the queue, with help calls for clickers. See the
+Healthstone requests (a trade you start when someone asks), a soulstone target, Portal of
+Summoning, a smarter Demonic Sacrifice, and Banish and Enslave Demon buttons. See the
 [issues](https://github.com/Spotnick2/123/issues).
 
-## Download
-[CurseForge: forever-123](https://www.curseforge.com/wow/addons/forever-123) (project 1735903).
+## Install
+Install **123** from [CurseForge](https://www.curseforge.com/projects/1735903) or
+[Wago Addons](https://addons.wago.io/addons/qGYBAONg), or unzip a release from
+[GitHub](https://github.com/Spotnick2/123/releases) into the `Interface\AddOns` folder inside
+your Forever game folder. Then `/reload`, or start the game.
+
+## Bugs and ideas
+In the [GitHub issues](https://github.com/Spotnick2/123/issues). For a bug, `/123 debug` prints
+the client build and what each bar button is armed with: paste it in.
 
 ## Requirements
 WoW: Forever (1.60.1), a Warlock (other classes get nothing). Uses
@@ -91,6 +111,12 @@ WoW: Forever (1.60.1), a Warlock (other classes get nothing). Uses
 [LibShowcase-1.0](https://github.com/Spotnick2/LibShowcase), embedded, and LibDataBroker /
 LibDBIcon for the minimap button.
 
+## Credits
+The demons' portraits and voices are the game's own.
+
 ## Development
 See `AGENTS.md`. Tests: `pwsh tests/run.ps1`. Deploy: `pwsh Tools/deploy.ps1 [-Probe]`.
 Screenshots: `python Tools/make_screenshots.py` (names blurred).
+
+## Licence
+MIT ([LICENSE](https://github.com/Spotnick2/123/blob/main/LICENSE)).
