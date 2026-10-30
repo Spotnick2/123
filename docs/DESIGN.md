@@ -102,9 +102,23 @@ explicit policy (option).
   in combat. Name in class colour, wait time, x; eight rows, then "and N more".
 - Solo test: `/123 queue test` runs "123", "123!" and "1234" from made-up members through the
   same matching; test entries skip the roster check.
-- Execution: Ritual of Summoning on the next queued member. Members drop off only on measured
-  signals (summon accepted and arrived, left the group); "unknown" keeps them.
-- Announcements: "summoning X, click the portal" / "need clickers", configurable and throttled.
+- Execution (#10): the Summoning button's `unit1` is `Queue:Next()`, the first entry that is not a
+  test, has no summon state, isn't near (30 yd, `UnitDistanceSquared`) and is in the group, read
+  at sync time. Rebuilt on queue change (`MarkDirty`) and **at once** on `GROUP_ROSTER_UPDATE`
+  (`RunSyncs`), so no click meets a stale token. In combat (`SA.inCombat`, set before the
+  `PLAYER_REGEN_DISABLED` sync) the unit comes off: the ritual casts on the target.
+- Lifecycle (`Core/Summon.lua`): a ritual starts at `UNIT_SPELLCAST_START` / `_CHANNEL_START`
+  (not `_SENT`: a refused cast announces nothing), on the member the button was clicked for
+  (PostClick, 2 s), else the `_SENT` target name, else the target. States: "summoning", then
+  `IncomingSummonStatus` Pending / Accepted / Declined. Pending going back to None is waiting
+  again, as is a ritual that ends with no prompt (3 s). Dropped only on measured signals:
+  accepted and then near, or gone from the group (and the timeout); unreadable status or
+  distance keeps them. Asking again after declining puts them back in line.
+- Announcements (#11, `Core/Announce.lua`): at the ritual's start, "Summoning {name}, please
+  click the portal" (on) and "Need 2 clickers for the summon" (off; only when fewer than two
+  others are within 30 yd, and never when a distance is unreadable). Instance, raid, then
+  party chat; nothing solo; each at most every 10 s. Blank saved text means the default in the
+  client's language.
 
 ## Portal of Summoning
 Grimoire of Portal of Summoning (item 216748; its use-spell 402265 is the generic "Learning" teach spell, not the portal) is in the database; whether it is

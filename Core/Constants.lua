@@ -38,6 +38,14 @@ ns.Constants = {
             keywords = { "123" },
             timeout = 10,
         },
+        -- Group chat when a Ritual of Summoning starts (#11). An empty text
+        -- is the default line, in the client's language.
+        announce = {
+            summon = true,
+            summonText = "",
+            clickers = false,
+            clickersText = "",
+        },
         -- Minimap button (LibDBIcon) and Addon Compartment entry (#15).
         showMinimapButton = true,
         showCompartment = true,

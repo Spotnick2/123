@@ -27,6 +27,8 @@ Core\Events.lua
 Core\SecureAction.lua
 Core\Sound.lua
 Core\Queue.lua
+Core\Summon.lua
+Core\Announce.lua
 UI\Skin.lua
 UI\Presentation.lua
 UI\Portrait.lua

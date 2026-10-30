@@ -70,6 +70,22 @@ L["%dm"] = "%dmin"
 L["Summons (%d)"] = "Beschwörungen (%d)"
 L["and %d more"] = "und %d weitere"
 
+-- Summon execution and announcements (#10, #11)
+L["Click: %s on %s"] = "Klick: %s auf %s"
+L["next"] = "nächste"
+L["summoning"] = "Beschwörung"
+L["pending"] = "angefragt"
+L["accepted"] = "angenommen"
+L["declined"] = "abgelehnt"
+L["here"] = "hier"
+L["Summoning {name}, please click the portal"] = "Beschwöre {name}, bitte das Portal anklicken"
+L["Need 2 clickers for the summon"] = "Brauche 2 Klicker für die Beschwörung"
+L["Summon announcements"] = "Beschwörungsansagen"
+L["Announce the summon in group chat"] = "Beschwörung im Gruppenchat ansagen"
+L["Ask for clickers when fewer than 2 are near"] = "Nach Klickern fragen, wenn weniger als 2 in der Nähe sind"
+L["{name} is who you summon. Sent to instance, raid or party chat when the ritual starts, at most every 10 seconds."] =
+    "{name} ist, wen du beschwörst. Geht an den Instanz-, Schlachtzugs- oder Gruppenchat, wenn das Ritual beginnt, höchstens alle 10 Sekunden."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Umschalt-Klick: Leiste ein- oder ausblenden"
 L["Right-click: options"] = "Rechtsklick: Optionen"

@@ -97,6 +97,53 @@ function API.UnitNpcID(unit)
 end
 
 ------------------------------------------------------------
+-- Group members: summon status, distance, group chat (#10, #11)
+------------------------------------------------------------
+
+-- Enum.SummonStatus (70532 dump; Blizzard's PartyMemberFrame reads it).
+-- Copied, never written into Blizzard's table.
+local status = Enum and Enum.SummonStatus or {}
+API.SUMMON = {
+    None = status.None or 0, Pending = status.Pending or 1,
+    Accepted = status.Accepted or 2, Declined = status.Declined or 3,
+}
+
+-- A member's incoming summon status, or nil when unreadable. Readable in
+-- the open world (FOREVER-PROBE.md run 1: 0, None); the transitions are
+-- unmeasured (ledger row 4).
+function API.SummonStatus(unit)
+    local ok, status = pcall(C_IncomingSummon.IncomingSummonStatus, unit)
+    return ok and API.Number(status) or nil
+end
+
+-- Within `yards` of the player: true, false, or nil when the client can't
+-- tell (UnitDistanceSquared's second return; readable in the open world,
+-- runs 1-2; an instance is unmeasured, ledger row 8).
+function API.Near(unit, yards)
+    local ok, d2, checked = pcall(UnitDistanceSquared, unit)
+    if not ok or not API.Readable(checked) or checked ~= true then return nil end
+    d2 = API.Number(d2)
+    if not d2 then return nil end
+    return d2 <= yards * yards
+end
+
+-- The group's chat: a dungeon-finder group's instance chat, else raid, else
+-- party; nil when solo (Portal Roulette's CastTracker).
+function API.GroupChannel()
+    if not IsInGroup() then return nil end
+    if LE_PARTY_CATEGORY_INSTANCE and IsInGroup(LE_PARTY_CATEGORY_INSTANCE) then return "INSTANCE_CHAT" end
+    if IsInRaid() then return "RAID" end
+    return "PARTY"
+end
+
+-- Sends to group chat. Party sends raised no error typed or from a timer
+-- (run 1); whether others receive one sent from an event is ledger row 7.
+function API.SendGroup(message, channel)
+    local send = C_ChatInfo and C_ChatInfo.SendChatMessage or SendChatMessage
+    return (pcall(send, message, channel))
+end
+
+------------------------------------------------------------
 -- Spells (Portal Roulette's helpers; IDs measured in FOREVER-PROBE.md run 2)
 ------------------------------------------------------------
 

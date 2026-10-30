@@ -9,6 +9,13 @@
   messages) follows the game's language. Demon names now come from the game, so the wheel
   shows "Diablotin" or "Wichtel" instead of the whole summon spell, and Demonic Sacrifice's
   effect line is found on every client. Other languages show English for now.
+- Summoning the queue (#10): the Summoning button casts Ritual of Summoning on the first in
+  line who still needs it, with no targeting, and on your target in combat. Each row follows
+  the summon (next, summoning, pending, accepted, declined, here); people leave once they
+  accepted and stand beside you. Beta: the ritual's events are measured in game first.
+- Summon announcements (#11): "Summoning <name>, please click the portal" in group chat when
+  the ritual starts, and optionally "Need 2 clickers for the summon" when fewer than two
+  others are near. Both texts can be changed in the options.
 
 ## v0.3.0 (2026-10-18)
 The summon queue, and releases on GitHub and Wago Addons as well as CurseForge.

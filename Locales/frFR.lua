@@ -70,6 +70,22 @@ L["%dm"] = "%dmin"
 L["Summons (%d)"] = "Invocations (%d)"
 L["and %d more"] = "et %d de plus"
 
+-- Summon execution and announcements (#10, #11)
+L["Click: %s on %s"] = "Clic : %s sur %s"
+L["next"] = "suivant"
+L["summoning"] = "invocation"
+L["pending"] = "proposée"
+L["accepted"] = "acceptée"
+L["declined"] = "refusée"
+L["here"] = "ici"
+L["Summoning {name}, please click the portal"] = "J'invoque {name}, cliquez sur le portail svp"
+L["Need 2 clickers for the summon"] = "Il faut 2 personnes pour cliquer sur le portail"
+L["Summon announcements"] = "Annonces d'invocation"
+L["Announce the summon in group chat"] = "Annoncer l'invocation dans la discussion de groupe"
+L["Ask for clickers when fewer than 2 are near"] = "Demander de l'aide quand moins de 2 personnes sont proches"
+L["{name} is who you summon. Sent to instance, raid or party chat when the ritual starts, at most every 10 seconds."] =
+    "{name} est la personne invoquée. Envoyé en discussion d'instance, de raid ou de groupe quand le rituel commence, au plus toutes les 10 secondes."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Maj-clic : afficher ou masquer la barre"
 L["Right-click: options"] = "Clic droit : options"

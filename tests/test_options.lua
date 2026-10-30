@@ -104,6 +104,21 @@ for _, alert in ipairs(ns.Sound.ALERTS) do
     H.check(found, alert.key .. " defaults to a listed choice")
 end
 
+-- Announcements (#11): the summon line on, the clickers line off; each text
+-- box shows its default and saves the player's own; the default, or a
+-- blank box, saves as blank (the default in the client's language).
+local announce = find("Announce the summon in group chat")
+H.eq(announce:GetChecked(), true, "the summon line is on by default")
+H.eq(find("Ask for clickers when fewer than 2 are near"):GetChecked(), false, "the clickers line is off")
+local box = find("Summoning {name}, please click the portal")
+box:SetText("Portal for {name}!")
+box.save()
+H.eq(ns.db.announce.summonText, "Portal for {name}!", "a text of the player's own is saved")
+box:SetText("   ")
+box.save()
+H.eq(ns.db.announce.summonText, "", "a blank box saves as the default")
+H.eq(box:GetText(), "Summoning {name}, please click the portal", "and shows it")
+
 -- /123 options opens the page; not in combat.
 H.slash("ONETWOTHREE", "options")
 WoW.enterCombat()

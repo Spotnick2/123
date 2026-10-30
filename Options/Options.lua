@@ -28,14 +28,15 @@ local APPLY = {
     showMinimapButton = function() ns.Minimap:RefreshVisibility() end,
 }
 
--- Where a key is saved: ns.db, except the bar's own, the alert kits and
--- the summon queue's.
+-- Where a key is saved: ns.db, except the bar's own, the alert kits, the
+-- summon queue's and the announcements'.
 local function path(key)
     local tbl, field = ns.db, key
     if key == "barShown" then tbl, field = ns.db.bar, "shown"
     elseif key == "barScale" then tbl, field = ns.db.bar, "scale"
     elseif key:find("^alerts%.") then tbl, field = ns.db.alerts, key:sub(8)
-    elseif key:find("^queue%.") then tbl, field = ns.db.queue, key:sub(7) end
+    elseif key:find("^queue%.") then tbl, field = ns.db.queue, key:sub(7)
+    elseif key:find("^announce%.") then tbl, field = ns.db.announce, key:sub(10) end
     return tbl, field
 end
 
@@ -175,6 +176,29 @@ local function keywords(parent, anchor)
     return box
 end
 
+-- An announcement's text (#11): the saved one, or its default when blank.
+-- Saved on Enter or when the box loses focus; the default text, or an
+-- empty box, saves as blank (the default, in the client's language).
+local function lineBox(parent, anchor, kind)
+    local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
+    box:SetSize(290, 20)
+    box:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 6, -4)
+    box:SetAutoFocus(false)
+    box:SetMaxLetters(200)
+    local function refresh() box:SetText(ns.Announce.Template(kind)) end
+    local function save()
+        local text = (box:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", "")
+        ns.db.announce[kind .. "Text"] = text == ns.Announce.DEFAULT[kind] and "" or text
+        refresh()
+    end
+    box:SetScript("OnEnterPressed", function(self) save(); self:ClearFocus() end)
+    box:SetScript("OnEditFocusLost", save)
+    box:SetScript("OnEscapePressed", function(self) refresh(); self:ClearFocus() end)
+    controls[#controls + 1] = refresh
+    box.save = save
+    return box
+end
+
 local function build()
     local title = panel:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
     title:SetPoint("TOPLEFT", 16, -16)
@@ -204,6 +228,13 @@ local function build()
     local preview = button(panel, L["Preview the wheel"], 150)
     preview:SetPoint("TOPLEFT", a, "BOTTOMLEFT", 0, -8)
     preview:SetScript("OnClick", function() ns.Wheel:SetPreview(not ns.Wheel.preview) end)
+
+    h = heading(panel, L["Summon announcements"], preview)
+    a = toggle(panel, h, "announce.summon", L["Announce the summon in group chat"])
+    a = lineBox(panel, a, "summon")
+    a = toggle(panel, a, "announce.clickers", L["Ask for clickers when fewer than 2 are near"])
+    a = lineBox(panel, a, "clickers")
+    note(panel, L["{name} is who you summon. Sent to instance, raid or party chat when the ritual starts, at most every 10 seconds."], a)
 
     -- Right column.
     local right = CreateFrame("Frame", nil, panel)

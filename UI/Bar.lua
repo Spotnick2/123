@@ -117,9 +117,18 @@ local RESOLVE = {
     healthstone = function()
         return stone(Data.HEALTHSTONE_TIERS)
     end,
+    -- Ritual of Summoning on the next in the summon queue (#10), out of
+    -- combat only: a roster change in combat can't rewrite the unit token,
+    -- so from combat's start the button casts on the target instead and a
+    -- stale token never hits someone else. Unaimed with no one waiting.
     summoning = function()
         local spellID = Data.RITUAL_OF_SUMMONING
-        return API.IsKnown(spellID) and spellAction(spellID) or nil
+        if not API.IsKnown(spellID) then return nil end
+        local action = spellAction(spellID)
+        local entry, unit
+        if not SA.inCombat then entry, unit = ns.Queue:Next() end
+        if entry then action.unit, action.guid, action.name = unit, entry.guid, entry.name end
+        return action
     end,
 }
 
@@ -368,6 +377,8 @@ function Bar:Sync()
     end
     self:Refresh()
     self:UpdateArmor()
+    -- The list marks whom the Summoning button is now aimed at (#10).
+    ns.QueueList:Refresh()
 end
 
 ------------------------------------------------------------
@@ -394,7 +405,9 @@ function showTooltip(button)
             if effect then GameTooltip:AddLine(effect, 1, 1, 1, true) end
         end
     elseif button.action then
-        GameTooltip:AddLine(L["Click: %s"]:format(actionName(button.action)), 0.75, 0.8, 0.9)
+        local click = button.action.name and L["Click: %s on %s"]:format(actionName(button.action), button.action.name)
+            or L["Click: %s"]:format(actionName(button.action))
+        GameTooltip:AddLine(click, 0.75, 0.8, 0.9)
         if button.short then addNeeds(button.action) end
         local waiting = button.key == "summoning" and #ns.Queue.entries or 0
         if waiting > 0 then
@@ -466,6 +479,9 @@ function Bar:CreateButton(index, spec, parent)
             if mouseButton == "RightButton" and b.sacrifice then return end
             ns.Resummon:Show(b, b.action.spellID)
         end)
+    elseif spec.key == "summoning" then
+        -- Who the click aimed the ritual at, for the summon's tracking (#10).
+        button:SetScript("PostClick", function(b) ns.Summon:Clicked(b.action) end)
     end
     return button
 end
@@ -612,9 +628,14 @@ function Bar:Initialize()
     self:ApplyScale()
     self:ApplyShown()
 
+    -- The queue's order and states decide whom the ritual aims at (#10).
     ns.Queue:OnChanged(function()
         ns.BarEffects.Update(self:Button("summoning"))
+        SA.MarkDirty()
     end)
+    -- A roster change moves unit tokens ("party2" becomes someone else):
+    -- rebuild now, not a frame later, so a click never meets a stale one.
+    ns.Events:Register("GROUP_ROSTER_UPDATE", function() SA.RunSyncs() end)
     SA.RegisterSync(function() self:Sync() end)
     local function rebuild() SA.MarkDirty() end
     local function refresh() self:Refresh() end
