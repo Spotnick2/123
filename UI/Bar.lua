@@ -111,8 +111,15 @@ local RESOLVE = {
         end
         return nil
     end,
+    -- A carried soulstone goes to the picked target (#5), out of combat
+    -- only, as Summoning: from combat's start, on your target.
     soulstone = function()
-        return stone(Data.SOULSTONE_TIERS)
+        local action = stone(Data.SOULSTONE_TIERS)
+        if action and action ~= KEEP and action.itemID and not SA.inCombat then
+            local unit = ns.SoulTarget:Unit()
+            if unit then action.unit, action.name = unit, ns.SoulTarget:Get().name end
+        end
+        return action
     end,
     healthstone = function()
         return stone(Data.HEALTHSTONE_TIERS)
@@ -211,6 +218,7 @@ function Bar:RefreshButton(button)
     button.icon:SetDesaturated(dim)
     button.icon:SetAlpha(dim and 0.45 or 1)
     ns.BarEffects.Update(button)
+    if button.target then self:RefreshTarget(button) end
     if action and action.itemID then
         setCount(button.count, API.ItemCountRaw(action.itemID))
         SA.ApplyItemCooldown(button.cooldown, action.itemID)
@@ -220,6 +228,29 @@ function Bar:RefreshButton(button)
     else
         button.count:SetText("")
         button.cooldown:Clear()
+    end
+end
+
+-- The soulstone target's first name on the Soulstone icon (#5): in class
+-- colour while the stone goes to them, grey while it doesn't (in combat,
+-- or creating a stone).
+local function classColor(class)
+    local c = class and RAID_CLASS_COLORS[class]
+    if type(c) == "table" then return c.r, c.g, c.b end
+    return 1, 1, 1
+end
+
+function Bar:RefreshTarget(button)
+    local picked = ns.SoulTarget:Get()
+    if not picked then
+        button.target:SetText("")
+        return
+    end
+    button.target:SetText((picked.name or "?"):match("^(%S+)") or picked.name)
+    if button.action and button.action.name then
+        button.target:SetTextColor(classColor(picked.class))
+    else
+        button.target:SetTextColor(0.6, 0.6, 0.6)
     end
 end
 
@@ -361,8 +392,12 @@ function Bar:Sync()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
         if action == KEEP then
-            -- Unreadable counts: keep what it is armed with.
+            -- Unreadable counts: keep what it is armed with, but never a
+            -- unit token into combat (#5): it can't be rewritten there.
             action = button.action
+            if action and action.unit and SA.inCombat then
+                action = itemAction(action.itemID)
+            end
         end
         local isDemon = button.key == "demon"
         local sacrifice = isDemon and self:SacrificeAction() or nil
@@ -409,6 +444,13 @@ function showTooltip(button)
             or L["Click: %s"]:format(actionName(button.action))
         GameTooltip:AddLine(click, 0.75, 0.8, 0.9)
         if button.short then addNeeds(button.action) end
+        if button.key == "soulstone" then
+            local picked = ns.SoulTarget:Get()
+            if picked and not button.action.name and button.action.itemID then
+                GameTooltip:AddLine(L["%s: in combat, on your target"]:format(picked.name), 0.75, 0.8, 0.9)
+            end
+            GameTooltip:AddLine(L["Right-click: choose who gets it"], 0.75, 0.8, 0.9)
+        end
         local waiting = button.key == "summoning" and #ns.Queue.entries or 0
         if waiting > 0 then
             GameTooltip:AddLine(L["%d waiting for a summon"]:format(waiting), 0.75, 0.8, 0.9)
@@ -482,6 +524,15 @@ function Bar:CreateButton(index, spec, parent)
     elseif spec.key == "summoning" then
         -- Who the click aimed the ritual at, for the summon's tracking (#10).
         button:SetScript("PostClick", function(b) ns.Summon:Clicked(b.action) end)
+    elseif spec.key == "soulstone" then
+        -- The right click is unarmed (no type2): it opens the target picker
+        -- (#5). Its first name sits on the icon, in class colour.
+        button:SetScript("PostClick", function(_, mouseButton, down)
+            if mouseButton == "RightButton" and not down then ns.SoulPicker:Toggle() end
+        end)
+        local target = ns.Skin:Font(overlay, 10, "CENTER")
+        target:SetPoint("TOP", 0, -2)
+        button.target = target
     end
     return button
 end
@@ -560,6 +611,20 @@ function Bar:StopMoving()
     local point, _, _, x, y = self.frame:GetPoint()
     ns.db.bar.point, ns.db.bar.x, ns.db.bar.y = point, x, y
     self:Moved()
+end
+
+-- The top centre of a bar button, in UIParent's coordinates (x, top), or
+-- nil when it can't be read: where the lists above the bar hang (#9, #5).
+function Bar:TopOf(key)
+    local button = self:Button(key)
+    if not button then return nil end
+    local ok, x, top, scale = pcall(function()
+        local cx = button:GetCenter()
+        return cx, button:GetTop(), button:GetEffectiveScale() / UIParent:GetEffectiveScale()
+    end)
+    x, top, scale = ok and API.Number(x), ok and API.Number(top), ok and API.Number(scale)
+    if not (x and top and scale) then return nil end
+    return x * scale, top * scale
 end
 
 -- The summon queue's list follows the Summoning button (#9).

@@ -13,7 +13,6 @@
 local _, ns = ...
 if ns.skip then return end
 
-local API = ns.API
 local L = ns.L
 
 local QueueList = {}
@@ -94,16 +93,8 @@ end
 -- moved (out of combat): a refused read, even for the first list after a
 -- /reload, falls back to it (Codex on #38).
 function QueueList:Remember()
-    local button = ns.Bar:Button("summoning")
-    if not button then return nil end
-    local ok, x, top, scale = pcall(function()
-        local cx = button:GetCenter()
-        return cx, button:GetTop(), button:GetEffectiveScale() / UIParent:GetEffectiveScale()
-    end)
-    x, top, scale = ok and API.Number(x), ok and API.Number(top), ok and API.Number(scale)
-    if x and top and scale then
-        self.spot = { x * scale, top * scale + 22 }
-    end
+    local x, top = ns.Bar:TopOf("summoning")
+    if x then self.spot = { x, top + 22 } end
     return self.spot
 end
 

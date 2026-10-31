@@ -20,7 +20,7 @@ time. Every global 123 uses is unchanged.
 | 2 | Active pet: GUID NPC id, family, pet bar | `pet` | #1 | PARTIAL (run 2: Voidwalker) |
 | 3 | Stones and shards: item IDs created, counts, cooldowns, item spells, cache misses | `stones` | #1 | PARTIAL (run 2) |
 | 4 | Ritual of Summoning: channel start / stop / success, `INCOMING_SUMMON_CHANGED` and `IncomingSummonStatus` through accept, decline, timeout, arrival; `UNIT_SPELLCAST_SENT`'s target name (#10 reads it) | `watch on`, `summon` (guided) | #1, #10 | OPEN (needs a Warlock with Ritual) |
-| 5 | Secure `unitN`: Ritual as a spell action, Soulstone as an item action, both click edges, in combat, after a roster reshuffle | `secure <unit>` | #2 | OPEN (needs Ritual or a soulstone) |
+| 5 | Secure `unitN`: Ritual as a spell action, Soulstone as an item action, both click edges, in combat, after a roster reshuffle | `secure <unit>`, `soulstone` (guided, #5), `summon` | #2, #5, #10 | OPEN (needs Ritual or a soulstone) |
 | 6 | Trade: `InitiateTrade` from a click, `TRADE_SHOW` recipient, placing a stone from the event vs. from a click | `trade <unit>`, `tradeitem <id>` | #2 | PARTIAL (run 2) |
 | 7 | Chat: PARTY / RAID / INSTANCE_CHAT sent typed vs. from a timer or an event (#11 sends at the ritual's start), seen by another player; incoming sender name / GUID, group and non-group whispers | `say <chan>`, `watch on`, `summon` | #2, #11 | PARTIAL (run 1) |
 | 8 | Range and position for group members (near, far, offline, instanced): `UnitPosition`, `UnitDistanceSquared`, `CheckInteractDistance`, `UnitIsVisible`, `UnitInRange`, map, spell range | `range` | #2 | PARTIAL (runs 1–2: far and near, open world) |

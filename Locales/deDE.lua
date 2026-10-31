@@ -86,6 +86,13 @@ L["Ask for clickers when fewer than 2 are near"] = "Nach Klickern fragen, wenn w
 L["{name} is who you summon. Sent to instance, raid or party chat when the ritual starts, at most every 10 seconds."] =
     "{name} ist, wen du beschwörst. Geht an den Instanz-, Schlachtzugs- oder Gruppenchat, wenn das Ritual beginnt, höchstens alle 10 Sekunden."
 
+-- Soulstone target (#5)
+L["Soulstone target"] = "Seelenstein-Ziel"
+L["Clear"] = "Entfernen"
+L["Right-click: choose who gets it"] = "Rechtsklick: wählen, wer ihn bekommt"
+L["%s: in combat, on your target"] = "%s: im Kampf auf dein Ziel"
+L["%s left the group: no soulstone target."] = "%s hat die Gruppe verlassen: kein Seelenstein-Ziel mehr."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Umschalt-Klick: Leiste ein- oder ausblenden"
 L["Right-click: options"] = "Rechtsklick: Optionen"
