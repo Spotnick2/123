@@ -666,7 +666,7 @@ end
 
 Probe:Steps("control", {
     title = "Banish and Subjugate Demon (#29)",
-    rev = 1,
+    rev = 2,
     { text = "A Warlock with Banish (28) and, for the rest, Subjugate Demon (30) and a Soul Shard, near a "
         .. "demon or elemental to banish. 123 and this probe loaded. Turning watch on.",
       auto = true, run = function() watch(true) return true end },
@@ -693,6 +693,8 @@ Probe:Steps("control", {
     { text = "Subjugate a demon again and let it break free (wait it out, or summon one of your own). Did "
         .. "123 say it broke free, with a sound and a red glow?", ask = true },
     { text = "Optional: subjugate one more and let it die in a fight. No break-free alert?", ask = true },
+    { text = "Optional: with a demon subjugated, subjugate a second one. Does the first go hostile or "
+        .. "vanish? 123 should say nothing about the first and count down the second.", ask = true },
     { text = "Summon one of your own demons, then right-click Subjugate: is your demon still out?",
       ask = true },
     { text = "Type /reload to save the results.", reload = true },

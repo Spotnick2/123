@@ -12,8 +12,10 @@
 -- the subjugated one. Its countdown is the most the spell lasts. When it
 -- stops being the pet, it was dismissed (PET_DISMISS_START), died
 -- (UNIT_DIED), or broke free: then a chat line, a sound and a red glow,
--- since the demon is hostile again. The pet events are unmeasured
--- (FOREVER-PROBE.md row 11), so the verdict waits JUDGE seconds for them.
+-- since the demon is hostile again. A new Subjugate that replaces it was
+-- the player's own doing: no alert either, and the new demon is followed.
+-- The pet events are unmeasured (FOREVER-PROBE.md row 11), so the verdict
+-- waits JUDGE seconds for them.
 -- ============================================================
 
 local _, ns = ...
@@ -94,32 +96,35 @@ local function ownDemon(guid)
     return npc and Data.DEMON_NPC[npc] ~= nil
 end
 
--- UNIT_PET for the player: the subjugated demon came out, or went.
+-- UNIT_PET for the player: the subjugated demon went, came out, or both
+-- (a second Subjugate replacing the first). Each cast captures one pet.
 function Control:PetChanged()
     local pet = API.UnitGUID("pet")
     local s = self.subjugate
-    if s and not self.enslaved and pet and not ownDemon(pet) and GetTime() - s.start <= CAST_WINDOW then
-        local name = UnitName("pet")
-        self.enslaved = { guid = pet, name = API.Readable(name) and name or nil, at = GetTime() }
-        self:Changed()
-        return
-    end
     local enslaved = self.enslaved
     if enslaved and pet ~= enslaved.guid then
         self.enslaved = nil
-        C_Timer.After(JUDGE, function() self:Judge(enslaved) end)
+        local replaced = s ~= nil and s ~= enslaved.timer
+        C_Timer.After(JUDGE, function() self:Judge(enslaved, replaced) end)
+    end
+    if s and not s.captured and not self.enslaved and pet and not ownDemon(pet) and GetTime() - s.start <= CAST_WINDOW then
+        local name = UnitName("pet")
+        s.captured = true
+        self.enslaved = { guid = pet, name = API.Readable(name) and name or nil, at = GetTime(), timer = s }
+        self:Changed()
     end
 end
 
--- The subjugated demon is no longer the pet: dismissed, dead, or broken free.
-function Control:Judge(enslaved)
+-- The subjugated demon is no longer the pet: replaced by a new Subjugate,
+-- dismissed, dead, or broken free. Only its own cast's countdown ends.
+function Control:Judge(enslaved, replaced)
     local now = GetTime()
     local dismissed = self.dismissedAt and now - self.dismissedAt <= JUDGE + 2
     -- A death since it became the pet (not a GUID that died before).
     local died = self.died and self.died[enslaved.guid]
     died = died and died >= enslaved.at
-    self.subjugate = nil
-    if not dismissed and not died then
+    if self.subjugate == enslaved.timer then self.subjugate = nil end
+    if not replaced and not dismissed and not died then
         self.brokenAt = now
         ns.Print(L["%s broke free: it's hostile again!"]:format(enslaved.name or L["the subjugated demon"]))
         ns.Sound:Play("breakFree")

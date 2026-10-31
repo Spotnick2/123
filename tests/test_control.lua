@@ -134,6 +134,42 @@ WoW.fire("UNIT_DIED", MOB)
 WoW.runTimers(0.5)
 H.eq(H.messagesMatching("broke free"), 0, "died: no alert")
 
+-- A second Subjugate replaces the first: the new demon and its countdown
+-- are kept, and the first going is no break (the player's own doing).
+local MOB2 = "Creature-0-4613-0-1234-7136-0000FEDCBB"
+cast(1098, 61)
+pet(MOB)
+WoW.runTimers(60)
+cast(1098, 62)
+local second = Control.subjugate
+pet(MOB2)
+H.eq(Control.enslaved and Control.enslaved.guid, MOB2, "the replacement is the subjugated demon now")
+WoW.runTimers(0.5)
+H.eq(Control.subjugate, second, "judging the first leaves the second cast's countdown")
+H.eq(subjugate.timer:GetText(), "5m", "still counting from the second cast")
+H.eq(H.messagesMatching("broke free"), 0, "replaced: no alert")
+-- And the second still breaks free like any other.
+pet(nil)
+WoW.runTimers(0.5)
+H.check(H.messagesMatching("broke free") > 0, "the replacement breaking free alerts")
+WoW.runTimers(10.2)
+WoW.messages = {}
+-- The pet seen before the cast's success (UNIT_PET first): same outcome.
+cast(1098, 63)
+pet(MOB)
+WoW.runTimers(60)
+WoW.fire("UNIT_SPELLCAST_SENT", "player", "Some Demon", "Cast-3-0-0-1098-64", 1098)
+WoW.petGUID = MOB2
+WoW.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-3-0-0-1098-64", 1098)
+WoW.fire("UNIT_PET", "player")
+H.eq(Control.enslaved and Control.enslaved.guid, MOB2, "either order: the replacement is followed")
+WoW.runTimers(0.5)
+H.check(Control.subjugate ~= nil, "and its countdown kept")
+H.eq(H.messagesMatching("broke free"), 0, "and no alert")
+WoW.fire("PET_DISMISS_START", 0)
+pet(nil)
+WoW.runTimers(0.5)
+
 -- One of the Warlock's own demons after the cast isn't subjugated.
 cast(1098, 7)
 pet(IMP_PET)
