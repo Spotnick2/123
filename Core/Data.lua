@@ -113,6 +113,15 @@ ns.Data = {
     -- Voidwalker's own Sacrifice is a pet action (run 2: pet bar slot 5).
     FEL_DOMINATION = 18708,
     DEMONIC_SACRIFICE = 18788,
+    -- Smart Demonic Sacrifice (#20), from Wowhead's Forever database
+    -- (2026-10-31), unmeasured in game: Demonic Pact 425464, the talent that
+    -- keeps the buff through summoning a DIFFERENT demon; the buff each
+    -- demon's sacrifice gives, by its summon (Forever renamed them: the
+    -- Imp's is "Burning Shadow", the Succubus' "Touch of Fire", which the
+    -- Incubus shares per the talent's own text). It lasts 2 hours (#4).
+    DEMONIC_PACT = 425464,
+    SACRIFICE_BUFF = { [688] = 18789, [697] = 18790, [712] = 18791, [713] = 18791, [691] = 18792 },
+    SACRIFICE_LASTS = 2 * 60 * 60,
     VOIDWALKER_SACRIFICE = 7812,
 
     RITUAL_OF_SUMMONING = 698,

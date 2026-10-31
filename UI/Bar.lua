@@ -339,12 +339,13 @@ function Bar:RememberPet()
     ns.char.demon = spellID
 end
 
--- Out of combat, a right-click on the Demon button while that demon is out
--- asks first (ns.Resummon) instead of casting: the right button is left
--- unarmed.
+-- Out of combat, a click on the Demon button that would re-summon the
+-- demon that is out, or throw away the Demonic Sacrifice buff (#20), asks
+-- first (ns.Resummon) instead of casting: the button is left unarmed.
 function Bar:HoldsDemon(action)
-    return action ~= nil and ns.db.confirmResummon and not SA.inCombat
-        and petSummon() == action.spellID
+    if action == nil or SA.inCombat then return false end
+    if ns.Sacrifice:Cancels(action.spellID) then return true end
+    return ns.db.confirmResummon and petSummon() == action.spellID
 end
 
 -- Demonic Sacrifice, when it is known and a demon it takes is out (a
@@ -365,8 +366,11 @@ end
 --     same summon as the left.
 -- In combat there is no question: the summon is armed as combat starts (a
 -- demon that dies mid-fight comes straight back).
-local function demonActions(action, held, sacrifice)
+-- With a sacrifice pair and Demonic Pact (#20), the right click is the
+-- pair's next step instead, and unarmed once the pair is done.
+local function demonActions(action, held, sacrifice, pairStep)
     local summon = (SA.inCombat or not held) and action or nil
+    if pairStep ~= nil then return { summon, pairStep or nil } end
     return { summon, sacrifice or summon }
 end
 
@@ -404,10 +408,13 @@ function Bar:Sync()
         -- Held whatever Sacrifice does: the left click (and its binding)
         -- still asks before re-summoning the demon that is out (Codex, #19).
         local held = isDemon and self:HoldsDemon(action)
-        local actions = isDemon and demonActions(action, held, sacrifice) or { action }
+        local pairStep
+        if isDemon then pairStep = ns.Sacrifice:PairStep() end
+        local actions = isDemon and demonActions(action, held, sacrifice, pairStep) or { action }
         local key = syncKey(actions, held, action)
         if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
+            button.pairStep = pairStep
         end
     end
     self:Refresh()
@@ -432,9 +439,19 @@ function showTooltip(button)
         GameTooltip:AddLine(L["Not on you"], 1, 0.45, 0.45)
     end
     if button.key == "demon" and button.action then
+        local why = button.held and (ns.Sacrifice:Cancels(button.action.spellID) and L["(ends your Demonic Sacrifice: asks first)"]
+            or L["(already out: asks first)"])
         GameTooltip:AddLine(L["Click: %s"]:format(actionName(button.action))
-            .. (button.held and (" " .. L["(already out: asks first)"]) or ""), 0.75, 0.8, 0.9)
-        if button.sacrifice then
+            .. (why and (" " .. why) or ""), 0.75, 0.8, 0.9)
+        local step = button.pairStep
+        if step == false then
+            GameTooltip:AddLine(L["Sacrifice pair done: %s"]:format(ns.Sacrifice:BuffName() or L["Demonic Sacrifice"]), 0.75, 0.8, 0.9)
+        elseif step and step.step == "summon" then
+            GameTooltip:AddLine(L["Right-click: %s (to sacrifice)"]:format(actionName(step)), 0.75, 0.8, 0.9)
+        elseif step and step.step == "keep" then
+            GameTooltip:AddLine(L["Right-click: %s (to keep)"]:format(actionName(step)), 0.75, 0.8, 0.9)
+        end
+        if button.sacrifice and (step == nil or (step and step.step == "sacrifice")) then
             local effect = ns.Wheel.SacrificeEffect(ns.Wheel.DemonName(petSummon()))
             GameTooltip:AddLine(L["Right-click: %s"]:format(actionName(button.sacrifice)), 0.75, 0.8, 0.9)
             if effect then GameTooltip:AddLine(effect, 1, 1, 1, true) end
@@ -518,7 +535,7 @@ function Bar:CreateButton(index, spec, parent)
     if spec.key == "demon" then
         button:SetScript("PostClick", function(b, mouseButton, down)
             if down or InCombatLockdown() or not b.held then return end
-            if mouseButton == "RightButton" and b.sacrifice then return end
+            if mouseButton == "RightButton" and (b.sacrifice or b.pairStep ~= nil) then return end
             ns.Resummon:Show(b, b.action.spellID)
         end)
     elseif spec.key == "summoning" then

@@ -112,6 +112,17 @@ L["Also whispers from outside the group"] = "Aussi les chuchotements hors du gro
 L["Whole message, in group chat or a whisper. You open the trade and place the stone; you accept. /123 hs test shows the prompt."] =
     "Le message entier, en discussion de groupe ou chuchoté. Vous ouvrez l'échange et placez la pierre ; vous acceptez. /123 hs test montre la fenêtre."
 
+-- Smart Demonic Sacrifice (#20)
+L["(ends your Demonic Sacrifice: asks first)"] = "(met fin à votre Sacrifice démoniaque : demande d'abord)"
+L["Sacrifice pair done: %s"] = "Paire de sacrifice terminée : %s"
+L["Right-click: %s (to sacrifice)"] = "Clic droit : %s (à sacrifier)"
+L["Right-click: %s (to keep)"] = "Clic droit : %s (à garder)"
+L["Summoning %s ends your Demonic Sacrifice (%s). Summon anyway?"] = "Invoquer %s met fin à votre Sacrifice démoniaque (%s). L'invoquer quand même ?"
+L["Demon to sacrifice"] = "Démon à sacrifier"
+L["Demon to keep"] = "Démon à garder"
+L["With Demonic Pact, the Demon button's right click walks the pair: summon the first, sacrifice it, then summon the second."] =
+    "Avec Pacte démoniaque, le clic droit du bouton Démon suit la paire : invoquer le premier, le sacrifier, puis invoquer le second."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Maj-clic : afficher ou masquer la barre"
 L["Right-click: options"] = "Clic droit : options"

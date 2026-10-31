@@ -157,6 +157,12 @@ H.check(not logged("Ashka Vale"), "the request is logged by shape: never the nam
 S.Stop("test")
 fp("123 watch off")
 
+fp("123 sacrifice")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/sacrifice"]
+H.check(S.IsShown() and rec ~= nil, "/fp 123 sacrifice starts the procedure (#20)")
+S.Stop("test")
+fp("123 watch off")
+
 fp("123 clear")
 H.eq(#DB.log, 1, "clear empties the log in place (then says so)")
 H.check(ns._test.Probe ~= nil, "the test seam")
