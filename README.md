@@ -18,6 +18,8 @@ the game's language.
 - **Armor** casts your best armor (Demon Armor over Demon Skin, highest rank) and glows while
   it is not on you.
 - **Soulstone / Healthstone** use the best stone you carry, or create the best one you know.
+  **Right-click Soulstone** to pick who gets it (you or a group member): their name shows on
+  the icon and the stone goes to them, no targeting. In combat it goes to your target.
 - **Summoning** is Ritual of Summoning, on the next in the summon queue (or your target).
 - Out of Soul Shards, the Demon button falls back to the Imp and the buttons that would spend
   one grey out, until shards come back.
@@ -92,7 +94,7 @@ Summoning button, with a sound, in the order they asked.
   English, French and German show 123's own text in English.
 
 ## Coming next
-Healthstone requests (a trade you start when someone asks), a soulstone target, Portal of
+Healthstone requests (a trade you start when someone asks), Portal of
 Summoning, a smarter Demonic Sacrifice, and Banish and Enslave Demon buttons. See the
 [issues](https://github.com/Spotnick2/123/issues).
 

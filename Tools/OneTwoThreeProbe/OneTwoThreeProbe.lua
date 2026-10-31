@@ -26,6 +26,8 @@
 --                              (Demonic Sacrifice's buff per demon, #20)
 --   /fp 123 summon             guided: the Summoning button on a queued member,
 --                              the announcement, the summon's status (#10, #11)
+--   /fp 123 soulstone          guided: the Soulstone button on a picked group
+--                              member (#5)
 --   /fp 123 clear              empty the saved log
 --
 -- Every client call goes through Probe:Call (the whole return tuple, ABSENT
@@ -581,6 +583,32 @@ Probe:Steps("summon", {
 
 Probe:Command("summon", function() Probe:StartSteps("summon") end,
     "#10, #11: the Summoning button on a queued member, its announcement and status")
+
+------------------------------------------------------------
+-- soulstone (#5): a carried soulstone on the picked group member, through
+-- the Soulstone button's secure unit1 (ledger row 5: an item action on a
+-- unit).
+------------------------------------------------------------
+
+Probe:Steps("soulstone", {
+    title = "Soulstone on a picked group member (#5)",
+    rev = 1,
+    { text = "In a group with another player, out of combat, a soulstone in your bags (create one with the "
+        .. "Soulstone button). 123 and this probe loaded. Turning watch on.",
+      auto = true, run = function() watch(true) return true end },
+    { text = "Right-click the Soulstone button: does a list open above it, you first, then the group? Click "
+        .. "the other player. Is their first name on the icon, in class colour?", ask = true,
+      screenshot = "soulstone: picker" },
+    { text = "Clear your target (Esc), then click the Soulstone button.", event = "UNIT_SPELLCAST_SUCCEEDED" },
+    { text = "Did THEY get Soulstone Resurrection (look at their buffs, or ask them)?", ask = true },
+    { text = "Get into combat and hover the Soulstone button: does the tooltip say it goes to your target "
+        .. "in combat, and is the name grey? Leave combat: back in colour?", ask = true },
+    { text = "Ask them to leave the group: did 123 say they left, and did the name leave the icon?", ask = true },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("soulstone", function() Probe:StartSteps("soulstone") end,
+    "#5: the Soulstone button on a picked group member")
 
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.

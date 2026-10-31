@@ -81,8 +81,16 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
   the player's CVar values when it ends. Nameplates are unaffected.
 
 ## Soulstone target
-Assign a group member (GUID), then cast explicitly. The secure `unitN` is rebuilt on roster
-change out of combat; a stale token is cleared, never retargeted.
+- (#5, `Core/SoulTarget.lua`, `UI/SoulPicker.lua`) The Soulstone button's right click (unarmed:
+  no `type2`) opens a glass list above it: you, then the group, class colours, the pick marked,
+  "Clear". Saved per character on the GUID (`ns.char.soulTarget`).
+- A carried soulstone's action gets `unit1` = the pick's token, read at each rebuild out of
+  combat (so a reshuffle follows the same person). Creating a stone has no unit. In combat the
+  unit comes off (`SA.inCombat`), also when unreadable counts keep the armed stone (KEEP): the
+  stone goes to the target. The pick's first name sits on the icon, in class colour while the
+  stone goes to them, grey otherwise.
+- Someone gone from the group (`GROUP_ROSTER_UPDATE`) is cleared and 123 says so; never
+  retargeted. Item action on a unit: unmeasured (ledger row 5).
 
 ## Healthstone request
 Someone asks (whisper or group chat): a glass prompt offers a trade. The player clicks to open the

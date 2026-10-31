@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Soulstone target (#5): right-click the Soulstone button to pick who gets it, you or a group
+  member. Their name shows on the icon and a carried soulstone goes to them with no targeting
+  (in combat, to your target). Someone who leaves the group is cleared. Beta: tested in game
+  first.
 - The bar's buttons get framed icons with state colours: grey for unlearned abilities,
   red for missing reagents, a purple pulse for missing armor, and a fel-green pulse
   when people are waiting for a summon. Hover highlights, a dotted handle grip, and
