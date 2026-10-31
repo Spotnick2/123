@@ -432,6 +432,8 @@ function GetNumGroupMembers() return #WoW.group > 0 and #WoW.group + 1 or 0 end
 function UnitGUID(unit)
     if unit == "pet" then return WoW.petGUID end
     if unit == "player" then return WoW.playerGUID end
+    if unit == "NPC" then return WoW.tradeWith end
+    if unit == "target" then return WoW.targetGUID end
     local m = member(unit)
     return m and m.guid or nil
 end
@@ -495,6 +497,18 @@ function C_Container.GetContainerNumSlots(bag)
     local n = 0
     for slot in pairs(b) do if slot > n then n = slot end end
     return n
+end
+-- A pickup puts the item on the cursor; it stays in its slot (locked)
+-- until a trade completes, as the client shows it. Holding something
+-- already, the two swap. WoW.pickupFails: nothing happens (a locked item,
+-- run 2).
+function C_Container.PickupContainerItem(bag, slot)
+    if WoW.pickupFails then return end
+    WoW.bags[bag] = WoW.bags[bag] or {}
+    local s = WoW.bags[bag][slot]
+    local held = WoW.cursor
+    if held then WoW.bags[bag][slot] = { itemID = held, stackCount = 1 } end
+    WoW.cursor = s and s.itemID
 end
 function C_Container.GetContainerItemID(bag, slot)
     local s = WoW.bags[bag] and WoW.bags[bag][slot]
@@ -880,6 +894,30 @@ WoW.chat = {}
 DEFAULT_CHAT_FRAME = { AddMessage = function(_, msg) WoW.messages[#WoW.messages + 1] = msg end }
 function SendChatMessage(msg, channel) WoW.chat[#WoW.chat + 1] = { msg, channel } end
 C_ChatInfo = { SendChatMessage = SendChatMessage }
+-- Trade (#8): WoW.trades records InitiateTrade's units; the cursor holds an
+-- item ID; WoW.tradeSlots[slot] = the item placed (WoW.tradeRefuses: the
+-- slot takes nothing).
+WoW.trades, WoW.tradeSlots = {}, {}
+function InitiateTrade(unit) WoW.trades[#WoW.trades + 1] = unit end
+function CursorHasItem() return WoW.cursor ~= nil end
+function GetCursorInfo()
+    if WoW.cursor then return "item", WoW.cursor, "item:" .. WoW.cursor end
+end
+function GetTradePlayerItemLink(slot)
+    local id = WoW.tradeSlots[slot]
+    return id and ("|Hitem:" .. id .. "::::|h[" .. (WoW.items[id] or "?") .. "]|h") or nil
+end
+function ClearCursor() WoW.cursor = nil end
+function ClickTradeButton(slot)
+    if WoW.cursor and not WoW.tradeRefuses then
+        WoW.tradeSlots[slot], WoW.cursor = WoW.cursor, nil
+        WoW.fire("TRADE_PLAYER_ITEM_CHANGED", slot)
+    end
+end
+function GetTradePlayerItemInfo(slot)
+    local id = WoW.tradeSlots[slot]
+    return id and WoW.items[id] or nil
+end
 function IsShiftKeyDown() return WoW.shiftDown or false end
 WoW.sounds = {}
 WoW.soundHandle = 0

@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Healthstone requests (#8): "hs" or "healthstone" (or your own keywords) in group chat or a
+  whisper opens a small prompt: Open trade, then Place the healthstone, and you accept. Nothing
+  is given on its own. Whispers from outside the group are off by default. `/123 hs test` shows
+  it alone. Beta: the trade is tested in game first.
 - Soulstone target (#5): right-click the Soulstone button to pick who gets it, you or a group
   member. Their name shows on the icon and a carried soulstone goes to them with no targeting
   (in combat, to your target). Someone who leaves the group is cleared. Beta: tested in game

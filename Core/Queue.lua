@@ -51,8 +51,8 @@ end
 Queue.Normalize = normalize
 
 -- Keywords from the player's text ("123, summ"): normalized, no blanks or
--- repeats. Never empty: an empty list falls back to "123".
-function Queue.ParseKeywords(text)
+-- repeats. Never empty: an empty list falls back to `fallback` ("123").
+function Queue.ParseKeywords(text, fallback)
     local list, seen = {}, {}
     for word in tostring(text or ""):gmatch("[^,]+") do
         word = normalize(word)
@@ -61,7 +61,7 @@ function Queue.ParseKeywords(text)
             list[#list + 1] = word
         end
     end
-    if #list == 0 then list[1] = "123" end
+    if #list == 0 then list[1] = fallback or "123" end
     return list
 end
 

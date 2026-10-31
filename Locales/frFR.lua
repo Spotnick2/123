@@ -93,6 +93,25 @@ L["Right-click: choose who gets it"] = "Clic droit : choisir qui la reçoit"
 L["%s: in combat, on your target"] = "%s : en combat, sur votre cible"
 L["%s left the group: no soulstone target."] = "%s a quitté le groupe : plus de cible pour la pierre d'âme."
 
+-- Healthstone requests (#8)
+L["%s asks for a healthstone."] = "%s demande une pierre de soins."
+L["Open trade"] = "Ouvrir l'échange"
+L["Place the healthstone"] = "Placer la pierre de soins"
+L["Skip"] = "Ignorer"
+L["Put your best healthstone in the trade."] = "Placez votre meilleure pierre de soins dans l'échange."
+L["Accept the trade to give it."] = "Acceptez l'échange pour la donner."
+L["No healthstone: create one first (the Healthstone button)."] = "Pas de pierre de soins : créez-en une d'abord (bouton Pierre de soins)."
+L["Not in your group: target them first."] = "Pas dans votre groupe : ciblez cette personne d'abord."
+L["A test request: nothing to trade."] = "Une demande de test : rien à échanger."
+L["No healthstone, or no free trade slot."] = "Pas de pierre de soins, ou plus de place dans l'échange."
+L["Your cursor holds something: put it down first."] = "Votre curseur tient un objet : posez-le d'abord."
+L["%d healthstone requests. /123 hs test | clear"] = "%d demandes de pierre de soins. /123 hs test | clear"
+L["Healthstone requests"] = "Demandes de pierre de soins"
+L["Prompt when someone asks for a healthstone"] = "Proposer un échange quand on demande une pierre de soins"
+L["Also whispers from outside the group"] = "Aussi les chuchotements hors du groupe"
+L["Whole message, in group chat or a whisper. You open the trade and place the stone; you accept. /123 hs test shows the prompt."] =
+    "Le message entier, en discussion de groupe ou chuchoté. Vous ouvrez l'échange et placez la pierre ; vous acceptez. /123 hs test montre la fenêtre."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Maj-clic : afficher ou masquer la barre"
 L["Right-click: options"] = "Clic droit : options"
@@ -152,8 +171,8 @@ L["the demon wheel opens with the cinematic camera and hides the game UI."] =
 L["the demon wheel opens over the game, no camera."] = "la roue des démons s'ouvre par-dessus le jeu, sans caméra."
 L["will ask before re-summoning the demon that is out."] = "demandera avant de réinvoquer le démon présent."
 L["won't ask before re-summoning the demon that is out."] = "ne demandera pas avant de réinvoquer le démon présent."
-L["/123 | options | queue (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"] =
-    "/123 | options | queue (test, clear) | wheel | preview (tous les démons, aucun sort) | camera (ouverture cinématique) | sounds (voix des démons) | labels (noms sous les icônes) | confirm (demander avant de réinvoquer) | debug"
+L["/123 | options | queue (test, clear) | hs (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"] =
+    "/123 | options | queue (test, clear) | hs (test, clear) | wheel | preview (tous les démons, aucun sort) | camera (ouverture cinématique) | sounds (voix des démons) | labels (noms sous les icônes) | confirm (demander avant de réinvoquer) | debug"
 L["Show or hide the 123 bar"] = "Afficher ou masquer la barre 123"
 L["Open or close the demon wheel"] = "Ouvrir ou fermer la roue des démons"
 L["Summon the last demon"] = "Invoquer le dernier démon"

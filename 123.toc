@@ -30,6 +30,7 @@ Core\Queue.lua
 Core\Summon.lua
 Core\Announce.lua
 Core\SoulTarget.lua
+Core\Requests.lua
 UI\Skin.lua
 UI\Presentation.lua
 UI\Portrait.lua
@@ -40,6 +41,7 @@ UI\WheelEffects.lua
 UI\Wheel.lua
 UI\QueueList.lua
 UI\SoulPicker.lua
+UI\StonePrompt.lua
 UI\Minimap.lua
 Options\Options.lua
 Core\Init.lua

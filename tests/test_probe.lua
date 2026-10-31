@@ -148,6 +148,15 @@ H.check(S.IsShown() and rec ~= nil, "/fp 123 soulstone starts the procedure (#5)
 S.Stop("test")
 fp("123 watch off")
 
+fp("123 healthstone")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/healthstone"]
+H.check(S.IsShown() and rec ~= nil, "/fp 123 healthstone starts the procedure (#8)")
+S.Next()
+WoW.fire("CHAT_MSG_PARTY", "hs", "Ashka Vale", "", "", "", "", 0, 0, "", 0, 9, "Player-1-AAA")
+H.check(not logged("Ashka Vale"), "the request is logged by shape: never the name")
+S.Stop("test")
+fp("123 watch off")
+
 fp("123 clear")
 H.eq(#DB.log, 1, "clear empties the log in place (then says so)")
 H.check(ns._test.Probe ~= nil, "the test seam")

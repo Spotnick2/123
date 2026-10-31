@@ -116,7 +116,8 @@ Q:Clear()
 ns.Options.panel:GetScript("OnShow")(ns.Options.panel)
 local box
 for _, c in ipairs(ns.Options.panel._children) do
-    if c._kind == "EditBox" then box = c end
+    -- The queue's box shows "123" (the page has others: #8, #11).
+    if c._kind == "EditBox" and c:GetText() == "123" then box = c end
 end
 H.eq(box:GetText(), "123", "the box shows the keywords")
 box:SetText("123, summ")
