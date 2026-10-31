@@ -29,6 +29,8 @@
 --   /fp 123 soulstone          guided: the Soulstone button on a picked group
 --                              member (#5)
 --   /fp 123 healthstone        guided: a healthstone request, the trade (#8)
+--   /fp 123 control            guided: Banish and Subjugate Demon, durations, the
+--                              subjugated demon's break, dismiss and death (#29)
 --   /fp 123 clear              empty the saved log
 --
 -- Every client call goes through Probe:Call (the whole return tuple, ABSENT
@@ -185,6 +187,7 @@ local WATCHED = {
     "UNIT_SPELLCAST_FAILED", "UNIT_SPELLCAST_INTERRUPTED",
     "UNIT_SPELLCAST_CHANNEL_START", "UNIT_SPELLCAST_CHANNEL_STOP",
     "INCOMING_SUMMON_CHANGED", "CONFIRM_SUMMON", "CANCEL_SUMMON",
+    "UNIT_PET", "UNIT_DIED", "PET_DISMISS_START",
     "TRADE_SHOW", "TRADE_CLOSED", "TRADE_REQUEST", "TRADE_ACCEPT_UPDATE",
     "TRADE_PLAYER_ITEM_CHANGED", "UI_ERROR_MESSAGE",
     "CHAT_MSG_PARTY", "CHAT_MSG_PARTY_LEADER", "CHAT_MSG_RAID", "CHAT_MSG_RAID_LEADER",
@@ -642,6 +645,63 @@ Probe:Steps("healthstone", {
 
 Probe:Command("healthstone", function() Probe:StartSteps("healthstone") end,
     "#8: a healthstone request, the prompt and the trade")
+
+------------------------------------------------------------
+-- control (#29): Banish's and Subjugate Demon's real durations, and what
+-- the client fires when a subjugated demon breaks free, is dismissed or
+-- dies (ledger row 11). watch on logs UNIT_PET / UNIT_DIED /
+-- PET_DISMISS_START and the casts with their spell IDs.
+------------------------------------------------------------
+
+-- How long a debuff of ours lasts on the target, read out of combat.
+local function ourDebuff(spellIDs)
+    for i = 1, 40 do
+        local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "target", i, "HARMFUL|PLAYER")
+        if not ok or isSecret(aura) or type(aura) ~= "table" then return nil end
+        for _, id in ipairs(spellIDs) do
+            if aura.spellId == id then return id, aura.duration, aura.expirationTime end
+        end
+    end
+end
+
+Probe:Steps("control", {
+    title = "Banish and Subjugate Demon (#29)",
+    rev = 2,
+    { text = "A Warlock with Banish (28) and, for the rest, Subjugate Demon (30) and a Soul Shard, near a "
+        .. "demon or elemental to banish. 123 and this probe loaded. Turning watch on.",
+      auto = true, run = function() watch(true) return true end },
+    { text = "Is a Banish button on the bar after Summoning (and Subjugate once learned)?", ask = true,
+      screenshot = "control: bar" },
+    { text = "Target a demon or elemental and click Banish.", event = "UNIT_SPELLCAST_SUCCEEDED" },
+    { text = "Reading Banish on the target: its real duration.", auto = true,
+      run = function() return ourDebuff({ 710, 18647 }) end },
+    { text = "Does the button count down and glow its last 5 seconds? Watch the debuff: did both end "
+        .. "together?", ask = true, screenshot = "control: banish" },
+    { text = "Target a demon you can subjugate and click Subjugate.", event = "UNIT_SPELLCAST_SUCCEEDED" },
+    { text = "Reading Subjugate Demon on the pet: its real duration.", auto = true, run = function()
+          for i = 1, 40 do
+              local ok, aura = pcall(C_UnitAuras.GetAuraDataByIndex, "pet", i, "HARMFUL")
+              if not ok or isSecret(aura) or type(aura) ~= "table" then break end
+              if aura.spellId == 1098 or aura.spellId == 11725 or aura.spellId == 11726 then
+                  return aura.spellId, aura.duration, aura.expirationTime
+              end
+          end
+          return "no subjugate aura on the pet"
+      end },
+    { text = "Is it your pet, with a countdown on the button? Right-click the Subjugate button: was it "
+        .. "dismissed (and no break-free alert)?", ask = true },
+    { text = "Subjugate a demon again and let it break free (wait it out, or summon one of your own). Did "
+        .. "123 say it broke free, with a sound and a red glow?", ask = true },
+    { text = "Optional: subjugate one more and let it die in a fight. No break-free alert?", ask = true },
+    { text = "Optional: with a demon subjugated, subjugate a second one. Does the first go hostile or "
+        .. "vanish? 123 should say nothing about the first and count down the second.", ask = true },
+    { text = "Summon one of your own demons, then right-click Subjugate: is your demon still out?",
+      ask = true },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("control", function() Probe:StartSteps("control") end,
+    "#29: Banish and Subjugate Demon, their durations and the break")
 
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.

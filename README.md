@@ -9,7 +9,8 @@ the game's language.
 ## The bar
 ![The bar](https://raw.githubusercontent.com/Spotnick2/123/main/docs/screenshots/bar.jpg)
 
-**Demons** · **Demon** · **Armor** · **Soulstone** · **Healthstone** · **Summoning** | soul shards
+**Demons** · **Demon** · **Armor** · **Soulstone** · **Healthstone** · **Summoning** · **Banish** ·
+**Subjugate** | soul shards
 
 - **Demons** opens the demon wheel.
 - **Demon** summons your last demon (it asks before re-summoning the one that is out). Its
@@ -21,6 +22,10 @@ the game's language.
   **Right-click Soulstone** to pick who gets it (you or a group member): their name shows on
   the icon and the stone goes to them, no targeting. In combat it goes to your target.
 - **Summoning** is Ritual of Summoning, on the next in the summon queue (or your target).
+- **Banish** and **Subjugate** appear once you learn them (Subjugate Demon is Forever's Enslave
+  Demon). Banish counts down from your cast and glows its last 5 seconds; it can't see a break
+  before that. Subjugate counts down the most it lasts, alerts you when the demon breaks free
+  (it is hostile again), and its right click dismisses the demon (never one of your own).
 - Out of Soul Shards, the Demon button falls back to the Imp and the buttons that would spend
   one grey out, until shards come back.
 - Shift-drag the "123" handle to move it. Scale, names under the icons and the rest are in
@@ -88,7 +93,7 @@ whispers it: a small prompt above the Healthstone button says who asks.
 - Minimap button: click for the demon wheel, shift-click to show or hide the bar, right-click for
   options (also in the Addon Compartment)
 - Key bindings (Key Bindings > 123): the wheel, summon, Sacrifice-or-summon, Armor, Soulstone,
-  Healthstone, Ritual of Summoning
+  Healthstone, Ritual of Summoning, Banish, Subjugate Demon and its dismiss
 
 ## Good to know
 - Warlocks only: on any other class, 123 loads nothing.
@@ -105,7 +110,7 @@ whispers it: a small prompt above the Healthstone button says who asks.
   English, French and German show 123's own text in English.
 
 ## Coming next
-Portal of Summoning, a smarter Demonic Sacrifice, and Banish and Enslave Demon buttons. See the
+Portal of Summoning and a smarter Demonic Sacrifice. See the
 [issues](https://github.com/Spotnick2/123/issues).
 
 ## Install
