@@ -104,6 +104,7 @@ L["No healthstone: create one first (the Healthstone button)."] = "Kein Gesundhe
 L["Not in your group: target them first."] = "Nicht in deiner Gruppe: zuerst ins Ziel nehmen."
 L["A test request: nothing to trade."] = "Eine Testanfrage: nichts zu handeln."
 L["No healthstone, or no free trade slot."] = "Kein Gesundheitsstein oder kein freier Handelsplatz."
+L["Your cursor holds something: put it down first."] = "Dein Mauszeiger hält etwas: leg es zuerst ab."
 L["%d healthstone requests. /123 hs test | clear"] = "%d Gesundheitsstein-Anfragen. /123 hs test | clear"
 L["Healthstone requests"] = "Gesundheitsstein-Anfragen"
 L["Prompt when someone asks for a healthstone"] = "Handel anbieten, wenn jemand um einen Gesundheitsstein bittet"

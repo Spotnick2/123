@@ -94,6 +94,21 @@ WoW.tradeSlots = {}
 WoW.tradeWith = BROM
 WoW.fire("TRADE_SHOW")
 H.eq(P.primary.text:GetText(), "Place the healthstone", "Brom opened it: place it")
+-- Codex on #53: something already on the cursor is never touched, and
+-- never traded in place of the stone.
+WoW.items[2589] = "Linen Cloth"
+WoW.cursor = 2589
+click(P.primary)
+H.eq(WoW.cursor, 2589, "the cloth on the cursor stays there")
+H.eq(next(WoW.tradeSlots), nil, "nothing goes in the trade")
+H.eq(P.hint:GetText(), "Your cursor holds something: put it down first.", "the hint says so")
+WoW.cursor = nil
+-- A refused pickup (a locked stone): the slot isn't clicked, nothing is placed.
+WoW.pickupFails = true
+click(P.primary)
+H.eq(next(WoW.tradeSlots), nil, "a refused pickup places nothing")
+H.eq(P.hint:GetText(), "No healthstone, or no free trade slot.", "and says so")
+WoW.pickupFails = false
 -- The slot refuses: nothing stays on the cursor, and the hint says so.
 WoW.tradeRefuses = true
 click(P.primary)

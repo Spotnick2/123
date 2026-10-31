@@ -309,6 +309,22 @@ function API.TradePartner()
     return API.UnitGUID("NPC")
 end
 
+-- What the cursor holds: nil when empty; "item" and its ID; another kind
+-- ("spell", "money") and nil; "unknown" when it can't be read.
+function API.CursorItem()
+    local ok, kind, id = pcall(GetCursorInfo)
+    if not ok or not API.Readable(kind) then return "unknown" end
+    if kind == nil then return nil end
+    return kind, API.Number(id)
+end
+
+-- The item ID in a slot on the player's side of the trade, or nil.
+function API.TradeItemID(slot)
+    local ok, link = pcall(GetTradePlayerItemLink, slot)
+    if not ok or type(link) ~= "string" or not API.Readable(link) then return nil end
+    return tonumber(link:match("item:(%d+)"))
+end
+
 -- The first empty slot on the player's side of the trade, or nil (six
 -- traded slots; the seventh is "will not be traded").
 function API.TradeSlotFree()

@@ -160,21 +160,28 @@ function Requests:OpenTrade(entry)
 end
 
 -- The prompt's second button, once the trade with them is open: the best
--- healthstone into the first empty slot. Returns true when it landed.
+-- healthstone into the first empty slot. Only that stone ever goes in
+-- (Codex on #53): with something already on the cursor nothing is touched;
+-- the slot is clicked only once the cursor holds the stone picked up (a
+-- locked stone leaves it empty, run 2); and it counts as placed only if
+-- the slot then holds that stone's ID. Returns true, or false and why:
+-- "cursor" (holding something), "place".
 function Requests:PlaceStone()
+    self.placed = false
+    if API.CursorItem() ~= nil then return false, "cursor" end
     local itemID = Requests.Stone()
     local bag, slot
     if itemID then bag, slot = API.FindItem(itemID) end
     local tradeSlot = API.TradeSlotFree()
-    if not (bag and tradeSlot) then return false end
+    if not (bag and tradeSlot) then return false, "place" end
     pcall(C_Container.PickupContainerItem, bag, slot)
-    pcall(ClickTradeButton, tradeSlot)
-    -- Whatever didn't land goes back to the bags, never left on the cursor.
-    local ok, held = pcall(CursorHasItem)
-    if ok and held == true then pcall(ClearCursor) end
-    local okR, name = pcall(GetTradePlayerItemInfo, tradeSlot)
-    self.placed = okR and API.Readable(name) and name ~= nil
-    return self.placed
+    local kind, held = API.CursorItem()
+    if kind == "item" and held == itemID then pcall(ClickTradeButton, tradeSlot) end
+    -- Whatever is on the cursor now came from that pickup: back to the bags.
+    if API.CursorItem() ~= nil then pcall(ClearCursor) end
+    self.placed = API.TradeItemID(tradeSlot) == itemID
+    if self.placed then return true end
+    return false, "place"
 end
 
 -- The open trade, if it is with someone who asked.

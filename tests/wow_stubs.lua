@@ -498,8 +498,16 @@ function C_Container.GetContainerNumSlots(bag)
     for slot in pairs(b) do if slot > n then n = slot end end
     return n
 end
+-- A pickup puts the item on the cursor; it stays in its slot (locked)
+-- until a trade completes, as the client shows it. Holding something
+-- already, the two swap. WoW.pickupFails: nothing happens (a locked item,
+-- run 2).
 function C_Container.PickupContainerItem(bag, slot)
-    local s = WoW.bags[bag] and WoW.bags[bag][slot]
+    if WoW.pickupFails then return end
+    WoW.bags[bag] = WoW.bags[bag] or {}
+    local s = WoW.bags[bag][slot]
+    local held = WoW.cursor
+    if held then WoW.bags[bag][slot] = { itemID = held, stackCount = 1 } end
     WoW.cursor = s and s.itemID
 end
 function C_Container.GetContainerItemID(bag, slot)
@@ -892,6 +900,13 @@ C_ChatInfo = { SendChatMessage = SendChatMessage }
 WoW.trades, WoW.tradeSlots = {}, {}
 function InitiateTrade(unit) WoW.trades[#WoW.trades + 1] = unit end
 function CursorHasItem() return WoW.cursor ~= nil end
+function GetCursorInfo()
+    if WoW.cursor then return "item", WoW.cursor, "item:" .. WoW.cursor end
+end
+function GetTradePlayerItemLink(slot)
+    local id = WoW.tradeSlots[slot]
+    return id and ("|Hitem:" .. id .. "::::|h[" .. (WoW.items[id] or "?") .. "]|h") or nil
+end
 function ClearCursor() WoW.cursor = nil end
 function ClickTradeButton(slot)
     if WoW.cursor and not WoW.tradeRefuses then

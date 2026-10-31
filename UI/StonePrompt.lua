@@ -26,6 +26,7 @@ local WHY = {
     target = L["Not in your group: target them first."],
     test = L["A test request: nothing to trade."],
     place = L["No healthstone, or no free trade slot."],
+    cursor = L["Your cursor holds something: put it down first."],
 }
 
 local function choice(parent, width)
@@ -89,7 +90,8 @@ function StonePrompt:Primary()
     local Requests, entry = ns.Requests, self.entry
     if not entry then return end
     if self.placing then
-        self.why = not Requests:PlaceStone() and "place" or nil
+        local ok, why = Requests:PlaceStone()
+        self.why = not ok and why or nil
     else
         local ok, why = Requests:OpenTrade(entry)
         self.why = not ok and why or nil
