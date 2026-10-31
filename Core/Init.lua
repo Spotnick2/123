@@ -80,6 +80,15 @@ local function registerSlashCommands()
             else
                 printMessage(L["%d waiting. /123 queue test | clear"]:format(#ns.Queue.entries))
             end
+        elseif cmd == "hs" then
+            local sub = string.lower((commandText or ""):match("^%s*%S+%s+(%S*)") or "")
+            if sub == "test" then
+                ns.Requests:Test()
+            elseif sub == "clear" then
+                ns.Requests:Clear()
+            else
+                printMessage(L["%d healthstone requests. /123 hs test | clear"]:format(#ns.Requests.entries))
+            end
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
         elseif cmd == "labels" then
@@ -105,7 +114,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage(L["/123 | options | queue (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"])
+            printMessage(L["/123 | options | queue (test, clear) | hs (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"])
         end
     end
 end
@@ -126,6 +135,8 @@ ns.Events:Register("PLAYER_LOGIN", function()
     ns.QueueList:Initialize()
     ns.SoulTarget:Initialize()
     ns.SoulPicker:Initialize()
+    ns.Requests:Initialize()
+    ns.StonePrompt:Initialize()
     ns.Minimap:Initialize()
     ns.Options:Register()
     registerSlashCommands()

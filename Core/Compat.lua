@@ -285,6 +285,40 @@ function API.IsUsableItem(itemID)
     return ok and API.Readable(usable) and usable == true
 end
 
+-- The bag and slot holding `itemID` (backpack and the four bags), or nil.
+function API.FindItem(itemID)
+    for bag = 0, NUM_BAG_SLOTS or 4 do
+        local okN, slots = pcall(C_Container.GetContainerNumSlots, bag)
+        slots = okN and API.Number(slots) or 0
+        for slot = 1, slots do
+            local okI, id = pcall(C_Container.GetContainerItemID, bag, slot)
+            if okI and API.Number(id) == itemID then return bag, slot end
+        end
+    end
+    return nil
+end
+
+------------------------------------------------------------
+-- Trade (#8). Measured in run 2: InitiateTrade from a click opens it; the
+-- partner reads through the "NPC" unit; a stone placed from a click
+-- (pickup, then ClickTradeButton) lands in the slot.
+------------------------------------------------------------
+
+-- Who the open trade is with (their GUID), or nil.
+function API.TradePartner()
+    return API.UnitGUID("NPC")
+end
+
+-- The first empty slot on the player's side of the trade, or nil (six
+-- traded slots; the seventh is "will not be traded").
+function API.TradeSlotFree()
+    for slot = 1, 6 do
+        local ok, name = pcall(GetTradePlayerItemInfo, slot)
+        if ok and API.Readable(name) and name == nil then return slot end
+    end
+    return nil
+end
+
 -- (start, duration, enable) as C_Container.GetItemCooldown returns them;
 -- possibly secret. Never compare them here.
 function API.ItemCooldown(itemID)

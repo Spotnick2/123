@@ -28,6 +28,7 @@
 --                              the announcement, the summon's status (#10, #11)
 --   /fp 123 soulstone          guided: the Soulstone button on a picked group
 --                              member (#5)
+--   /fp 123 healthstone        guided: a healthstone request, the trade (#8)
 --   /fp 123 clear              empty the saved log
 --
 -- Every client call goes through Probe:Call (the whole return tuple, ABSENT
@@ -609,6 +610,38 @@ Probe:Steps("soulstone", {
 
 Probe:Command("soulstone", function() Probe:StartSteps("soulstone") end,
     "#5: the Soulstone button on a picked group member")
+
+------------------------------------------------------------
+-- healthstone (#8): a request in party chat and in a whisper, then the two
+-- clicks (open the trade, place the stone). Ledger rows 6 (trade) and 7
+-- (whisper GUIDs).
+------------------------------------------------------------
+
+Probe:Steps("healthstone", {
+    title = "Healthstone request: the prompt and the trade (#8)",
+    rev = 1,
+    { text = "In a party with another player standing next to you, out of combat, a healthstone in your "
+        .. "bags. 123 and this probe loaded. Turning watch on.",
+      auto = true, run = function() watch(true) return true end },
+    { text = "Ask the other player to type hs in PARTY chat.", event = "CHAT_MSG_PARTY", shapeOnly = true },
+    { text = "Did a prompt open above the Healthstone button, with a sound, saying they ask?", ask = true,
+      screenshot = "healthstone: prompt" },
+    { text = "Click \"Open trade\" on the prompt.", event = "TRADE_SHOW" },
+    { text = "Click \"Place the healthstone\" on the prompt.", event = "TRADE_PLAYER_ITEM_CHANGED" },
+    { text = "Is the stone in the trade window, and nothing on your cursor? Accept, and ask them to "
+        .. "accept: did they get it, and did the prompt go away?", ask = true, screenshot = "healthstone: trade" },
+    { text = "Ask them to WHISPER you hs.", event = "CHAT_MSG_WHISPER", shapeOnly = true },
+    { text = "Did the prompt open again from the whisper? Click Skip.", ask = true },
+    { text = "Optional (Skip if not now): with \"Also whispers from outside the group\" on (Options), "
+        .. "someone outside your group whispers hs. Does the prompt say to target them; once targeted, "
+        .. "does \"Open trade\" open it?", ask = true },
+    { text = "Optional: in combat, ask them to type hs again and click \"Open trade\": does a trade open?",
+      ask = true },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("healthstone", function() Probe:StartSteps("healthstone") end,
+    "#8: a healthstone request, the prompt and the trade")
 
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.

@@ -29,14 +29,15 @@ local APPLY = {
 }
 
 -- Where a key is saved: ns.db, except the bar's own, the alert kits, the
--- summon queue's and the announcements'.
+-- summon queue's, the announcements' and the healthstone requests'.
 local function path(key)
     local tbl, field = ns.db, key
     if key == "barShown" then tbl, field = ns.db.bar, "shown"
     elseif key == "barScale" then tbl, field = ns.db.bar, "scale"
     elseif key:find("^alerts%.") then tbl, field = ns.db.alerts, key:sub(8)
     elseif key:find("^queue%.") then tbl, field = ns.db.queue, key:sub(7)
-    elseif key:find("^announce%.") then tbl, field = ns.db.announce, key:sub(10) end
+    elseif key:find("^announce%.") then tbl, field = ns.db.announce, key:sub(10)
+    elseif key:find("^stones%.") then tbl, field = ns.db.stones, key:sub(8) end
     return tbl, field
 end
 
@@ -153,9 +154,10 @@ local function stepper(parent, anchor, key, label, minV, maxV, step, fmt)
     return minus
 end
 
--- The summon queue's keywords, comma-separated, saved on Enter or when the
--- box loses focus (an empty box goes back to "123").
-local function keywords(parent, anchor)
+-- A keyword list (the summon queue's, the healthstone requests'), comma-
+-- separated, saved on Enter or when the box loses focus (an empty box goes
+-- back to `fallback`).
+local function keywords(parent, anchor, tbl, fallback)
     local box = CreateFrame("EditBox", nil, parent, "InputBoxTemplate")
     box:SetSize(150, 20)
     box:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 6, -8)
@@ -163,9 +165,9 @@ local function keywords(parent, anchor)
     local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
     fs:SetPoint("LEFT", box, "RIGHT", 8, 0)
     fs:SetText(L["Keywords"])
-    local function refresh() box:SetText(table.concat(ns.db.queue.keywords, ", ")) end
+    local function refresh() box:SetText(table.concat(tbl().keywords, ", ")) end
     local function save()
-        ns.db.queue.keywords = ns.Queue.ParseKeywords(box:GetText())
+        tbl().keywords = ns.Queue.ParseKeywords(box:GetText(), fallback)
         refresh()
     end
     box:SetScript("OnEnterPressed", function(self) save(); self:ClearFocus() end)
@@ -254,9 +256,15 @@ local function build()
 
     h = heading(panel, L["Summon queue"], a)
     a = toggle(panel, h, "queue.enabled", L["Queue group members who type a keyword"])
-    local box = keywords(panel, a)
+    local box = keywords(panel, a, function() return ns.db.queue end, "123")
     a = stepper(panel, box, "queue.timeout", L["Minutes before a request drops"], 2, 30, 1, "%d")
     a = note(panel, L["The whole message must be a keyword: \"123\" asks, \"1234\" or \"123 dps\" don't. /123 queue test tries it alone."], a)
+
+    h = heading(panel, L["Healthstone requests"], a)
+    a = toggle(panel, h, "stones.enabled", L["Prompt when someone asks for a healthstone"])
+    a = keywords(panel, a, function() return ns.db.stones end, "hs")
+    a = toggle(panel, a, "stones.strangers", L["Also whispers from outside the group"])
+    a = note(panel, L["Whole message, in group chat or a whisper. You open the trade and place the stone; you accept. /123 hs test shows the prompt."], a)
 
     h = heading(panel, L["Minimap"], a)
     a = toggle(panel, h, "showMinimapButton", L["Minimap button"])

@@ -93,9 +93,19 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
   retargeted. Item action on a unit: unmeasured (ledger row 5).
 
 ## Healthstone request
-Someone asks (whisper or group chat): a glass prompt offers a trade. The player clicks to open the
-trade and to place the stone; the player accepts. Whispers from outside the group follow an
-explicit policy (option).
+- (#8, `Core/Requests.lua`, `UI/StonePrompt.lua`) A keyword (`db.stones.keywords`, default "hs",
+  "healthstone") as the whole message, compared as the summon queue does, in party / raid /
+  instance chat or a whisper. Keyed on GUID (12th payload), oldest first; asking again refreshes.
+  A whisper from outside the group asks only with `db.stones.strangers` (off); trading them
+  needs them targeted.
+- A glass prompt above the Healthstone button (UIParent, `Bar:TopOf`; not secure): "Open trade"
+  (`InitiateTrade` on their token, or "target"), then, once `TRADE_SHOW`'s `NPC` GUID is theirs,
+  "Place the healthstone" (the best carried, any rank: pickup, `ClickTradeButton` into the first
+  free slot, the cursor cleared if it didn't land). The player accepts in the game's window. A
+  trade they open counts too. Two clicks, as run 2 measured (placing from `TRADE_SHOW` alone was
+  inconclusive).
+- Ends when a trade with them closes after the stone was placed, when they leave the group,
+  after 5 minutes, or by Skip. `/123 hs test` shows the prompt alone.
 
 ## Summon queue
 - Intake (#9, `Core/Queue.lua`): "123" plus an editable keyword list in PARTY / RAID /

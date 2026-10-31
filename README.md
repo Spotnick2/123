@@ -63,10 +63,20 @@ Summoning button, with a sound, in the order they asked.
   It can also ask for clickers when fewer than two others are near (off by default). Both
   texts are yours to change in the options.
 
+## Healthstone requests
+Someone in your group types **hs** (or "healthstone", or a keyword of yours) in group chat or
+whispers it: a small prompt above the Healthstone button says who asks.
+- **Open trade**, then **Place the healthstone**: two clicks, and you accept in the trade window.
+  Nothing is given on its own. A trade they open themselves works too.
+- Whispers from outside your group are ignored unless you turn them on; then target them first.
+- **Skip** drops a request; it also ends after a trade where you placed the stone, when they
+  leave the group, or after 5 minutes. `/123 hs test` shows the prompt alone.
+
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)
 - `/123 options`: the options page (Options > AddOns > 123)
 - `/123 queue`: how many wait; `/123 queue test` adds test requests, `/123 queue clear` empties it
+- `/123 hs`: healthstone requests; `/123 hs test` shows the prompt, `/123 hs clear` empties it
 - `/123 wheel`: open the demon wheel (also the bar's "Demons" button, and a key binding)
 - `/123 preview`: the wheel with every demon shown and nothing cast; click a demon to put it in
   the centre (screenshots, any level)
@@ -89,13 +99,13 @@ Summoning button, with a sound, in the order they asked.
 - 123 writes to group chat on its own only when your ritual starts: the summon announcement
   (on by default) and, if you turn it on, a call for clickers when fewer than two others are
   near. Each has its own switch in the options. It reads party, raid and instance chat for the
-  queue's keywords; it doesn't read whispers.
+  queue's and the healthstone keywords, and whispers for the healthstone ones only. It never
+  trades on its own: you open the trade, place the stone and accept.
 - Spell, item and demon names come from the game, in its language. Other languages than
   English, French and German show 123's own text in English.
 
 ## Coming next
-Healthstone requests (a trade you start when someone asks), Portal of
-Summoning, a smarter Demonic Sacrifice, and Banish and Enslave Demon buttons. See the
+Portal of Summoning, a smarter Demonic Sacrifice, and Banish and Enslave Demon buttons. See the
 [issues](https://github.com/Spotnick2/123/issues).
 
 ## Install

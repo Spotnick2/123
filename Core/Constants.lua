@@ -38,6 +38,14 @@ ns.Constants = {
             keywords = { "123" },
             timeout = 10,
         },
+        -- Healthstone requests (#8): a keyword in group chat or a whisper
+        -- opens the trade prompt. Whispers from outside the group only
+        -- with `strangers`.
+        stones = {
+            enabled = true,
+            keywords = { "hs", "healthstone" },
+            strangers = false,
+        },
         -- Group chat when a Ritual of Summoning starts (#11). An empty text
         -- is the default line, in the client's language.
         announce = {
