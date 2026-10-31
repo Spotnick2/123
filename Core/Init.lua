@@ -20,6 +20,9 @@ _G["BINDING_NAME_CLICK OneTwoThreeBarButton2:LeftButton"] = L["Armor"]
 _G["BINDING_NAME_CLICK OneTwoThreeBarButton3:LeftButton"] = L["Soulstone"]
 _G["BINDING_NAME_CLICK OneTwoThreeBarButton4:LeftButton"] = L["Healthstone"]
 _G["BINDING_NAME_CLICK OneTwoThreeBarButton5:LeftButton"] = L["Ritual of Summoning"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton6:LeftButton"] = L["Banish"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton7:LeftButton"] = L["Subjugate Demon"]
+_G["BINDING_NAME_CLICK OneTwoThreeBarButton7:RightButton"] = L["Dismiss the subjugated demon"]
 
 function OneTwoThree_Wheel()
     if ns.Wheel and ns.isWarlock then
@@ -132,6 +135,7 @@ ns.Events:Register("PLAYER_LOGIN", function()
     ns.Wheel:Initialize()
     ns.Queue:Initialize()
     ns.Summon:Initialize()
+    ns.Control:Initialize()
     ns.QueueList:Initialize()
     ns.SoulTarget:Initialize()
     ns.SoulPicker:Initialize()
