@@ -14,7 +14,9 @@ the game's language.
 - **Demons** opens the demon wheel.
 - **Demon** summons your last demon (it asks before re-summoning the one that is out). Its
   right click is **Demonic Sacrifice** once you have the talent, so a Demonologist sacrifices
-  from the bar.
+  from the bar. While the sacrifice's buff is up, a summon that would end it asks first (with
+  **Demonic Pact**, only the demon you sacrificed). With Demonic Pact, pick a pair in the
+  options and the right click walks it: summon the first, sacrifice it, summon the second.
 - **Armor** casts your best armor (Demon Armor over Demon Skin, highest rank) and glows while
   it is not on you.
 - **Soulstone / Healthstone** use the best stone you carry, or create the best one you know.
@@ -105,7 +107,7 @@ whispers it: a small prompt above the Healthstone button says who asks.
   English, French and German show 123's own text in English.
 
 ## Coming next
-Portal of Summoning, a smarter Demonic Sacrifice, and Banish and Enslave Demon buttons. See the
+Portal of Summoning, and Banish and Enslave Demon buttons. See the
 [issues](https://github.com/Spotnick2/123/issues).
 
 ## Install

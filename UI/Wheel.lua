@@ -414,7 +414,10 @@ function Wheel:Resolve()
     for _, node in ipairs(self.nodes) do
         node.known = API.IsKnown(node.spellID)
         node.isActive = node.spellID == active
-        node.held = node.isActive and node.known and ns.db.confirmResummon
+        -- Asks first: re-summoning the demon that is out, or a summon that
+        -- would end the Demonic Sacrifice buff (#20).
+        node.held = node.known and ((node.isActive and ns.db.confirmResummon)
+            or (not node.major and ns.Sacrifice:Cancels(node.spellID)))
     end
 
     -- Sacrifice is for the demons Data.DEMON_NPC knows.

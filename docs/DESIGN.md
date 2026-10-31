@@ -80,6 +80,20 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
   LibShowcase r4 hides world names while the cinematic presentation is up and restores
   the player's CVar values when it ends. Nameplates are unaffected.
 
+## Smart Demonic Sacrifice
+- (#20, `Core/Sacrifice.lua`) The buff is followed from its cast: `UNIT_SPELLCAST_SUCCEEDED` for
+  18788, the demon out at `_SENT`, saved per character (`ns.char.sacrifice`, `time()`), 2 hours.
+  Out of combat, 3 s after the cast, the aura (`Data.SACRIFICE_BUFF`, by ID or the client's
+  name) confirms it, and a buff gone is forgotten; in combat the estimate stands. Dying ends it.
+- A summon ends it: any pet demon, or with Demonic Pact (425464) only the sacrificed one. The
+  Demon button (`Bar:HoldsDemon`) and the wheel's beads hold such a summon and ask first
+  (`ns.Resummon`, which names the buff and has no "Don't ask again" for it). A summon that goes
+  through anyway (`UNIT_PET`) ends it, in combat too.
+- With Demonic Pact and a pair picked in Options (per character; the demon to keep skips the one
+  to sacrifice), the Demon button's right click walks it: summon A, Demonic Sacrifice, summon
+  B, then unarmed. Each step is re-armed out of combat. IDs from Wowhead's Forever database:
+  ledger row 12.
+
 ## Soulstone target
 - (#5, `Core/SoulTarget.lua`, `UI/SoulPicker.lua`) The Soulstone button's right click (unarmed:
   no `type2`) opens a glass list above it: you, then the group, class colours, the pick marked,

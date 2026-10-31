@@ -29,6 +29,8 @@
 --   /fp 123 soulstone          guided: the Soulstone button on a picked group
 --                              member (#5)
 --   /fp 123 healthstone        guided: a healthstone request, the trade (#8)
+--   /fp 123 sacrifice          guided: Demonic Sacrifice's buff per demon, Demonic
+--                              Pact, the summon that ends it (#20)
 --   /fp 123 clear              empty the saved log
 --
 -- Every client call goes through Probe:Call (the whole return tuple, ABSENT
@@ -642,6 +644,42 @@ Probe:Steps("healthstone", {
 
 Probe:Command("healthstone", function() Probe:StartSteps("healthstone") end,
     "#8: a healthstone request, the prompt and the trade")
+
+------------------------------------------------------------
+-- sacrifice (#20): the buff each demon's sacrifice gives (Wowhead's Forever
+-- database: 18789-18792), Demonic Pact (425464), and which summon ends the
+-- buff (ledger row 12).
+------------------------------------------------------------
+
+Probe:Steps("sacrifice", {
+    title = "Demonic Sacrifice's buffs and Demonic Pact (#20)",
+    rev = 1,
+    { text = "A Demonology Warlock with Demonic Sacrifice, the Imp out, out of combat. 123 and this probe "
+        .. "loaded. Reading Demonic Pact and turning watch on.", auto = true, run = function()
+          watch(true)
+          call("Demonic Pact known (IsPlayerSpell)", "IsPlayerSpell", 425464)
+          call("Demonic Pact known (C_SpellBook)", "C_SpellBook.IsSpellKnown", 425464)
+          call("Demonic Pact name", "C_Spell.GetSpellName", 425464)
+          return true
+      end },
+    { text = "Right-click the Demon button (Demonic Sacrifice).", event = "UNIT_SPELLCAST_SUCCEEDED" },
+    { text = "Reading your buffs: the Imp's sacrifice buff (expected 18789, \"Burning Shadow\").", auto = true,
+      run = function() auras() return true end },
+    { text = "Hover the Demon button: does it say a summon ends your Demonic Sacrifice and asks first? "
+        .. "Click it: does the question name the buff? Cancel.", ask = true, screenshot = "sacrifice: ask" },
+    { text = "Summon the Voidwalker from the wheel (answer Summon if asked), wait for it, and sacrifice it.",
+      event = "UNIT_SPELLCAST_SUCCEEDED" },
+    { text = "Reading your buffs: the Voidwalker's (expected 18790, Fel Stamina). Is the Imp's gone?",
+      auto = true, run = function() auras() return true end },
+    { text = "Optional, with Demonic Pact: summon the Succubus. Reading your buffs: is the Voidwalker's "
+        .. "still up? Then sacrifice the Succubus (expected 18791) and the Incubus if learned (18791 too?).",
+      auto = false, ask = true },
+    { text = "Reading your buffs once more.", auto = true, run = function() auras() return true end },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("sacrifice", function() Probe:StartSteps("sacrifice") end,
+    "#20: Demonic Sacrifice's buffs and Demonic Pact")
 
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.

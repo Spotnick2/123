@@ -112,6 +112,17 @@ L["Also whispers from outside the group"] = "Auch Flüstern von außerhalb der G
 L["Whole message, in group chat or a whisper. You open the trade and place the stone; you accept. /123 hs test shows the prompt."] =
     "Die ganze Nachricht, im Gruppenchat oder geflüstert. Du öffnest den Handel und legst den Stein hinein; du nimmst an. /123 hs test zeigt das Fenster."
 
+-- Smart Demonic Sacrifice (#20)
+L["(ends your Demonic Sacrifice: asks first)"] = "(beendet deine Dämonische Opferung: fragt zuerst)"
+L["Sacrifice pair done: %s"] = "Opferpaar fertig: %s"
+L["Right-click: %s (to sacrifice)"] = "Rechtsklick: %s (zum Opfern)"
+L["Right-click: %s (to keep)"] = "Rechtsklick: %s (zum Behalten)"
+L["Summoning %s ends your Demonic Sacrifice (%s). Summon anyway?"] = "%s zu beschwören beendet deine Dämonische Opferung (%s). Trotzdem beschwören?"
+L["Demon to sacrifice"] = "Zu opfernder Dämon"
+L["Demon to keep"] = "Zu behaltender Dämon"
+L["With Demonic Pact, the Demon button's right click walks the pair: summon the first, sacrifice it, then summon the second."] =
+    "Mit Dämonischem Pakt führt der Rechtsklick des Dämonenknopfs durch das Paar: den ersten beschwören, ihn opfern, dann den zweiten beschwören."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Umschalt-Klick: Leiste ein- oder ausblenden"
 L["Right-click: options"] = "Rechtsklick: Optionen"

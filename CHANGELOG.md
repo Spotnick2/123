@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Smart Demonic Sacrifice (#20): while the buff is up, a summon that would end it asks first, on
+  the bar and the wheel. With Demonic Pact only re-summoning the sacrificed demon does; pick a
+  pair in the options and the Demon button's right click walks it (summon, sacrifice, summon the
+  one to keep). Beta: the buffs and the talent are measured in game first.
 - Healthstone requests (#8): "hs" or "healthstone" (or your own keywords) in group chat or a
   whisper opens a small prompt: Open trade, then Place the healthstone, and you accept. Nothing
   is given on its own. Whispers from outside the group are off by default. `/123 hs test` shows
