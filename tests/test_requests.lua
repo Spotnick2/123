@@ -73,11 +73,38 @@ click(P.primary)
 H.eq(WoW.tradeSlots[1], 5512, "the stone is in the first trade slot")
 H.eq(WoW.cursor, nil, "nothing left on the cursor")
 H.eq(P.hint:GetText(), "Accept the trade to give it.", "the player accepts")
+-- Codex on #53: a failed repeat click (something on the cursor) keeps the
+-- placement, and leaves the trade as it is.
+WoW.items[2589] = "Linen Cloth"
+WoW.cursor = 2589
+click(P.primary)
+H.eq(WoW.cursor, 2589, "a repeat click doesn't touch the cursor")
+H.eq(WoW.tradeSlots[1], 5512, "the stone stays in the trade")
+H.eq(next(WoW.tradeSlots, 1), nil, "and nothing else goes in")
+H.eq(P.hint:GetText(), "Accept the trade to give it.", "still placed")
+WoW.cursor = nil
 WoW.tradeWith = nil
 WoW.fire("TRADE_CLOSED")
 WoW.runTimers(0)
 H.eq(names(), "", "the trade closed after the stone was placed: her request is done")
 H.check(not P.frame:IsShown(), "and the prompt goes")
+
+-- A stone placed, then taken back out by hand: not placed any more.
+WoW.tradeSlots = {}
+say("CHAT_MSG_PARTY", "hs", ASHKA)
+click(P.primary)
+WoW.tradeWith = ASHKA
+WoW.fire("TRADE_SHOW")
+click(P.primary)
+H.eq(WoW.tradeSlots[1], 5512, "placed")
+WoW.tradeSlots[1] = nil
+WoW.fire("TRADE_PLAYER_ITEM_CHANGED", 1)
+H.eq(P.hint:GetText(), "Put your best healthstone in the trade.", "taken back out: place it again")
+WoW.tradeWith = nil
+WoW.fire("TRADE_CLOSED")
+WoW.runTimers(0)
+H.eq(names(), "Ashka Vale", "closed without the stone: she still asks")
+R:Clear()
 
 -- A trade closed before the stone was placed keeps the request.
 say("CHAT_MSG_RAID", "healthstone", BROM)

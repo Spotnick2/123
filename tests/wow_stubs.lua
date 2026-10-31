@@ -911,6 +911,7 @@ function ClearCursor() WoW.cursor = nil end
 function ClickTradeButton(slot)
     if WoW.cursor and not WoW.tradeRefuses then
         WoW.tradeSlots[slot], WoW.cursor = WoW.cursor, nil
+        WoW.fire("TRADE_PLAYER_ITEM_CHANGED", slot)
     end
 end
 function GetTradePlayerItemInfo(slot)

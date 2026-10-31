@@ -10,7 +10,7 @@
 -- Nothing is delivered on its own: the player opens the trade (a click on
 -- the prompt), places the stone (another click), and accepts in the
 -- game's trade window. A trade the requester opens counts too. A request
--- ends when a trade with them closes after the stone was placed, when they
+-- ends when a trade with them closes with the stone in it, when they
 -- leave the group, after TIMEOUT, or by Skip.
 -- ============================================================
 
@@ -159,15 +159,32 @@ function Requests:OpenTrade(entry)
     return true
 end
 
+-- A healthstone (any rank) in the player's side of the open trade.
+function Requests.TradeHasStone()
+    for slot = 1, 6 do
+        local id = API.TradeItemID(slot)
+        for _, tier in ipairs(Data.HEALTHSTONE_TIERS) do
+            for _, itemID in ipairs(tier.items) do
+                if id == itemID then return true end
+            end
+        end
+    end
+    return false
+end
+
 -- The prompt's second button, once the trade with them is open: the best
 -- healthstone into the first empty slot. Only that stone ever goes in
 -- (Codex on #53): with something already on the cursor nothing is touched;
 -- the slot is clicked only once the cursor holds the stone picked up (a
 -- locked stone leaves it empty, run 2); and it counts as placed only if
 -- the slot then holds that stone's ID. Returns true, or false and why:
--- "cursor" (holding something), "place".
+-- "cursor" (holding something), "place". A stone already in the trade is
+-- left there: a repeat click changes nothing (Codex on #53).
 function Requests:PlaceStone()
-    self.placed = false
+    if Requests.TradeHasStone() then
+        self.placed = true
+        return true
+    end
     if API.CursorItem() ~= nil then return false, "cursor" end
     local itemID = Requests.Stone()
     local bag, slot
@@ -209,6 +226,13 @@ function Requests:Initialize()
         else
             self.trading = nil
         end
+        self:Changed()
+    end)
+    -- `placed` follows what the trade holds: a stone taken back out by
+    -- hand isn't placed any more.
+    ns.Events:Register("TRADE_PLAYER_ITEM_CHANGED", function()
+        if not self.tradeOpen then return end
+        self.placed = Requests.TradeHasStone()
         self:Changed()
     end)
     -- Closed after the stone was placed: their request is done, accepted
