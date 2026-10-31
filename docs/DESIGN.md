@@ -85,6 +85,7 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
   18788, the demon out at `_SENT`, saved per character (`ns.char.sacrifice`, `time()`), 2 hours.
   Out of combat, 3 s after the cast, the aura (`Data.SACRIFICE_BUFF`, by ID or the client's
   name) confirms it, and a buff gone is forgotten; in combat the estimate stands. Dying ends it.
+  Its end (the player's `UNIT_AURA`, a timer for the two hours) rebuilds the bar and the wheel.
 - A summon ends it: any pet demon, or with Demonic Pact (425464) only the sacrificed one. The
   Demon button (`Bar:HoldsDemon`) and the wheel's beads hold such a summon and ask first
   (`ns.Resummon`, which names the buff and has no "Don't ask again" for it). A summon that goes

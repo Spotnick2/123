@@ -6,7 +6,9 @@
 -- Demonic Sacrifice, the demon out at SENT), saved per character with the
 -- time, so it survives a reload. Out of combat the aura is checked too
 -- (Data.SACRIFICE_BUFF), and a buff gone is forgotten; in combat auras are
--- secret, so the estimate stands. Dying ends it.
+-- secret, so the estimate stands. Dying ends it. Whenever it ends (the
+-- player's UNIT_AURA, the two hours run out), the bar and the wheel are
+-- rebuilt, so nothing stays held for a buff that is gone.
 --
 -- Summoning a demon cancels the buff, unless Demonic Pact is known: then
 -- only the sacrificed demon cancels it. The Demon button and the wheel ask
@@ -33,13 +35,19 @@ local GRACE = 3
 local OWN = {}
 for _, spellID in ipairs(Data.DEMONS) do OWN[spellID] = true end
 
+-- The buff ended: forgotten, and the held summons re-armed.
+local function forget()
+    ns.char.sacrifice = nil
+    ns.SecureAction.MarkDirty()
+end
+
 -- { spell = the sacrificed demon's summon, at = time() }, or nil.
 function Sacrifice:Active()
     local s = ns.char and ns.char.sacrifice
     if not s then return nil end
     local age = time() - s.at
     if age >= Data.SACRIFICE_LASTS then
-        ns.char.sacrifice = nil
+        forget()
         return nil
     end
     local buff = Data.SACRIFICE_BUFF[s.spell]
@@ -47,11 +55,19 @@ function Sacrifice:Active()
     if name and age >= GRACE and not ns.SecureAction.inCombat then
         local has = API.HasAura("player", { [buff] = true }, { [name] = true })
         if has == false then
-            ns.char.sacrifice = nil
+            forget()
             return nil
         end
     end
     return s
+end
+
+-- Looks again once the saved buff's two hours are up (no event says so).
+function Sacrifice:WatchExpiry()
+    local s = ns.char.sacrifice
+    if not s then return end
+    local left = s.at + Data.SACRIFICE_LASTS - time()
+    C_Timer.After(math.max(left, 0) + 1, function() self:Active() end)
 end
 
 function Sacrifice.HasPact()
@@ -116,22 +132,24 @@ function Sacrifice:Initialize()
         if demon then
             ns.char.sacrifice = { spell = demon, at = time() }
             ns.SecureAction.MarkDirty()
+            self:WatchExpiry()
         end
     end)
+    -- The buff cancelled or gone out of combat: Active forgets it.
+    local auras = CreateFrame("Frame")
+    API.RegisterUnitEvent(auras, "UNIT_AURA", "player")
+    auras:SetScript("OnEvent", function()
+        if ns.char.sacrifice and not ns.SecureAction.inCombat then self:Active() end
+    end)
+    self:WatchExpiry()
     -- A summon that cancels it (any demon, or with Demonic Pact the one
     -- sacrificed) ends it, in combat too.
     Events:Register("UNIT_PET", function(_, unit)
         if unit ~= "player" then return end
         local out = ns.Bar.PetSummon()
-        if out and self:Cancels(out) then
-            ns.char.sacrifice = nil
-            ns.SecureAction.MarkDirty()
-        end
+        if out and self:Cancels(out) then forget() end
     end)
     Events:Register("PLAYER_DEAD", function()
-        if ns.char.sacrifice then
-            ns.char.sacrifice = nil
-            ns.SecureAction.MarkDirty()
-        end
+        if ns.char.sacrifice then forget() end
     end)
 end

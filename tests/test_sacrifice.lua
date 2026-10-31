@@ -93,6 +93,28 @@ H.check(S:Active() ~= nil, "right after the cast the aura isn't checked yet")
 WoW.runTimers(3)
 H.eq(S:Active(), nil, "the buff is gone: forgotten")
 
+-- The buff cancelled while the bar and the wheel hold summons: both are
+-- re-armed with no click and no other event.
+pet(IMP)
+sacrifice(18789, "Burning Shadow")
+WoW.runTimers(3)
+spell(425464, "Demonic Pact", false)
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+nodes = openWheel()
+H.eq(demon:GetAttribute("type1"), nil, "held while the buff is up")
+H.check(nodes[1].held, "the wheel's bead too")
+WoW.auras.HELPFUL = {}
+WoW.fire("UNIT_AURA", "player", { isFullUpdate = true })
+WoW.runTimers(0)
+H.eq(ns.char.sacrifice, nil, "the buff cancelled: forgotten")
+H.eq(demon:GetAttribute("type1"), "spell", "the Demon button casts again")
+H.check(not nodes[1].held and nodes[1].button:GetAttribute("type1") == "spell", "the open wheel's bead too")
+ns.Wheel:Close()
+spell(425464, "Demonic Pact", true)
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+
 -- In combat auras are secret: the estimate stands. Dying ends it.
 pet(IMP)
 sacrifice(18789, "Burning Shadow")
@@ -108,8 +130,16 @@ H.eq(ns.char.sacrifice, nil, "dying ends it")
 -- Two hours later it is over.
 pet(IMP)
 sacrifice(18789, "Burning Shadow")
-WoW.runTimers(2 * 60 * 60)
-H.eq(S:Active(), nil, "after two hours: over")
+spell(425464, "Demonic Pact", false)
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+H.eq(demon:GetAttribute("type1"), nil, "held during the two hours")
+WoW.runTimers(2 * 60 * 60 + 1)
+H.eq(ns.char.sacrifice, nil, "after two hours: over, with nothing asking")
+H.eq(demon:GetAttribute("type1"), "spell", "and the Demon button re-armed")
+spell(425464, "Demonic Pact", true)
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
 
 -- The pair (Options): sacrifice the Imp, keep the Voidwalker.
 ns.char.sacrificePair = { sacrifice = 688, keep = 697 }
