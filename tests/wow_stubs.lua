@@ -336,8 +336,14 @@ GameFontNormal, GameFontHighlight = {}, {}
 -- Dispatch helpers
 ------------------------------------------------------------
 
+-- Frames in creation order, from a copy taken first: a handler that creates
+-- and registers frames (an addon loaded twice, as a reload test does) must
+-- not change the walk. pairs over WoW.events skipped frames at random.
 function WoW.fire(event, ...)
-    for frame, evs in pairs(WoW.events) do
+    local frames = {}
+    for i, f in ipairs(WoW.frames) do frames[i] = f end
+    for _, frame in ipairs(frames) do
+        local evs = WoW.events[frame] or {}
         local units = frame._units and frame._units[event]
         local wanted = not units
         for _, u in ipairs(units or {}) do

@@ -125,6 +125,17 @@ L["%s broke free: it's hostile again!"] = "%s hat sich befreit: wieder feindlich
 L["the subjugated demon"] = "der unterworfene Dämon"
 L["Subjugated demon breaks free"] = "Unterworfener Dämon befreit sich"
 
+-- Smart Demonic Sacrifice (#20)
+L["(ends your Demonic Sacrifice: asks first)"] = "(beendet deine Dämonische Opferung: fragt zuerst)"
+L["Sacrifice pair done: %s"] = "Opferpaar fertig: %s"
+L["Right-click: %s (to sacrifice)"] = "Rechtsklick: %s (zum Opfern)"
+L["Right-click: %s (to keep)"] = "Rechtsklick: %s (zum Behalten)"
+L["Summoning %s ends your Demonic Sacrifice (%s). Summon anyway?"] = "%s zu beschwören beendet deine Dämonische Opferung (%s). Trotzdem beschwören?"
+L["Demon to sacrifice"] = "Zu opfernder Dämon"
+L["Demon to keep"] = "Zu behaltender Dämon"
+L["With Demonic Pact, the Demon button's right click walks the pair: summon the first, sacrifice it, then summon the second."] =
+    "Mit Dämonischem Pakt führt der Rechtsklick des Dämonenknopfs durch das Paar: den ersten beschwören, ihn opfern, dann den zweiten beschwören."
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Umschalt-Klick: Leiste ein- oder ausblenden"
 L["Right-click: options"] = "Rechtsklick: Optionen"

@@ -84,7 +84,7 @@ function Resummon:Create()
     local dontAskText = ns.Skin:Font(top, 12, "LEFT")
     dontAskText:SetPoint("LEFT", dontAsk, "RIGHT", 2, 0)
     dontAskText:SetText(L["Don't ask again"])
-    self.dontAsk = dontAsk
+    self.dontAsk, self.dontAskText = dontAsk, dontAskText
 
     frame:Hide()
 end
@@ -102,8 +102,18 @@ function Resummon:Show(anchor, spellID, onSummon, parent)
     -- The demon's name in the client's language (#22).
     local demon = ns.Wheel.DemonName(spellID)
     if demon == "" then demon = L["that demon"] end
-    self.text:SetText(L["You already have your %s summoned. Summon it again?"]:format(demon))
+    -- A summon that would end the Demonic Sacrifice buff (#20) says so, and
+    -- always asks: "Don't ask again" is for re-summoning only.
+    local cancels = ns.Sacrifice:Cancels(spellID)
+    if cancels then
+        self.text:SetText(L["Summoning %s ends your Demonic Sacrifice (%s). Summon anyway?"]:format(
+            demon, ns.Sacrifice:BuffName() or L["Demonic Sacrifice"]))
+    else
+        self.text:SetText(L["You already have your %s summoned. Summon it again?"]:format(demon))
+    end
     self.dontAsk:SetChecked(false)
+    self.dontAsk:SetShown(not cancels)
+    self.dontAskText:SetShown(not cancels)
     SA.Apply(self.summon, { { type = "spell", spell = spellID } })
     -- Tall enough for the question however it wraps (it overflowed in game):
     -- top pad, the text, the checkbox row, the buttons row, bottom pad.

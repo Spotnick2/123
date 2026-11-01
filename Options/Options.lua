@@ -25,11 +25,14 @@ local APPLY = {
     barShown = function() return ns.Bar:ApplyShown() end,
     barScale = function() return ns.Bar:ApplyScale() end,
     confirmResummon = function() ns.SecureAction.MarkDirty() end,
+    ["pair.sacrifice"] = function() ns.SecureAction.MarkDirty() end,
+    ["pair.keep"] = function() ns.SecureAction.MarkDirty() end,
     showMinimapButton = function() ns.Minimap:RefreshVisibility() end,
 }
 
 -- Where a key is saved: ns.db, except the bar's own, the alert kits, the
--- summon queue's, the announcements' and the healthstone requests'.
+-- summon queue's, the announcements', the healthstone requests' and this
+-- character's Demonic Sacrifice pair (#20).
 local function path(key)
     local tbl, field = ns.db, key
     if key == "barShown" then tbl, field = ns.db.bar, "shown"
@@ -37,7 +40,11 @@ local function path(key)
     elseif key:find("^alerts%.") then tbl, field = ns.db.alerts, key:sub(8)
     elseif key:find("^queue%.") then tbl, field = ns.db.queue, key:sub(7)
     elseif key:find("^announce%.") then tbl, field = ns.db.announce, key:sub(10)
-    elseif key:find("^stones%.") then tbl, field = ns.db.stones, key:sub(8) end
+    elseif key:find("^stones%.") then tbl, field = ns.db.stones, key:sub(8)
+    elseif key:find("^pair%.") then
+        ns.char.sacrificePair = ns.char.sacrificePair or {}
+        tbl, field = ns.char.sacrificePair, key:sub(6)
+    end
     return tbl, field
 end
 
@@ -103,8 +110,9 @@ local function toggle(parent, anchor, key, label)
     return cb
 end
 
--- choices = { { value, text }, ... }; onPick runs after a choice is made.
-local function cycle(parent, anchor, key, label, choices, onPick)
+-- choices = { { value, text }, ... }; onPick runs after a choice is made;
+-- a choice `skip(value)` refuses is passed over.
+local function cycle(parent, anchor, key, label, choices, onPick, skip)
     local b = button(parent, "", 140)
     b:SetPoint("TOPLEFT", anchor, "BOTTOMLEFT", 0, -6)
     local fs = parent:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
@@ -120,6 +128,10 @@ local function cycle(parent, anchor, key, label, choices, onPick)
         local nextIndex = 1
         for i, c in ipairs(choices) do
             if c[1] == get(key) then nextIndex = i % #choices + 1 break end
+        end
+        for _ = 1, #choices do
+            if not (skip and skip(choices[nextIndex][1])) then break end
+            nextIndex = nextIndex % #choices + 1
         end
         set(key, choices[nextIndex][1])
         refresh()
@@ -230,6 +242,23 @@ local function build()
     local preview = button(panel, L["Preview the wheel"], 150)
     preview:SetPoint("TOPLEFT", a, "BOTTOMLEFT", 0, -8)
     preview:SetScript("OnClick", function() ns.Wheel:SetPreview(not ns.Wheel.preview) end)
+
+    -- #20: the pair the Demon button's right click walks with Demonic Pact.
+    local demons = { { 0, L["None"] } }
+    for _, spellID in ipairs(ns.Data.DEMONS) do
+        demons[#demons + 1] = { spellID, ns.Wheel.DemonName(spellID) }
+    end
+    h = heading(panel, L["Demonic Sacrifice"], preview)
+    a = cycle(panel, h, "pair.sacrifice", L["Demon to sacrifice"], demons, function(v)
+        local pair = ns.char.sacrificePair
+        if v ~= 0 and pair.keep == v then pair.keep = 0 end
+        Options.Refresh()
+    end)
+    a = cycle(panel, a, "pair.keep", L["Demon to keep"], demons, nil, function(v)
+        return v ~= 0 and v == (ns.char.sacrificePair or {}).sacrifice
+    end)
+    a = note(panel, L["With Demonic Pact, the Demon button's right click walks the pair: summon the first, sacrifice it, then summon the second."], a)
+    preview = a
 
     h = heading(panel, L["Summon announcements"], preview)
     a = toggle(panel, h, "announce.summon", L["Announce the summon in group chat"])

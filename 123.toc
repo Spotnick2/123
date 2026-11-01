@@ -32,6 +32,7 @@ Core\Announce.lua
 Core\SoulTarget.lua
 Core\Requests.lua
 Core\Control.lua
+Core\Sacrifice.lua
 UI\Skin.lua
 UI\Presentation.lua
 UI\Portrait.lua
