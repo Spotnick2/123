@@ -104,8 +104,7 @@ function Control:PetChanged()
     local enslaved = self.enslaved
     if enslaved and pet ~= enslaved.guid then
         self.enslaved = nil
-        local replaced = s ~= nil and s ~= enslaved.timer
-        C_Timer.After(JUDGE, function() self:Judge(enslaved, replaced) end)
+        C_Timer.After(JUDGE, function() self:Judge(enslaved) end)
     end
     if s and not s.captured and not self.enslaved and pet and not ownDemon(pet) and GetTime() - s.start <= CAST_WINDOW then
         local name = UnitName("pet")
@@ -117,8 +116,11 @@ end
 
 -- The subjugated demon is no longer the pet: replaced by a new Subjugate,
 -- dismissed, dead, or broken free. Only its own cast's countdown ends.
-function Control:Judge(enslaved, replaced)
+-- Judged JUDGE seconds later, so a replacing cast counts whichever came
+-- first, its success or the pet change.
+function Control:Judge(enslaved)
     local now = GetTime()
+    local replaced = self.subjugate ~= nil and self.subjugate ~= enslaved.timer
     local dismissed = self.dismissedAt and now - self.dismissedAt <= JUDGE + 2
     -- A death since it became the pet (not a GUID that died before).
     local died = self.died and self.died[enslaved.guid]

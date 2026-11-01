@@ -154,14 +154,14 @@ WoW.runTimers(0.5)
 H.check(H.messagesMatching("broke free") > 0, "the replacement breaking free alerts")
 WoW.runTimers(10.2)
 WoW.messages = {}
--- The pet seen before the cast's success (UNIT_PET first): same outcome.
+-- UNIT_PET before the cast's success: same outcome.
 cast(1098, 63)
 pet(MOB)
 WoW.runTimers(60)
 WoW.fire("UNIT_SPELLCAST_SENT", "player", "Some Demon", "Cast-3-0-0-1098-64", 1098)
-WoW.petGUID = MOB2
+pet(MOB2)
+H.eq(Control.enslaved, nil, "the new pet before the success: not yet the subjugated one")
 WoW.fire("UNIT_SPELLCAST_SUCCEEDED", "player", "Cast-3-0-0-1098-64", 1098)
-WoW.fire("UNIT_PET", "player")
 H.eq(Control.enslaved and Control.enslaved.guid, MOB2, "either order: the replacement is followed")
 WoW.runTimers(0.5)
 H.check(Control.subjugate ~= nil, "and its countdown kept")
