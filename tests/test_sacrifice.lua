@@ -115,6 +115,24 @@ spell(425464, "Demonic Pact", true)
 WoW.fire("SPELLS_CHANGED")
 WoW.runTimers(0)
 
+-- Cancelled within the grace: its UNIT_AURA is skipped, the grace's end
+-- looks again.
+pet(IMP)
+spell(425464, "Demonic Pact", false)
+WoW.fire("SPELLS_CHANGED")
+sacrifice(18789, "Burning Shadow")
+H.eq(demon:GetAttribute("type1"), nil, "held right after the sacrifice")
+WoW.auras.HELPFUL = {}
+WoW.fire("UNIT_AURA", "player", { isFullUpdate = true })
+WoW.runTimers(0)
+H.check(ns.char.sacrifice ~= nil, "within the grace: not checked yet")
+WoW.runTimers(4)
+H.eq(ns.char.sacrifice, nil, "the grace over: forgotten, with nothing asking")
+H.eq(demon:GetAttribute("type1"), "spell", "and the Demon button re-armed")
+spell(425464, "Demonic Pact", true)
+WoW.fire("SPELLS_CHANGED")
+WoW.runTimers(0)
+
 -- In combat auras are secret: the estimate stands. Dying ends it.
 pet(IMP)
 sacrifice(18789, "Burning Shadow")

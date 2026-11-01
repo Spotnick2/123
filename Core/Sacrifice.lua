@@ -62,12 +62,17 @@ function Sacrifice:Active()
     return s
 end
 
--- Looks again once the saved buff's two hours are up (no event says so).
-function Sacrifice:WatchExpiry()
+-- Looks again when the grace ends (a UNIT_AURA during it was skipped)
+-- and once the saved buff's two hours are up (no event says so).
+function Sacrifice:Watch()
     local s = ns.char.sacrifice
     if not s then return end
-    local left = s.at + Data.SACRIFICE_LASTS - time()
-    C_Timer.After(math.max(left, 0) + 1, function() self:Active() end)
+    for _, after in ipairs({ GRACE, Data.SACRIFICE_LASTS }) do
+        local left = s.at + after - time()
+        if left > -1 then
+            C_Timer.After(math.max(left, 0) + 1, function() self:Active() end)
+        end
+    end
 end
 
 function Sacrifice.HasPact()
@@ -132,7 +137,7 @@ function Sacrifice:Initialize()
         if demon then
             ns.char.sacrifice = { spell = demon, at = time() }
             ns.SecureAction.MarkDirty()
-            self:WatchExpiry()
+            self:Watch()
         end
     end)
     -- The buff cancelled or gone out of combat: Active forgets it.
@@ -141,7 +146,7 @@ function Sacrifice:Initialize()
     auras:SetScript("OnEvent", function()
         if ns.char.sacrifice and not ns.SecureAction.inCombat then self:Active() end
     end)
-    self:WatchExpiry()
+    self:Watch()
     -- A summon that cancels it (any demon, or with Demonic Pact the one
     -- sacrificed) ends it, in combat too.
     Events:Register("UNIT_PET", function(_, unit)
