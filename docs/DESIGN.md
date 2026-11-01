@@ -92,6 +92,23 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
 - Someone gone from the group (`GROUP_ROSTER_UPDATE`) is cleared and 123 says so; never
   retargeted. Item action on a unit: unmeasured (ledger row 5).
 
+## Banish and Subjugate Demon
+- (#29, `Core/Control.lua`) Two bar buttons after Summoning, shown only once learned
+  (`Bar:Layout`, out of combat; the bar is as wide as what it shows). Each casts the best rank
+  known on the target. Forever renamed Enslave Demon "Subjugate Demon" (same IDs, a Soul Shard).
+- Banish counts from `UNIT_SPELLCAST_SUCCEEDED`, on the target GUID read at `_SENT`, for
+  `Data.LASTS` (20 / 30 s, Wowhead's Forever database): the swipe and our own seconds, a glow
+  for the last 5 s. A recast restarts it, the target's `UNIT_DIED` ends it. An estimate: an early
+  break isn't visible in combat (no combat log, auras secret), and the tooltip says so.
+- Subjugate: the pet that comes out within 5 s of the cast and isn't one of the Warlock's own
+  demons (`Data.DEMON_NPC`) is the subjugated one; up to 5 min. When it stops being the pet, the
+  verdict waits 0.5 s: `PET_DISMISS_START` is a dismissal, a `UNIT_DIED` since it became the pet
+  a death, otherwise it broke free (a chat line, the "breaks free" alert sound, a red glow 10 s).
+- Right click: `/stopmacro [nopet][pet:<own families>]` then `/petdismiss` (its handler ignores
+  conditionals), armed whenever Subjugate is known, so it works in combat and never dismisses
+  the Warlock's own demon. Families by the client's names (`API.FamilyName`), English fallback.
+  Ledger row 11.
+
 ## Healthstone request
 - (#8, `Core/Requests.lua`, `UI/StonePrompt.lua`) A keyword (`db.stones.keywords`, default "hs",
   "healthstone") as the whole message, compared as the summon queue does, in party / raid /

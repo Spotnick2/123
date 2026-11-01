@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Banish and Subjugate Demon (#29): two bar buttons once learned. Banish counts down from your
+  cast and glows its last 5 seconds. Subjugate (Forever's Enslave Demon) counts down, alerts you
+  with a sound and a red glow when the demon breaks free, and its right click dismisses it.
+  Key bindings for both. Beta: durations and the pet events are measured in game first.
 - Healthstone requests (#8): "hs" or "healthstone" (or your own keywords) in group chat or a
   whisper opens a small prompt: Open trade, then Place the healthstone, and you accept. Nothing
   is given on its own. Whispers from outside the group are off by default. `/123 hs test` shows

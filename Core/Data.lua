@@ -53,6 +53,7 @@ ns.Data = {
         [6201] = 6265, [6202] = 6265, [5699] = 6265, [11729] = 6265, [11730] = 6265,
         [693] = 6265, [20752] = 6265, [20755] = 6265, [20756] = 6265, [20757] = 6265,
         [698] = 6265,       -- Ritual of Summoning
+        [1098] = 6265, [11725] = 6265, [11726] = 6265,   -- Subjugate Demon (#29)
         [1122] = 5565,      -- Infernal Stone
         [18540] = 16583,    -- Demonic Figurine
     },
@@ -116,6 +117,16 @@ ns.Data = {
     VOIDWALKER_SACRIFICE = 7812,
 
     RITUAL_OF_SUMMONING = 698,
+
+    -- Banish and Subjugate Demon (#29), best rank first. Forever renamed
+    -- Enslave Demon "Subjugate Demon" (same IDs). Durations are the most a
+    -- cast lasts, from Wowhead's Forever database (2026-10-31): Banish 20 s
+    -- (710, level 28) and 30 s (18647, level 48); Subjugate up to 5 min
+    -- (levels 30, 44, 58). Unmeasured in game; an early break isn't seen
+    -- in combat (no combat log, auras secret).
+    BANISH = { 18647, 710 },
+    SUBJUGATE = { 11726, 11725, 1098 },
+    LASTS = { [710] = 20, [18647] = 30, [1098] = 300, [11725] = 300, [11726] = 300 },
 
     SOUL_SHARD = 6265,
 

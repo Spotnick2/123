@@ -246,6 +246,8 @@ function Frame:GetUnboundedStringWidth()
     return chars * select(2, self:GetFont()) * 0.45
 end
 function Frame:GetStringHeight() return 12 end
+-- A Cooldown widget keeps what it was set to (start, duration).
+function Frame:SetCooldown(start, duration) self._cooldown = { start, duration } end
 function Frame:GetText() return self._text end
 function Frame:SetText(t) self._text = t end
 function Frame:GetID() return 1 end

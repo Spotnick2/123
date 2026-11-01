@@ -1,7 +1,8 @@
 -- ============================================================
 -- Bar: the compact bar (storyboard panel 01, issue #3).
 --
---   [123] Demons · Demon · Armor · Soulstone · Healthstone · Summoning | shards
+--   [123] Demons · Demon · Armor · Soulstone · Healthstone · Summoning
+--         · Banish · Subjugate (once learned, #29) | shards
 --
 -- "Demons" opens the demon wheel (Retail's Summon Demon flyout, with Fel
 -- Domination's icon: owner); it casts nothing, so it is a plain button.
@@ -35,8 +36,11 @@ local HANDLE_W = 34
 local SHARD_W = 56
 local LABEL_H = 12
 local LABEL_W = PITCH - 4     -- a name's room under its icon, clear of the next one
-local SLOTS = 6             -- the wheel's button, then the five secure ones
-local WIDTH = PAD + HANDLE_W + PITCH * SLOTS + 1 + SHARD_W + PAD
+-- The wheel's button, then the secure ones shown (Bar:Layout).
+local function widthFor(slots)
+    return PAD + HANDLE_W + PITCH * slots + 1 + SHARD_W + PAD
+end
+local WIDTH = widthFor(6)
 -- The names under the icons are a setting, off by default (owner: the
 -- tooltips are enough); without them the bar loses that row.
 local HEIGHT = PAD + ICON + 2 + LABEL_H + PAD
@@ -137,7 +141,30 @@ local RESOLVE = {
         if entry then action.unit, action.guid, action.name = unit, entry.guid, entry.name end
         return action
     end,
+    -- The best rank known, on the target (#29).
+    banish = function()
+        local spellID = API.FirstKnown(Data.BANISH)
+        return spellID and spellAction(spellID) or nil
+    end,
+    subjugate = function()
+        local spellID = API.FirstKnown(Data.SUBJUGATE)
+        return spellID and spellAction(spellID) or nil
+    end,
 }
+
+-- The Subjugate button's right click (#29): dismiss the pet, unless it is
+-- one of the Warlock's own demons. /petdismiss ignores conditionals
+-- (FrameXML SlashCommands.lua), so a /stopmacro guards it; families by
+-- the client's names, English when it gives none. A Doomguard isn't one of
+-- them: Ritual of Doom's is subjugated like any demon.
+local OWN_FAMILIES = {
+    { 23, "Imp" }, { 16, "Voidwalker" }, { 17, "Succubus" }, { 302, "Incubus" }, { 15, "Felhunter" },
+}
+function Bar.DismissMacro()
+    local names = {}
+    for i, f in ipairs(OWN_FAMILIES) do names[i] = API.FamilyName(f[1]) or f[2] end
+    return "/stopmacro [nopet][pet:" .. table.concat(names, "/") .. "]\n/petdismiss"
+end
 
 -- The icon shown while nothing is armed (not learned yet).
 local IDLE_ICON = {
@@ -146,6 +173,8 @@ local IDLE_ICON = {
     soulstone = { item = 5232 },
     healthstone = { item = 5512 },
     summoning = { spell = Data.RITUAL_OF_SUMMONING },
+    banish = { spell = 710 },
+    subjugate = { spell = 1098 },
 }
 
 Bar.BUTTONS = {
@@ -154,6 +183,9 @@ Bar.BUTTONS = {
     { key = "soulstone", label = L["Soulstone"] },
     { key = "healthstone", label = L["Healthstone"] },
     { key = "summoning", label = L["Summoning"] },
+    -- Shown only once learned (#29): Banish at 28, Subjugate Demon at 30.
+    { key = "banish", label = L["Banish"], optional = true },
+    { key = "subjugate", label = L["Subjugate"], optional = true },
 }
 
 -- A name wider than its room (#22: "Gesundheitsstein", "Pierre de soins")
@@ -219,6 +251,7 @@ function Bar:RefreshButton(button)
     button.icon:SetAlpha(dim and 0.45 or 1)
     ns.BarEffects.Update(button)
     if button.target then self:RefreshTarget(button) end
+    if button.timer and self:RefreshTimer(button) then return end
     if action and action.itemID then
         setCount(button.count, API.ItemCountRaw(action.itemID))
         SA.ApplyItemCooldown(button.cooldown, action.itemID)
@@ -252,6 +285,31 @@ function Bar:RefreshTarget(button)
     else
         button.target:SetTextColor(0.6, 0.6, 0.6)
     end
+end
+
+-- A Banish or a subjugation running (#29): the swipe and the time left
+-- replace the spell's cooldown. Returns true while one runs.
+local function timeLeft(left)
+    if left >= 60 then return L["%dm"]:format(math.ceil(left / 60)) end
+    return tostring(math.ceil(left))
+end
+Bar.TimeLeft = timeLeft
+
+function Bar:RefreshTimer(button)
+    local timer = ns.Control[button.key]
+    local left = ns.Control.Left(timer)
+    if not left then
+        button.timer:SetText("")
+        button.timerStart = nil
+        return false
+    end
+    button.timer:SetText(timeLeft(left))
+    if button.timerStart ~= timer.start then
+        button.timerStart = timer.start
+        button.cooldown:SetCooldown(timer.start, timer.duration)
+    end
+    button.count:SetText("")
+    return true
 end
 
 ------------------------------------------------------------
@@ -386,9 +444,38 @@ local function syncKey(actions, held, action)
         .. (held and ("|held:" .. keyOf(action)) or "")
 end
 
+-- Which buttons the bar shows and where (out of combat only: they are
+-- secure). The optional ones (#29) only once learned; the bar is as wide
+-- as what it shows, and the shards follow.
+function Bar:Layout()
+    if InCombatLockdown() then return false end
+    local slot = 1
+    for _, button in ipairs(self.buttons) do
+        local shown = not button.optional or RESOLVE[button.key]() ~= nil
+        button:SetShown(shown)
+        if shown then
+            button:ClearAllPoints()
+            button:SetPoint("TOPLEFT", self.frame, "TOPLEFT", PAD + HANDLE_W + PITCH * slot + (PITCH - ICON) / 2, -PAD)
+            slot = slot + 1
+        end
+    end
+    if slot ~= self.slots then
+        self.slots = slot
+        local left = PAD + HANDLE_W + PITCH * slot
+        self.frame:SetWidth(widthFor(slot))
+        self.divider:ClearAllPoints()
+        self.divider:SetPoint("LEFT", self.frame, "LEFT", left, 0)
+        self.shardIcon:ClearAllPoints()
+        self.shardIcon:SetPoint("LEFT", self.frame, "LEFT", left + 8, 0)
+        self:Moved()
+    end
+    return true
+end
+
 -- Rewrites a button's attributes only when what it does changed.
 function Bar:Sync()
     self:RememberPet()
+    self:Layout()
     for _, button in ipairs(self.buttons) do
         local action = RESOLVE[button.key]()
         if action == KEEP then
@@ -405,6 +492,9 @@ function Bar:Sync()
         -- still asks before re-summoning the demon that is out (Codex, #19).
         local held = isDemon and self:HoldsDemon(action)
         local actions = isDemon and demonActions(action, held, sacrifice) or { action }
+        if button.key == "subjugate" and action then
+            actions[2] = { type = "macro", macrotext = Bar.DismissMacro() }
+        end
         local key = syncKey(actions, held, action)
         if key == button.syncKey or SA.Apply(button, actions) then
             button.action, button.held, button.sacrifice, button.syncKey = action, held, sacrifice, key
@@ -444,6 +534,18 @@ function showTooltip(button)
             or L["Click: %s"]:format(actionName(button.action))
         GameTooltip:AddLine(click, 0.75, 0.8, 0.9)
         if button.short then addNeeds(button.action) end
+        if button.key == "banish" or button.key == "subjugate" then
+            local left = ns.Control.Left(ns.Control[button.key])
+            if left and button.key == "banish" then
+                GameTooltip:AddLine(L["Banished: %s left"]:format(timeLeft(left)), 1, 1, 1)
+                GameTooltip:AddLine(L["From the cast: a break before that can't be seen."], 0.75, 0.8, 0.9, true)
+            elseif left then
+                GameTooltip:AddLine(L["Subjugated: %s left at most"]:format(timeLeft(left)), 1, 1, 1)
+            end
+            if button.key == "subjugate" then
+                GameTooltip:AddLine(L["Right-click: dismiss the subjugated demon"], 0.75, 0.8, 0.9)
+            end
+        end
         if button.key == "soulstone" then
             local picked = ns.SoulTarget:Get()
             if picked and not button.action.name and button.action.itemID then
@@ -476,7 +578,7 @@ function Bar:CreateButton(index, spec, parent)
     button:SetFrameLevel(self:ContentLevel())
     local x = PAD + HANDLE_W + PITCH * index + (PITCH - ICON) / 2
     button:SetPoint("TOPLEFT", self.frame, "TOPLEFT", x, -PAD)
-    button.key = spec.key
+    button.key, button.optional = spec.key, spec.optional
 
     local icon = button:CreateTexture(nil, "ARTWORK")
     icon:SetAllPoints()
@@ -524,6 +626,11 @@ function Bar:CreateButton(index, spec, parent)
     elseif spec.key == "summoning" then
         -- Who the click aimed the ritual at, for the summon's tracking (#10).
         button:SetScript("PostClick", function(b) ns.Summon:Clicked(b.action) end)
+    elseif spec.key == "banish" or spec.key == "subjugate" then
+        -- How long the Banish or the subjugation has left (#29).
+        local timer = ns.Skin:Font(overlay, 14, "CENTER")
+        timer:SetPoint("CENTER", 0, 0)
+        button.timer = timer
     elseif spec.key == "soulstone" then
         -- The right click is unarmed (no type2): it opens the target picker
         -- (#5). Its first name sits on the icon, in class colour.
@@ -644,7 +751,7 @@ function Bar:Button(key)
 end
 
 function Bar:CreateShards()
-    local left = PAD + HANDLE_W + PITCH * SLOTS
+    local left = PAD + HANDLE_W + PITCH * 6  -- until Bar:Layout places them
     local divider = (self.glass.top or self.frame):CreateTexture(nil, "ARTWORK")
     divider:SetTexture(ns.Media.BAR_DIVIDER)
     divider:SetVertexColor(1, 1, 1, 0.18)
@@ -693,6 +800,16 @@ function Bar:Initialize()
     self:ApplyScale()
     self:ApplyShown()
 
+    -- The countdowns and the break glow (#29), in combat too: visuals only.
+    ns.Control:OnChanged(function()
+        for _, key in ipairs({ "banish", "subjugate" }) do
+            local b = self:Button(key)
+            if b then
+                self:RefreshButton(b)
+                if GameTooltip:IsOwned(b) then showTooltip(b) end
+            end
+        end
+    end)
     -- The queue's order and states decide whom the ritual aims at (#10).
     ns.Queue:OnChanged(function()
         ns.BarEffects.Update(self:Button("summoning"))

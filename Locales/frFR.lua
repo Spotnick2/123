@@ -112,6 +112,19 @@ L["Also whispers from outside the group"] = "Aussi les chuchotements hors du gro
 L["Whole message, in group chat or a whisper. You open the trade and place the stone; you accept. /123 hs test shows the prompt."] =
     "Le message entier, en discussion de groupe ou chuchoté. Vous ouvrez l'échange et placez la pierre ; vous acceptez. /123 hs test montre la fenêtre."
 
+-- Banish and Subjugate Demon (#29)
+L["Banish"] = "Bannir"
+L["Subjugate"] = "Asservir"
+L["Subjugate Demon"] = "Asservir un démon"
+L["Dismiss the subjugated demon"] = "Renvoyer le démon asservi"
+L["Banished: %s left"] = "Banni : encore %s"
+L["From the cast: a break before that can't be seen."] = "Depuis le sort : une rupture avant ne peut pas être vue."
+L["Subjugated: %s left at most"] = "Asservi : encore %s au plus"
+L["Right-click: dismiss the subjugated demon"] = "Clic droit : renvoyer le démon asservi"
+L["%s broke free: it's hostile again!"] = "%s s'est libéré : il est de nouveau hostile !"
+L["the subjugated demon"] = "le démon asservi"
+L["Subjugated demon breaks free"] = "Démon asservi libéré"
+
 -- Minimap
 L["Shift-click: show or hide the bar"] = "Maj-clic : afficher ou masquer la barre"
 L["Right-click: options"] = "Clic droit : options"

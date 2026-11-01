@@ -30,6 +30,7 @@ ns.Constants = {
         alerts = {
             summonRequest = 3081,
             stoneRequest = 880,
+            breakFree = 8959,
         },
         -- Summon queue (#9): who typed a keyword in group chat; minutes
         -- before a request drops off.
