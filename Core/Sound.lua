@@ -3,8 +3,8 @@
 -- Vanilla-era kits play on Forever; PlaySoundFile refuses built-in paths
 -- (PORTING-TBC-TO-FOREVER.md, Gnomesweeper/docs/SOUNDS.md). Spells (a demon
 -- summoned, the Ritual, a stone created) already sound in game, so only
--- what the game doesn't announce gets one: a summon request ("123", #9) and
--- a healthstone request (#8). The demons' voices stay in UI/Wheel.lua.
+-- what the game doesn't announce gets one: a summon request ("123", #9), a
+-- healthstone request (#8) and a subjugated demon breaking free (#29). The demons' voices stay in UI/Wheel.lua.
 
 local _, ns = ...
 if ns.skip then return end
@@ -30,6 +30,7 @@ Sound.CHOICES = {
 Sound.ALERTS = {
     { key = "summonRequest", label = L["Summon request"] },
     { key = "stoneRequest", label = L["Healthstone request"] },
+    { key = "breakFree", label = L["Subjugated demon breaks free"] },
 }
 
 -- A burst (several people typing "123" at once) plays one sound.

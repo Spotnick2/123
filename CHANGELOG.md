@@ -1,6 +1,10 @@
 # Changelog
 
 ## Unreleased
+- Banish and Subjugate Demon (#29): two bar buttons once learned. Banish counts down from your
+  cast and glows its last 5 seconds. Subjugate (Forever's Enslave Demon) counts down, alerts you
+  with a sound and a red glow when the demon breaks free, and its right click dismisses it.
+  Key bindings for both. Beta: durations and the pet events are measured in game first.
 - Smart Demonic Sacrifice (#20): while the buff is up, a summon that would end it asks first, on
   the bar and the wheel. With Demonic Pact only re-summoning the sacrificed demon does; pick a
   pair in the options and the Demon button's right click walks it (summon, sacrifice, summon the

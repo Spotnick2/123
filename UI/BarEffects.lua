@@ -8,10 +8,11 @@ FX.PALETTE = {
     normal = ns.Colors.ACCENT, unlearned = { 0.40, 0.43, 0.37 },
     missing = { 1, 0.23, 0.12 }, armor = ns.Colors.ACCENT,
     waiting = ns.Colors.FEL, hover = { 0.85, 0.78, 1 },
+    ending = { 1, 0.82, 0.25 }, broken = { 1, 0.23, 0.12 },
     metal = { 0.8, 0.8, 0.8 }, grip = { 1, 1, 1 },
     rimAlpha = 0.7, hoverAlpha = 0.9, glowAlpha = 0.7, gripAlpha = 0.45,
 }
-FX.TIMING = { armor = 0.8, waiting = 1.4, low = 0.35, high = 1 }
+FX.TIMING = { armor = 0.8, waiting = 1.4, ending = 0.4, broken = 0.5, low = 0.35, high = 1 }
 
 local function tint(texture, color, alpha)
     texture:SetVertexColor(color[1], color[2], color[3], alpha or 1)
@@ -31,6 +32,12 @@ function FX.State(button)
     if button.short then return "missing" end
     if button.armorState == "missing" then return "armor" end
     if button.key == "summoning" and #ns.Queue.entries > 0 then return "waiting" end
+    -- #29: a subjugated demon broke free; a Banish about to run out.
+    if button.key == "subjugate" and ns.Control.brokenAt then return "broken" end
+    if button.key == "banish" then
+        local left = ns.Control.Left(ns.Control.banish)
+        if left and left <= ns.Control.ENDING then return "ending" end
+    end
     return "normal"
 end
 
@@ -39,7 +46,7 @@ function FX.Update(button)
     button.barState = state
     tint(button.barRim, FX.PALETTE[state], FX.PALETTE.rimAlpha)
     if button.glow then
-        local on = state == "armor" or state == "waiting"
+        local on = state == "armor" or state == "waiting" or state == "ending" or state == "broken"
         button.glow:SetShown(on)
         if on then
             tint(button.glow, FX.PALETTE[state], FX.PALETTE.glowAlpha)
@@ -67,7 +74,7 @@ function FX.Attach(button, overlay, wheel)
     button.barHover = hover
     button:HookScript("OnEnter", function() hover:Show() end)
     button:HookScript("OnLeave", function() hover:Hide() end)
-    if button.key == "armor" or button.key == "summoning" then
+    if button.key == "armor" or button.key == "summoning" or button.key == "banish" or button.key == "subjugate" then
         button.glow = texture(overlay, button, "BACKGROUND", ns.Media.BAR_GLOW, 56)
         button.glow:SetBlendMode("ADD")
         local pulse = button.glow:CreateAnimationGroup()
@@ -75,7 +82,8 @@ function FX.Attach(button, overlay, wheel)
         local fade = pulse:CreateAnimation("Alpha")
         fade:SetFromAlpha(FX.TIMING.high)
         fade:SetToAlpha(FX.TIMING.low)
-        fade:SetDuration(button.key == "armor" and FX.TIMING.armor or FX.TIMING.waiting)
+        local timing = { armor = FX.TIMING.armor, banish = FX.TIMING.ending, subjugate = FX.TIMING.broken }
+        fade:SetDuration(timing[button.key] or FX.TIMING.waiting)
         button.pulse = pulse
     end
     FX.Update(button)

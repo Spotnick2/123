@@ -18,7 +18,9 @@ local Bar = ns.Bar
 local byKey = {}
 for _, button in ipairs(Bar.buttons) do byKey[button.key] = button end
 
-H.eq(#Bar.buttons, 5, "five buttons")
+H.eq(#Bar.buttons, 7, "seven buttons")
+-- Banish and Subjugate (#29) only once learned: this Warlock knows neither.
+H.check(not Bar:Button("banish"):IsShown() and not Bar:Button("subjugate"):IsShown(), "Banish and Subjugate hidden until learned")
 for _, button in ipairs(Bar.buttons) do
     H.check(button._template == "SecureActionButtonTemplate", button.key .. " is a secure button")
     H.eq(button._clicks and button._clicks[1], "AnyUp", button.key .. " takes the up edge")

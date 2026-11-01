@@ -11,4 +11,7 @@
     <Binding name="CLICK OneTwoThreeBarButton3:LeftButton" category="123"/>
     <Binding name="CLICK OneTwoThreeBarButton4:LeftButton" category="123"/>
     <Binding name="CLICK OneTwoThreeBarButton5:LeftButton" category="123"/>
+    <Binding name="CLICK OneTwoThreeBarButton6:LeftButton" category="123"/>
+    <Binding name="CLICK OneTwoThreeBarButton7:LeftButton" category="123"/>
+    <Binding name="CLICK OneTwoThreeBarButton7:RightButton" category="123"/>
 </Bindings>
