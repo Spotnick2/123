@@ -1,6 +1,9 @@
 # Changelog
 
-## Unreleased
+## v1.0.0-beta1 (2026-11-03)
+Everything a Warlock does for the group: summon the queue, give soulstones and healthstones,
+Banish and Subjugate, a smarter Demonic Sacrifice, a new look, French and German. A beta: the
+spell-dependent parts are tested in game before 1.0.0.
 - Banish and Subjugate Demon (#29): two bar buttons once learned. Banish counts down from your
   cast and glows its last 5 seconds. Subjugate (Forever's Enslave Demon) counts down, alerts you
   with a sound and a red glow when the demon breaks free, and its right click dismisses it.
