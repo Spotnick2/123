@@ -63,6 +63,13 @@ jobs:
           echo "LIBGLASS=$RUNNER_TEMP/LibGlass" >> "$GITHUB_ENV"
           echo "LIBSHOWCASE=$RUNNER_TEMP/LibShowcase" >> "$GITHUB_ENV"
 
+      # The test scaffolding at the commit tests/kit.pin names (WowTestKit's
+      # README, step 5); tests/kit.lua loads it from $WOWTESTKIT.
+      - name: Fetch WowTestKit at its pin
+        run: |
+          bash tests/fetch_kit.sh "$RUNNER_TEMP/WowTestKit"
+          echo "WOWTESTKIT=$RUNNER_TEMP/WowTestKit" >> "$GITHUB_ENV"
+
       # WoW runs Lua 5.1, so the tests do too. tests/run.ps1 is the Windows entry
       # point for the same files. find, not globs: Libs/ nests deeper than one level.
       - name: Syntax-check every shipped Lua file

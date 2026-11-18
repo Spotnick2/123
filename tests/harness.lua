@@ -1,48 +1,25 @@
 ------------------------------------------------------------
--- harness.lua: assertions and addon loading for the tests
--- (adapted from Portal Roulette's tests/harness.lua).
+-- harness.lua: addon loading for the tests (adapted from Portal Roulette's
+-- tests/harness.lua). The assertions are WowTestKit's globals (check, eq,
+-- done), loaded by tests/wow_stubs.lua.
 --
 --     dofile("tests/wow_stubs.lua")
 --     local H = dofile("tests/harness.lua")
 --     local ns = H.loadAddon()
---     H.check(cond, "message")
---     H.done("test_name")
+--     check(cond, "message")
+--     done("test_name")
 ------------------------------------------------------------
 
 local H = {}
-local passed, failed = 0, 0
 
-function H.check(cond, msg)
-    if cond then
-        passed = passed + 1
-    else
-        failed = failed + 1
-        io.stderr:write("FAIL: " .. tostring(msg) .. "\n")
-    end
-end
-
-function H.eq(actual, expected, msg)
-    H.check(actual == expected, (msg or "") .. " (expected " .. tostring(expected)
-            .. ", got " .. tostring(actual) .. ")")
-end
-
-function H.done(name)
-    if failed > 0 then
-        io.stderr:write(name .. ": " .. failed .. " failed, " .. passed .. " passed\n")
-        os.exit(1)
-    end
-    io.write(name .. ": " .. passed .. " tests passed\n")
-end
-
--- The files a TOC lists, in load order, with forward slashes.
+-- The files a TOC lists (every line, .xml too), in load order, with forward
+-- slashes, under the TOC's folder: Kit.tocLines as paths.
 function H.tocFiles(toc)
     local files = {}
     local dir = toc:match("^(.*)/[^/]+$")
-    for line in io.lines(toc) do
-        line = line:gsub("\r", ""):gsub("\\", "/")
-        if line ~= "" and not line:match("^#") then
-            files[#files + 1] = dir and (dir .. "/" .. line) or line
-        end
+    for _, line in ipairs(Kit.tocLines(toc)) do
+        line = line:gsub("\\", "/")
+        files[#files + 1] = dir and (dir .. "/" .. line) or line
     end
     return files
 end
@@ -51,7 +28,7 @@ local function login(addonName)
     WoW.fire("ADDON_LOADED", addonName)
     WoW.fire("PLAYER_LOGIN")
     WoW.fire("PLAYER_ENTERING_WORLD")
-    WoW.runTimers(0)
+    WoW.advance(0)
 end
 
 -- The ForeverProbe host from the sibling checkout ($FOREVERPROBE, else
@@ -75,7 +52,7 @@ function H.loadForeverProbe()
     end
     toc:close()
     WoW.fire("ADDON_LOADED", "ForeverProbe")
-    return ForeverProbe
+    return rawget(_G, "ForeverProbe")
 end
 
 -- The dev-only probe module on the ForeverProbe host, then the client's
@@ -124,10 +101,35 @@ function H.slash(key, msg)
     fn(msg or "")
 end
 
+-- Printed lines (the chat frame's included) matching a pattern.
 function H.messagesMatching(pattern)
     local n = 0
-    for _, m in ipairs(WoW.messages) do if m:find(pattern) then n = n + 1 end end
+    for _, m in ipairs(WoW.chat) do if m:find(pattern) then n = n + 1 end end
     return n
+end
+
+-- FINDING #61: /123 queue, /123 hs and the help line print a bare "|",
+-- which done() fails on (the kit's print checks every printed line). Until
+-- it is fixed, a test that runs those commands calls this before done(): it
+-- takes exactly those lines out of WoW.strays, so any other stray still
+-- fails, and checks one was printed, so the exception can't outlive the fix.
+local KNOWN_STRAYS = {
+    "/123 queue test | clear",
+    "/123 hs test | clear",
+    "/123 | options | queue (test, clear)",
+}
+function H.acceptKnownStrays()
+    local keep, known = {}, 0
+    for _, line in ipairs(WoW.strays) do
+        local isKnown = false
+        for _, s in ipairs(KNOWN_STRAYS) do
+            if line:find(s, 1, true) then isKnown = true break end
+        end
+        if isKnown then known = known + 1 else keep[#keep + 1] = line end
+    end
+    WoW.strays = keep
+    check(known > 0, "a known stray-| line (FINDING #61) was printed")
+    return known
 end
 
 return H

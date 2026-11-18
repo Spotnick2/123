@@ -37,7 +37,7 @@ for _, f in ipairs(H.tocFiles("123.toc")) do
 end
 local count = 0
 for _ in pairs(used) do count = count + 1 end
-H.check(count > 90, "the code's strings go through L (" .. count .. " keys)")
+check(count > 90, "the code's strings go through L (" .. count .. " keys)")
 
 -- The placeholders of a string, in order ("%s%d"); "%%" is not one.
 local function placeholders(text)
@@ -45,29 +45,29 @@ local function placeholders(text)
         return p:find("^%%") and p or ""
     end))
 end
-H.eq(placeholders("%s: needs %s (100%%)"), "%s%s", "placeholders are read in order")
+eq(placeholders("%s: needs %s (100%%)"), "%s%s", "placeholders are read in order")
 
 for _, locale in ipairs(LOCALES) do
     local path = "Locales/" .. locale .. ".lua"
-    H.check(H.tocFiles("123.toc") and io.open(path) ~= nil, path .. " exists")
+    check(H.tocFiles("123.toc") and io.open(path) ~= nil, path .. " exists")
     local L = {}
     local ns = { skip = false, locale = locale, L = L }
     assert(loadfile(path))("123", ns)
     for key, value in pairs(L) do
-        H.check(used[key] ~= nil, locale .. ": " .. key .. " is used by the code")
-        H.check(type(value) == "string" and value ~= "", locale .. ": " .. key .. " has text")
-        H.eq(placeholders(value), placeholders(key), locale .. ": " .. key .. " keeps its placeholders")
+        check(used[key] ~= nil, locale .. ": " .. key .. " is used by the code")
+        check(type(value) == "string" and value ~= "", locale .. ": " .. key .. " has text")
+        eq(placeholders(value), placeholders(key), locale .. ": " .. key .. " keeps its placeholders")
         if key:find("{name}", 1, true) then
-            H.check(value:find("{name}", 1, true) ~= nil, locale .. ": " .. key .. " keeps {name}")
+            check(value:find("{name}", 1, true) ~= nil, locale .. ": " .. key .. " keeps {name}")
         end
     end
     for key in pairs(used) do
-        H.check(L[key] ~= nil, locale .. " translates " .. key)
+        check(L[key] ~= nil, locale .. " translates " .. key)
     end
     -- Another client's file leaves the table alone.
     local other = {}
     assert(loadfile(path))("123", { skip = false, locale = "enUS", L = other })
-    H.eq(next(other), nil, locale .. " stays out of other clients")
+    eq(next(other), nil, locale .. " stays out of other clients")
 end
 
 ------------------------------------------------------------
@@ -97,34 +97,34 @@ WoW.petGUID = "Pet-0-4613-0-1234-416-0000ABCDEF" -- the Imp
 
 local ns = H.loadAddon()
 local Wheel = ns.Wheel
-H.eq(ns.locale, "frFR", "the client's language is read")
-H.eq(ns.L["Soulstone"], "Pierre d'âme", "frFR.lua loaded")
-H.eq(ns.L["not a key"], "not a key", "a missing string shows its English")
+eq(ns.locale, "frFR", "the client's language is read")
+eq(ns.L["Soulstone"], "Pierre d'âme", "frFR.lua loaded")
+eq(ns.L["not a key"], "not a key", "a missing string shows its English")
 
 ns.Bar.wheelButton:GetScript("OnClick")()
 local n = Wheel.nodes
-H.eq(n[1].label:GetText(), "Marcheur du Vide", "the Voidwalker's bead, in French")
-H.eq(n[3].label:GetText(), "Inferno", "Inferno keeps its own name")
-H.eq(n[4].label:GetText(), "Garde funeste", "the Doomguard, from its family")
-H.eq(n[5].label:GetText(), "Diablotin", "the Imp, not its whole summon")
-H.eq(n[6].sub:GetText(), "Non appris", "an unlearned bead says so in French")
-H.eq(Wheel.centerName:GetText(), "Diablotin", "the active demon in the centre")
+eq(n[1].label:GetText(), "Marcheur du Vide", "the Voidwalker's bead, in French")
+eq(n[3].label:GetText(), "Inferno", "Inferno keeps its own name")
+eq(n[4].label:GetText(), "Garde funeste", "the Doomguard, from its family")
+eq(n[5].label:GetText(), "Diablotin", "the Imp, not its whole summon")
+eq(n[6].sub:GetText(), "Non appris", "an unlearned bead says so in French")
+eq(Wheel.centerName:GetText(), "Diablotin", "the active demon in the centre")
 
 -- Demonic Sacrifice's line, matched on the French name before " : ".
 Wheel.center:GetScript("OnEnter")()
-H.eq(Wheel.strip.hint:GetText(),
+eq(Wheel.strip.hint:GetText(),
     "Clic droit : Sacrifice démoniaque - Diablotin : Augmente vos dégâts d'Ombre de 15%.",
     "the Imp's Sacrifice line, in French")
 n[2].button:GetScript("OnEnter")(n[2].button)
-H.eq(Wheel.strip.hint:GetText(), "Chasseur corrompu : pas encore appris", "a bead's hint in French")
+eq(Wheel.strip.hint:GetText(), "Chasseur corrompu : pas encore appris", "a bead's hint in French")
 n[1].button:GetScript("OnEnter")(n[1].button)
-H.eq(Wheel.strip.hint:GetText(),
+eq(Wheel.strip.hint:GetText(),
     "Clic : Invocation d'un marcheur du Vide    Maj : Domination corrompue d'abord",
     "Fel Domination by the client's own name")
 
 -- The re-summon question names the demon in French.
 ns.Resummon:Show(ns.Bar:Button("demon"), 688)
-H.eq(ns.Resummon.text:GetText(), "Diablotin est déjà là. L'invoquer à nouveau ?", "the question, in French")
+eq(ns.Resummon.text:GetText(), "Diablotin est déjà là. L'invoquer à nouveau ?", "the question, in French")
 ns.Resummon:Hide()
 
 -- The names under the icons stay in their room, clear of their neighbours:
@@ -133,23 +133,23 @@ local labels = { ns.Bar.wheelButton.label }
 for _, button in ipairs(ns.Bar.buttons) do labels[#labels + 1] = button.label end
 for i = 2, #labels do
     local a, b = labels[i - 1], labels[i]
-    H.check((a:GetUnboundedStringWidth() + b:GetUnboundedStringWidth()) / 2 <= 56,
+    check((a:GetUnboundedStringWidth() + b:GetUnboundedStringWidth()) / 2 <= 56,
         a:GetText() .. " and " .. b:GetText() .. " don't run into each other")
 end
 local healthstone = labels[5]
-H.eq(healthstone:GetText(), "Pierre de soins", "the Healthstone's name, in French")
-H.check(select(2, healthstone:GetFont()) < select(2, labels[3]:GetFont()), "a long name shrinks, a short one doesn't")
+eq(healthstone:GetText(), "Pierre de soins", "the Healthstone's name, in French")
+check(select(2, healthstone:GetFont()) < select(2, labels[3]:GetFont()), "a long name shrinks, a short one doesn't")
 for _, name in ipairs({ "Seelenstein", "Gesundheitsstein", "Beschwörung" }) do
     local fs = ns.Skin:Font(UIParent, 10, "CENTER")
     ns.Bar.FitLabel(fs, name)
-    H.check(fs:GetUnboundedStringWidth() <= 56, name .. " fits under its icon")
+    check(fs:GetUnboundedStringWidth() <= 56, name .. " fits under its icon")
 end
 
 -- Without the family API (unmeasured on Forever), nothing is nil: the
 -- bead shows the summon's whole name, the Doomguard its translated label.
 WoW.families = {}
 Wheel:Paint()
-H.eq(n[5].label:GetText(), "Invocation d'un diablotin", "no family: the whole summon name")
-H.eq(n[4].label:GetText(), "Garde funeste", "no family: the Doomguard's label")
+eq(n[5].label:GetText(), "Invocation d'un diablotin", "no family: the whole summon name")
+eq(n[4].label:GetText(), "Garde funeste", "no family: the Doomguard's label")
 
-H.done("test_locale")
+done("test_locale")

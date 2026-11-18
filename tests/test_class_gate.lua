@@ -8,13 +8,13 @@ local H = dofile("tests/harness.lua")
 
 WoW.class = "MAGE"
 local ns = H.loadAddon()
-H.eq(ns.skip, true, "a Mage skips 123")
-H.eq(ns.Bar, nil, "no bar module")
-H.eq(ns.Events, nil, "no event frame")
-H.eq(SlashCmdList.ONETWOTHREE, nil, "no /123")
-H.eq(rawget(_G, "OneTwoThree_Wheel"), nil, "no globals")
-H.eq(rawget(_G, "OneTwoThreeDB"), nil, "the saved table is left alone")
-H.eq(#WoW.messages, 0, "nothing said")
+eq(ns.skip, true, "a Mage skips 123")
+eq(ns.Bar, nil, "no bar module")
+eq(ns.Events, nil, "no event frame")
+eq(SlashCmdList.ONETWOTHREE, nil, "no /123")
+eq(rawget(_G, "OneTwoThree_Wheel"), nil, "no globals")
+eq(rawget(_G, "OneTwoThreeDB"), nil, "the saved table is left alone")
+eq(#WoW.chat, 0, "nothing said")
 
 -- The class unreadable while the files load: 123 loads, and the login gate
 -- (the class is known by then) gives a Mage no UI and no commands.
@@ -23,9 +23,9 @@ WoW.class = "MAGE"
 local realUnitClass = UnitClass
 UnitClass = function() return nil end
 ns = H.loadAddon({ beforeLogin = function() UnitClass = realUnitClass end })
-H.eq(ns.skip, false, "loaded when the class wasn't known yet")
-H.check(not ns.isWarlock, "the login gate sees a Mage")
-H.check(ns.Bar.frame == nil, "no bar")
-H.eq(SlashCmdList.ONETWOTHREE, nil, "no /123")
+eq(ns.skip, false, "loaded when the class wasn't known yet")
+check(not ns.isWarlock, "the login gate sees a Mage")
+check(ns.Bar.frame == nil, "no bar")
+eq(SlashCmdList.ONETWOTHREE, nil, "no /123")
 
-H.done("test_class_gate")
+done("test_class_gate")
