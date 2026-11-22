@@ -130,6 +130,11 @@ ns.Events:Register("PLAYER_LOGIN", function()
         return
     end
 
+    -- The LibShowcase instance now, not at the wheel's first opening: its
+    -- login work (the once-only repair of a camera left on saved view 5 by
+    -- r4-r11, a capture a crash left behind) runs only for an instance that
+    -- exists at login (Codex, PR #65).
+    ns.Presentation:Lib()
     ns.SecureAction.Initialize()
     ns.Bar:Initialize()
     ns.Wheel:Initialize()
