@@ -104,4 +104,4 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
 - Sounds: in-game kits (`PlaySound`, vanilla-era kits) or FileDataIDs; `PlaySoundFile` refuses
   built-in paths. Models: `ModelScene` + `SetModelByCreatureDisplayID`.
 - Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r10,
-  LibShowcase-1.0 r4); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.
+  LibShowcase-1.0 r15); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.
