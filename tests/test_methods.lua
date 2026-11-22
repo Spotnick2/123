@@ -58,21 +58,10 @@ WoW.group = {
 -- The 3D portraits (UI/Portrait.lua), which the other tests leave on their
 -- fallback: a PlayerModel answers its creature's display, and a model
 -- scene makes an actor whose model loads at once (Forever's six-number
--- bounding box, 2 units tall).
--- WowTestKit #90: an actor's methods aren't in the build's widget methods
--- (the dump documents them as functions tagged
--- [FrameAPIModelSceneFrameActorBase], forever-api-1.60.1.70959.md), so each
--- one the addon calls is allowed, before it loads (so it reads as a method),
--- and its name checked against the build's function list below.
-local ACTOR = "ModelSceneFrameActorBase in the dump (functions tagged [FrameAPIModelSceneFrameActorBase]); WowTestKit #90"
-local ACTOR_METHODS = { "ClearModel", "GetActiveBoundingBox", "SetDesaturation", "SetModelByCreatureDisplayID",
-                        "SetPosition", "SetScale", "SetUseCenterForOrigin" }
-local actorAllow = {}
-for _, m in ipairs(ACTOR_METHODS) do actorAllow["ModelSceneActor:" .. m] = ACTOR end
-Kit.allowMethods(actorAllow)
+-- bounding box, 2 units tall). The kit makes the actor (a ModelSceneActor,
+-- checked against the build like any widget).
 local Methods = WoW.Methods
 function Methods.GetDisplayInfo(m) return m._creature and (100000 + m._creature) or 0 end
-function Methods.CreateActor(scene) return WoW.newWidget("ModelSceneActor", scene) end
 function Methods.SetModelByCreatureDisplayID(a, id) a._model = id; return true end
 function Methods.GetActiveBoundingBox(a) if a._model then return -0.5, -0.5, 0, 0.5, 0.5, 2 end end
 
@@ -170,11 +159,6 @@ WoW.leaveCombat()
 WoW.advance(1)
 for _ = 1, 20 do WoW.step(0.05) end
 
--- WowTestKit #90: each actor method allowed above is a documented function.
-local functions = Kit.data("functions")
-for _, m in ipairs(ACTOR_METHODS) do
-    check(functions[m], "an actor's method is a documented function on Forever " .. Kit.BUILD .. ": " .. m)
-end
 local actors = 0
 for pair in pairs(WoW.methodsCalled) do
     if pair:find("^ModelSceneActor:") then actors = actors + 1 end
@@ -190,5 +174,4 @@ check(recorded >= floor, "the exercise reached the windows (" .. recorded .. " r
 
 eq(#swallowed, 0, "no error was swallowed by a pcall during the exercise: " .. tostring(swallowed[1]))
 
-H.acceptKnownStrays()   -- FINDING #61: /123 queue, /123 hs and the help line's bare |
 done("test_methods")
