@@ -182,21 +182,21 @@ C_SpellBook.IsSpellKnown = function(id, bank) return bank == Enum.SpellBookSpell
 C_SpellBook.IsSpellInSpellBook = function() return false end
 local before = failures()
 fp("123 petbook")
-H.eq(failures(), before, "/fp 123 petbook logs no ERROR")
-H.check(logged("rank Firebolt 2 %(spell 7799, item 16302%): IsSpellKnown=true"), "a known rank, with its grimoire")
-H.check(logged("rank Firebolt 3 %(spell 7800, item 16316%): IsSpellKnown=false"), "the next rank, not known")
-H.check(logged("no rank known: .*Torment"), "abilities with nothing known on one line")
-H.check(logged("merchant 1 item 16302 .*%-> Firebolt 2 %(spell 7799%).*IsSpellKnown=true"), "the vendor's grimoire, known")
-H.check(logged("2 of 3 items are grimoires in the table"), "a Soul Shard isn't a grimoire")
+eq(failures(), before, "/fp 123 petbook logs no ERROR")
+check(logged("rank Firebolt 2 %(spell 7799, item 16302%): IsSpellKnown=true"), "a known rank, with its grimoire")
+check(logged("rank Firebolt 3 %(spell 7800, item 16316%): IsSpellKnown=false"), "the next rank, not known")
+check(logged("no rank known: .*Torment"), "abilities with nothing known on one line")
+check(logged("merchant 1 item 16302 .*%-> Firebolt 2 %(spell 7799%).*IsSpellKnown=true"), "the vendor's grimoire, known")
+check(logged("2 of 3 items are grimoires in the table"), "a Soul Shard isn't a grimoire")
 fp("123 grimoires")
 rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/grimoires"]
-H.check(S.IsShown() and rec ~= nil, "/fp 123 grimoires starts the procedure (#59)")
-H.check(logged("grimoire watch on"), "and turns its watch on")
+check(S.IsShown() and rec ~= nil, "/fp 123 grimoires starts the procedure (#59)")
+check(logged("grimoire watch on"), "and turns its watch on")
 S.Stop("test")
 C_SpellBook.IsSpellKnown, C_SpellBook.IsSpellInSpellBook = realKnown, realInBook
 for k in pairs(merchantStubs) do rawset(_G, k, nil) end
 rawset(_G, "C_MerchantFrame", nil)
-H.eq(#thrown, 0, "no #59 command reached the error handler: " .. table.concat(thrown, "; "))
+eq(#thrown, 0, "no #59 command reached the error handler: " .. table.concat(thrown, "; "))
 
 fp("123 clear")
 eq(#DB.log, 1, "clear empties the log in place (then says so)")
