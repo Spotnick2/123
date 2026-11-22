@@ -108,28 +108,4 @@ function H.messagesMatching(pattern)
     return n
 end
 
--- FINDING #61: /123 queue, /123 hs and the help line print a bare "|",
--- which done() fails on (the kit's print checks every printed line). Until
--- it is fixed, a test that runs those commands calls this before done(): it
--- takes exactly those lines out of WoW.strays, so any other stray still
--- fails, and checks one was printed, so the exception can't outlive the fix.
-local KNOWN_STRAYS = {
-    "/123 queue test | clear",
-    "/123 hs test | clear",
-    "/123 | options | queue (test, clear)",
-}
-function H.acceptKnownStrays()
-    local keep, known = {}, 0
-    for _, line in ipairs(WoW.strays) do
-        local isKnown = false
-        for _, s in ipairs(KNOWN_STRAYS) do
-            if line:find(s, 1, true) then isKnown = true break end
-        end
-        if isKnown then known = known + 1 else keep[#keep + 1] = line end
-    end
-    WoW.strays = keep
-    check(known > 0, "a known stray-| line (FINDING #61) was printed")
-    return known
-end
-
 return H

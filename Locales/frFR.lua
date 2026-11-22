@@ -105,7 +105,7 @@ L["Not in your group: target them first."] = "Pas dans votre groupe : ciblez cet
 L["A test request: nothing to trade."] = "Une demande de test : rien à échanger."
 L["No healthstone, or no free trade slot."] = "Pas de pierre de soins, ou plus de place dans l'échange."
 L["Your cursor holds something: put it down first."] = "Votre curseur tient un objet : posez-le d'abord."
-L["%d healthstone requests. /123 hs test | clear"] = "%d demandes de pierre de soins. /123 hs test | clear"
+L["%d healthstone requests. /123 hs test || clear"] = "%d demandes de pierre de soins. /123 hs test || clear"
 L["Healthstone requests"] = "Demandes de pierre de soins"
 L["Prompt when someone asks for a healthstone"] = "Proposer un échange quand on demande une pierre de soins"
 L["Also whispers from outside the group"] = "Aussi les chuchotements hors du groupe"
@@ -187,7 +187,7 @@ L["options can't open in combat."] = "les options ne s'ouvrent pas en combat."
 -- Slash commands and key bindings (the command words stay as typed)
 L["%d test requests joined the summon queue (\"1234\" didn't match)."] =
     "%d demandes de test ont rejoint la file d'invocation (« 1234 » ne correspondait pas)."
-L["%d waiting. /123 queue test | clear"] = "%d en attente. /123 queue test | clear"
+L["%d waiting. /123 queue test || clear"] = "%d en attente. /123 queue test || clear"
 L["demon voices on."] = "voix des démons activées."
 L["demon voices off."] = "voix des démons désactivées."
 L["the demon wheel opens with the cinematic camera and hides the game UI."] =
@@ -195,8 +195,8 @@ L["the demon wheel opens with the cinematic camera and hides the game UI."] =
 L["the demon wheel opens over the game, no camera."] = "la roue des démons s'ouvre par-dessus le jeu, sans caméra."
 L["will ask before re-summoning the demon that is out."] = "demandera avant de réinvoquer le démon présent."
 L["won't ask before re-summoning the demon that is out."] = "ne demandera pas avant de réinvoquer le démon présent."
-L["/123 | options | queue (test, clear) | hs (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"] =
-    "/123 | options | queue (test, clear) | hs (test, clear) | wheel | preview (tous les démons, aucun sort) | camera (ouverture cinématique) | sounds (voix des démons) | labels (noms sous les icônes) | confirm (demander avant de réinvoquer) | debug"
+L["/123 || options || queue (test, clear) || hs (test, clear) || wheel || preview (every demon, nothing cast) || camera (cinematic opening) || sounds (demon voices) || labels (names under the icons) || confirm (ask before re-summoning) || debug"] =
+    "/123 || options || queue (test, clear) || hs (test, clear) || wheel || preview (tous les démons, aucun sort) || camera (ouverture cinématique) || sounds (voix des démons) || labels (noms sous les icônes) || confirm (demander avant de réinvoquer) || debug"
 L["Show or hide the 123 bar"] = "Afficher ou masquer la barre 123"
 L["Open or close the demon wheel"] = "Ouvrir ou fermer la roue des démons"
 L["Summon the last demon"] = "Invoquer le dernier démon"
