@@ -1,16 +1,46 @@
 # Changelog
 
-## v1.0.0-beta2 (2026-11-25)
-Grimoires at the demon trainer, and a camera that follows again after the demon wheel. A beta:
-the grimoires are tested in game before 1.0.0.
+## v1.0.0 (2026-11-25)
+Everything a Warlock does for the group: summon the queue, give soulstones and healthstones,
+Banish and Subjugate, a smarter Demonic Sacrifice, the grimoires your demons still need, a new
+look, French and German.
+- Grimoires at the demon trainer (#59): 123 remembers what each of your demons knows whenever it
+  is out, so the trainer's vendor window hides the grimoires your demons already know (a
+  checkbox on the window turns it off), and each grimoire's tooltip says what each demon knows.
+  Summon each demon once after installing.
+- Banish and Subjugate Demon (#29): two bar buttons once learned. Banish counts down from your
+  cast and glows its last 5 seconds. Subjugate (Forever's Enslave Demon) counts down, alerts you
+  with a sound and a red glow when the demon breaks free, and its right click dismisses it. Key
+  bindings for both.
+- Smart Demonic Sacrifice (#20): while the buff is up, a summon that would end it asks first, on
+  the bar and the wheel, out of combat (in combat the Demon button summons without asking).
+  With Demonic Pact only re-summoning the sacrificed demon does; pick a pair in the options and
+  the Demon button's right click walks it (summon, sacrifice, summon the one to keep).
+- Healthstone requests (#8): "hs" or "healthstone" (or your own keywords) in group chat or a
+  whisper opens a small prompt: Open trade, then Place the healthstone, and you accept. Nothing
+  is given on its own. Whispers from outside the group are off by default. `/123 hs test` shows
+  it alone.
+- Soulstone target (#5): right-click the Soulstone button to pick who gets it, you or a group
+  member. Their name shows on the icon and a carried soulstone goes to them with no targeting
+  (in combat, to your target). Someone who leaves the group is cleared.
+- The bar's buttons get framed icons with state colours: grey for unlearned abilities, red for
+  missing reagents, a purple pulse for missing armor, and a fel-green pulse when people are
+  waiting for a summon. Hover highlights, a dotted handle grip, and a fading shard divider
+  complete the bar's new look (#13).
+- French and German (#22): every text of 123 (bar, wheel, prompts, options, key bindings,
+  messages) follows the game's language. Demon names now come from the game, so the wheel shows
+  "Diablotin" or "Wichtel" instead of the whole summon spell, and Demonic Sacrifice's effect
+  line is found on every client. Other languages show English for now.
+- Summoning the queue (#10): the Summoning button casts Ritual of Summoning on the first in line
+  who still needs it, with no targeting, and on your target in combat. Each row follows the
+  summon (next, summoning, pending, accepted, declined, here); people leave once they accepted
+  and stand beside you.
+- Summon announcements (#11): "Summoning <name>, please click the portal" in group chat when the
+  ritual starts, and optionally "Need 2 clickers for the summon" when fewer than two others are
+  near. Both texts can be changed in the options.
 - The camera follows your character again after the demon wheel closes (LibShowcase r15). It
   used to end on a saved view that doesn't follow, which the client kept across logins; players
   left on it are moved back once.
-- Grimoires at the demon trainer (#59): 123 remembers what each of your demons knows whenever
-  it is out, so the trainer's vendor window hides the grimoires your demons already know (a
-  checkbox on the window turns it off), and each grimoire's tooltip says what each demon knows.
-  Summon each demon once after installing. Beta: the Succubus', Incubus' and Felhunter's are
-  checked in game first.
 - `/123 queue`, `/123 hs` and the `/123` help line show their `|` separators (#61).
 
 ## v1.0.0-beta1 (2026-11-03)
