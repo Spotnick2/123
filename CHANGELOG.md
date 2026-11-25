@@ -4,6 +4,11 @@
 - The camera follows your character again after the demon wheel closes (LibShowcase r15). It
   used to end on a saved view that doesn't follow, which the client kept across logins; players
   left on it are moved back once.
+- Grimoires at the demon trainer (#59): 123 remembers what each of your demons knows whenever
+  it is out, so the trainer's vendor window hides the grimoires your demons already know (a
+  checkbox on the window turns it off), and each grimoire's tooltip says what each demon knows.
+  Summon each demon once after installing. Beta: the Succubus', Incubus' and Felhunter's are
+  checked in game first.
 - `/123 queue`, `/123 hs` and the `/123` help line show their `|` separators (#61).
 
 ## v1.0.0-beta1 (2026-11-03)

@@ -296,7 +296,7 @@ function UnitPowerMax()  return WoW.powerMax end
 NUM_BAG_SLOTS = 4
 Enum = { BagIndex = { Backpack = 0, ReagentBag = 5 }, PowerType = { Mana = 0 },
     SummonStatus = { None = 0, Pending = 1, Accepted = 2, Declined = 3 },
-    SpellBookSpellBank = { Player = 0, Pet = 1 } }
+    SpellBookSpellBank = { Player = 0, Pet = 1 }, TooltipDataType = { Item = 0 } }
 
 C_Container = {}
 function C_Container.GetContainerNumSlots(bag)
@@ -427,7 +427,13 @@ end
 function C_Spell.GetSpellCooldownDuration(id) return { _duration = true, spellID = id } end
 function C_Spell.GetSpellPowerCost() return {} end
 C_SpellBook = {}
-function C_SpellBook.IsSpellKnown(id) local s = spell(id) return s and s.known or false end
+-- The pet bank (Enum.SpellBookSpellBank.Pet, 1) answers for the summoned
+-- demon only (docs/FOREVER-PROBE.md run 3): WoW.petSpells[id] = true.
+WoW.petSpells = {}
+function C_SpellBook.IsSpellKnown(id, bank)
+    if bank == 1 then return WoW.petSpells[id] == true end
+    local s = spell(id) return s and s.known or false
+end
 function C_SpellBook.GetNumSpellBookSkillLines() return 0 end
 function IsPlayerSpell(id) return C_SpellBook.IsSpellKnown(id) end
 
@@ -746,6 +752,102 @@ function GameEvent.UnregisterInternalEvent() end
 function GameEvent.RegisterInternalEvent() end
 function GameEvent.HandleExperimentalCVarConfirmationNeeded() end
 
+
+------------------------------------------------------------
+-- The vendor window (#59): Mainline's MerchantFrame, as the client loads it
+-- (docs/FOREVER-PROBE.md run 3; wow-ui-source Blizzard_UIPanels_Game/
+-- Mainline/MerchantFrame.lua and .xml). WoW.merchant = { { id, name, price,
+-- usable }, ... } is what the vendor sells. Blizzard's redraw is modelled
+-- far enough for a test: each slot's button ID, name and price, the page.
+------------------------------------------------------------
+
+WoW.merchant = {}
+MERCHANT_ITEMS_PER_PAGE = 10
+MERCHANT_PAGE_NUMBER = "Page %s of %s"
+function GetMerchantNumItems() return #WoW.merchant end
+function GetMerchantItemID(i) return WoW.merchant[i] and WoW.merchant[i][1] end
+function GetMerchantItemLink(i) return WoW.merchant[i] and ("item:" .. WoW.merchant[i][1]) end
+function CanAffordMerchantItem() return true end
+C_MerchantFrame = {}
+function C_MerchantFrame.GetItemInfo(i)
+    local m = WoW.merchant[i]
+    if not m then return nil end
+    return { name = m[2], texture = 133738, price = m[3], stackCount = 1, numAvailable = -1,
+             isPurchasable = true, isUsable = m[4] ~= false, hasExtendedCost = false }
+end
+function C_MerchantFrame.IsMerchantItemRefundable() return true end
+-- A named frame is a global, as the client's are; the XML's font strings
+-- inherit GameFontNormal (or a font like it).
+local function named(kind, parent, name)
+    local w = kind == "FontString" and Methods.CreateFontString(parent, name, "ARTWORK", "GameFontNormal")
+        or newWidget(kind, parent, name)
+    rawset(_G, name, w)
+    return w
+end
+named("Frame", UIParent, "MerchantFrame")
+MerchantFrame.page, MerchantFrame.selectedTab = 1, 1
+MerchantFrame:Hide()
+named("Frame", MerchantFrame, "MerchantExtraCurrencyInset")
+named("FontString", MerchantFrame, "MerchantPageText")
+named("Button", MerchantFrame, "MerchantPrevPageButton")
+named("Button", MerchantFrame, "MerchantNextPageButton")
+named("Button", MerchantFrame, "MerchantPageTurnIndicatorLeft")
+named("Button", MerchantFrame, "MerchantPageTurnIndicatorRight")
+MerchantPageTurnIndicatorLeft:Hide()
+MerchantPageTurnIndicatorRight:Hide()
+for i = 1, 10 do
+    local slot = named("Frame", MerchantFrame, "MerchantItem" .. i)
+    local button = named("Button", slot, "MerchantItem" .. i .. "ItemButton")
+    button.IconQuestTexture = newWidget("Texture", button)
+    named("FontString", slot, "MerchantItem" .. i .. "Name")
+    named("Frame", slot, "MerchantItem" .. i .. "MoneyFrame")
+    named("Frame", slot, "MerchantItem" .. i .. "AltCurrencyFrame")
+end
+-- ItemButtonTemplate's and MoneyFrame's helpers (SharedXML ItemButtonTemplate.lua,
+-- MoneyFrame.lua): the price shown is kept on the money frame.
+function SetItemButtonCount() end
+function SetItemButtonStock() end
+function SetItemButtonTexture(b, t) b._texture = t end
+function SetItemButtonDesaturated() end
+function SetItemButtonNameFrameVertexColor() end
+function SetItemButtonSlotVertexColor() end
+function SetItemButtonTextureVertexColor(b, r, g, bl) b._tint = { r, g, bl } end
+function SetItemButtonNormalTextureVertexColor() end
+function MoneyFrame_SetMaxDisplayWidth(frame, width) frame._maxWidth = width end
+function MoneyFrame_Update(name, price) _G[name]._price = price end
+function SetMoneyFrameColor() end
+function MerchantFrameItem_UpdateQuality() end
+function MerchantFrame_UpdateMerchantInfo()
+    local n = GetMerchantNumItems()
+    for i = 1, MERCHANT_ITEMS_PER_PAGE do
+        local index = (MerchantFrame.page - 1) * MERCHANT_ITEMS_PER_PAGE + i
+        local button, info = _G["MerchantItem" .. i .. "ItemButton"], C_MerchantFrame.GetItemInfo(index)
+        _G["MerchantItem" .. i .. "Name"]:SetText(info and info.name or "")
+        _G["MerchantItem" .. i .. "MoneyFrame"]._price = info and info.price
+        button:SetID(info and index or 0)
+        button:SetShown(info ~= nil)
+    end
+    MerchantPageText:SetFormattedText(MERCHANT_PAGE_NUMBER, MerchantFrame.page, math.ceil(n / MERCHANT_ITEMS_PER_PAGE))
+    MerchantNextPageButton:SetEnabled(MerchantFrame.page < math.ceil(n / MERCHANT_ITEMS_PER_PAGE))
+end
+function MerchantFrame_Update()
+    if MerchantFrame.selectedTab == 1 then MerchantFrame_UpdateMerchantInfo() end
+end
+-- TooltipDataProcessor (Blizzard_SharedXMLGame/Tooltip/TooltipDataHandler.lua):
+-- the post-calls registered per data type, for a test to run on a tooltip.
+WoW.tooltipPostCalls = {}
+TooltipDataProcessor = {}
+function TooltipDataProcessor.AddTooltipPostCall(dataType, fn)
+    WoW.tooltipPostCalls[dataType] = WoW.tooltipPostCalls[dataType] or {}
+    table.insert(WoW.tooltipPostCalls[dataType], fn)
+end
+-- Blizzard's tooltip for a slot (Mainline/MerchantFrame.lua): the item's
+-- link as its text, then shown.
+function MerchantItemButton_OnEnter(button)
+    GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+    GameTooltip:SetText(GetMerchantItemLink(button:GetID()) or "")
+    GameTooltip:Show()
+end
 ------------------------------------------------------------
 -- Strict globals
 ------------------------------------------------------------

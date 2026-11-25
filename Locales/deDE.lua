@@ -202,3 +202,11 @@ L["Open or close the demon wheel"] = "Dämonenrad öffnen oder schließen"
 L["Summon the last demon"] = "Den letzten Dämon beschwören"
 L["Demonic Sacrifice, or summon the last demon"] = "Dämonische Opferung oder den letzten Dämon beschwören"
 L["Ritual of Summoning"] = "Ritual der Beschwörung"
+
+-- Demon trainer: grimoires (#59)
+L["Demon trainer"] = "Dämonenausbilder"
+L["Hide known grimoires"] = "Bekannte Grimoires ausblenden"
+L["Hides a grimoire once every demon of yours that can learn it knows that rank. Summon each demon once so 123 can read what it knows."] = "Blendet ein Grimoire aus, sobald jeder deiner Dämonen, der es lernen kann, diesen Rang kennt. Beschwöre jeden Dämon einmal, damit 123 auslesen kann, was er kennt."
+L["%s: summon it once so 123 can read it"] = "%s: einmal beschwören, damit 123 es auslesen kann"
+L["%s: knows rank %d"] = "%s: kennt Rang %d"
+L["%s: not learned"] = "%s: nicht gelernt"

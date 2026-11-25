@@ -167,6 +167,37 @@ check(S.IsShown() and rec ~= nil, "/fp 123 sacrifice starts the procedure (#20)"
 S.Stop("test")
 fp("123 watch off")
 
+-- #59: a vendor selling two grimoires, an Imp that knows Firebolt rank 2.
+-- The merchant API isn't in the stub world: stubbed here, then removed.
+local merchantStubs = {
+    GetMerchantNumItems = function() return 3 end,
+    GetMerchantItemID = function(i) return ({ 16302, 16316, 6265 })[i] end,
+}
+for k, v in pairs(merchantStubs) do rawset(_G, k, v) end
+rawset(_G, "C_MerchantFrame", { GetItemInfo = function(i)
+    return { name = ({ "Grimoire of Firebolt (Rank 2)", "Grimoire of Firebolt (Rank 3)", "Soul Shard" })[i], price = 100 }
+end })
+local realKnown, realInBook = C_SpellBook.IsSpellKnown, C_SpellBook.IsSpellInSpellBook
+C_SpellBook.IsSpellKnown = function(id, bank) return bank == Enum.SpellBookSpellBank.Pet and (id == 7799 or id == 3110) end
+C_SpellBook.IsSpellInSpellBook = function() return false end
+local before = failures()
+fp("123 petbook")
+eq(failures(), before, "/fp 123 petbook logs no ERROR")
+check(logged("rank Firebolt 2 %(spell 7799, item 16302%): IsSpellKnown=true"), "a known rank, with its grimoire")
+check(logged("rank Firebolt 3 %(spell 7800, item 16316%): IsSpellKnown=false"), "the next rank, not known")
+check(logged("no rank known: .*Torment"), "abilities with nothing known on one line")
+check(logged("merchant 1 item 16302 .*%-> Firebolt 2 %(spell 7799%).*IsSpellKnown=true"), "the vendor's grimoire, known")
+check(logged("2 of 3 items are grimoires in the table"), "a Soul Shard isn't a grimoire")
+fp("123 grimoires")
+rec = ForeverProbeDB.steps.records["OneTwoThreeProbe/grimoires"]
+check(S.IsShown() and rec ~= nil, "/fp 123 grimoires starts the procedure (#59)")
+check(logged("grimoire watch on"), "and turns its watch on")
+S.Stop("test")
+C_SpellBook.IsSpellKnown, C_SpellBook.IsSpellInSpellBook = realKnown, realInBook
+for k in pairs(merchantStubs) do rawset(_G, k, nil) end
+rawset(_G, "C_MerchantFrame", nil)
+eq(#thrown, 0, "no #59 command reached the error handler: " .. table.concat(thrown, "; "))
+
 fp("123 clear")
 eq(#DB.log, 1, "clear empties the log in place (then says so)")
 check(ns._test.Probe ~= nil, "the test seam")

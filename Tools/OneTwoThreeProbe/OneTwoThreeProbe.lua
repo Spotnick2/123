@@ -33,6 +33,10 @@
 --                              subjugated demon's break, dismiss and death (#29)
 --   /fp 123 sacrifice          guided: Demonic Sacrifice's buff per demon, Demonic
 --                              Pact, the summon that ends it (#20)
+--   /fp 123 grimoires          guided: at a demon trainer, which grimoires the
+--                              summoned demon knows, the vendor window (#59)
+--   /fp 123 petbook            the summoned demon's spellbook and grimoire
+--                              ranks, and the open vendor window's grimoires
 --   /fp 123 clear              empty the saved log
 --
 -- Every client call goes through Probe:Call (the whole return tuple, ABSENT
@@ -740,6 +744,222 @@ Probe:Steps("sacrifice", {
 
 Probe:Command("sacrifice", function() Probe:StartSteps("sacrifice") end,
     "#20: Demonic Sacrifice's buffs and Demonic Pact")
+
+------------------------------------------------------------
+-- grimoires (#59): which grimoires the summoned demon already knows, read
+-- from the pet's spellbook, and what a demon trainer's vendor window is
+-- made of (Mainline or Vanilla MerchantFrame, its slots, its tooltips).
+-- The item -> pet spell table is the client's own data (wago.tools DB2,
+-- build 70532: itemsparse + itemxitemeffect + itemeffect + spelleffect,
+-- effect 36 LEARN_SPELL). Rank 1 of Firebolt, Torment, Lash of Pain and
+-- Devour Magic comes with the demon (no grimoire): INNATE, to see what a
+-- lower rank reads once a higher one is learned.
+------------------------------------------------------------
+
+local GRIMOIRES = { -- { item, pet spell, ability, rank }
+    { 16321, 6307, "Blood Pact", 1 }, { 16322, 7804, "Blood Pact", 2 }, { 16323, 7805, "Blood Pact", 3 },
+    { 16324, 11766, "Blood Pact", 4 }, { 16325, 11767, "Blood Pact", 5 }, { 16357, 17767, "Consume Shadows", 1 },
+    { 16358, 17850, "Consume Shadows", 2 }, { 16359, 17851, "Consume Shadows", 3 }, { 16360, 17852, "Consume Shadows", 4 },
+    { 16361, 17853, "Consume Shadows", 5 }, { 16362, 17854, "Consume Shadows", 6 }, { 16381, 19731, "Devour Magic", 2 },
+    { 16382, 19734, "Devour Magic", 3 }, { 16383, 19736, "Devour Magic", 4 }, { 16326, 2947, "Fire Shield", 1 },
+    { 16327, 8316, "Fire Shield", 2 }, { 16328, 8317, "Fire Shield", 3 }, { 16329, 11770, "Fire Shield", 4 },
+    { 16330, 11771, "Fire Shield", 5 }, { 16302, 7799, "Firebolt", 2 }, { 16316, 7800, "Firebolt", 3 },
+    { 16317, 7801, "Firebolt", 4 }, { 16318, 7802, "Firebolt", 5 }, { 16319, 11762, "Firebolt", 6 },
+    { 16320, 11763, "Firebolt", 7 }, { 16368, 7815, "Lash of Pain", 2 }, { 16371, 7816, "Lash of Pain", 3 },
+    { 16372, 11778, "Lash of Pain", 4 }, { 16373, 11779, "Lash of Pain", 5 }, { 16374, 11780, "Lash of Pain", 6 },
+    { 16380, 7870, "Lesser Invisibility", 1 }, { 16390, 19480, "Paranoia", 1 }, { 16331, 4511, "Phase Shift", 1 },
+    { 16351, 7812, "Sacrifice", 1 }, { 16352, 19438, "Sacrifice", 2 }, { 16353, 19440, "Sacrifice", 3 },
+    { 16354, 19441, "Sacrifice", 4 }, { 16355, 19442, "Sacrifice", 5 }, { 16356, 19443, "Sacrifice", 6 },
+    { 16379, 6358, "Seduction", 1 }, { 16375, 6360, "Soothing Kiss", 1 }, { 16376, 7813, "Soothing Kiss", 2 },
+    { 16377, 11784, "Soothing Kiss", 3 }, { 16378, 11785, "Soothing Kiss", 4 }, { 16388, 19244, "Spell Lock", 1 },
+    { 16389, 19647, "Spell Lock", 2 }, { 16363, 17735, "Suffering", 1 }, { 16364, 17750, "Suffering", 2 },
+    { 16365, 17751, "Suffering", 3 }, { 16366, 17752, "Suffering", 4 }, { 16384, 19478, "Tainted Blood", 1 },
+    { 16385, 19655, "Tainted Blood", 2 }, { 16386, 19656, "Tainted Blood", 3 }, { 16387, 19660, "Tainted Blood", 4 },
+    { 16346, 7809, "Torment", 2 }, { 16347, 7810, "Torment", 3 }, { 16348, 7811, "Torment", 4 },
+    { 16349, 11774, "Torment", 5 }, { 16350, 11775, "Torment", 6 },
+}
+local INNATE = { -- { nil, pet spell, ability, rank }: no grimoire teaches them
+    { nil, 3110, "Firebolt", 1 }, { nil, 3716, "Torment", 1 }, { nil, 7814, "Lash of Pain", 1 },
+    { nil, 19505, "Devour Magic", 1 },
+}
+local GRIMOIRE_BY_ITEM = {}
+for _, g in ipairs(GRIMOIRES) do GRIMOIRE_BY_ITEM[g[1]] = g end
+
+local function petBank()
+    local enum = G("Enum")
+    return enum and enum.SpellBookSpellBank and enum.SpellBookSpellBank.Pet
+end
+
+-- The flags one pet spell reads with, as text.
+local function petKnows(spellID)
+    local bank = petBank()
+    local okK, known = Probe:Try("IsSpellKnown(pet)", resolve("C_SpellBook.IsSpellKnown"), spellID, bank)
+    local okB, inBook = Probe:Try("IsSpellInSpellBook(pet)", resolve("C_SpellBook.IsSpellInSpellBook"),
+        spellID, bank, false)
+    known, inBook = okK and known, okB and inBook
+    return known == true or inBook == true, "IsSpellKnown=" .. show(known) .. " inBook=" .. show(inBook)
+end
+
+-- The summoned demon's spellbook as the client lists it, then every
+-- grimoire ability's ranks: in full for an ability with any rank known,
+-- one summary line for the rest.
+local function petBook()
+    call("pet guid", "UnitGUID", "pet")
+    call("pet family", "UnitCreatureFamily", "pet")
+    local bank = petBank()
+    say("pet bank = " .. show(bank))
+    local ok, n = Probe:Try("HasPetSpells", resolve("C_SpellBook.HasPetSpells"))
+    say("HasPetSpells = " .. show(n))
+    local info = resolve("C_SpellBook.GetSpellBookItemInfo")
+    if ok and type(n) == "number" and not isSecret(n) and info then
+        for i = 1, n do
+            local okI, item = pcall(info, i, bank)
+            if okI and type(item) == "table" then
+                say("petbook " .. i .. " " .. show(item.spellID) .. " " .. show(item.name) .. " ("
+                    .. show(item.subName) .. ") type " .. show(item.itemType) .. " passive " .. show(item.isPassive))
+            else
+                say("petbook " .. i .. " unreadable " .. show(item))
+            end
+        end
+    end
+    local rows, any, order = {}, {}, {}
+    for _, list in ipairs({ INNATE, GRIMOIRES }) do
+        for _, g in ipairs(list) do
+            local known, flags = petKnows(g[2])
+            if not rows[g[3]] then rows[g[3]] = {}; order[#order + 1] = g[3] end
+            table.insert(rows[g[3]], { g[4], g[2], g[1], flags })
+            if known then any[g[3]] = true end
+        end
+    end
+    local none = {}
+    for _, ability in ipairs(order) do
+        if any[ability] then
+            table.sort(rows[ability], function(a, b) return a[1] < b[1] end)
+            for _, r in ipairs(rows[ability]) do
+                say("rank " .. ability .. " " .. r[1] .. " (spell " .. r[2] .. ", item " .. show(r[3]) .. "): " .. r[4])
+            end
+        else
+            none[#none + 1] = ability
+        end
+    end
+    say("no rank known: " .. table.concat(none, ", "))
+end
+
+-- A tooltip line worth keeping: "Already known", or red (a requirement).
+local function notableLines(data)
+    local out = {}
+    if type(data) ~= "table" or type(data.lines) ~= "table" then return "no tooltip data" end
+    local knownText = G("ITEM_SPELL_KNOWN")
+    for _, line in ipairs(data.lines) do
+        local text, c = line.leftText, line.leftColor
+        if type(text) == "string" and not isSecret(text) then
+            local red = type(c) == "table" and type(c.r) == "number" and not isSecret(c.r)
+                and c.r > 0.9 and c.g < 0.2 and c.b < 0.2
+            if text == knownText or red then out[#out + 1] = (red and "red " or "") .. show(text) end
+        end
+    end
+    return #out > 0 and table.concat(out, " / ") or "nothing red or known"
+end
+
+-- The vendor window open now: which MerchantFrame this client loads, the
+-- items with their grimoire's pet spell, and the ten slots' button IDs.
+local function merchant()
+    local frame = G("MerchantFrame")
+    say("MerchantFrame " .. show(frame ~= nil) .. " shown " .. show(frame and frame:IsShown())
+        .. " FilterDropdown (Mainline) " .. show(frame and frame.FilterDropdown ~= nil)
+        .. " page " .. show(frame and frame.page) .. " per page " .. show(G("MERCHANT_ITEMS_PER_PAGE")))
+    call("merchant filter", "GetMerchantFilter")
+    local ok, n = Probe:Try("GetMerchantNumItems", resolve("GetMerchantNumItems"))
+    say("merchant items = " .. show(n))
+    if not ok or type(n) ~= "number" or isSecret(n) then return end
+    local grimoires = 0
+    for i = 1, n do
+        local _, id = Probe:Try("GetMerchantItemID", resolve("GetMerchantItemID"), i)
+        local _, info = Probe:Try("C_MerchantFrame.GetItemInfo", resolve("C_MerchantFrame.GetItemInfo"), i)
+        info = type(info) == "table" and info or {}
+        local line = "merchant " .. i .. " item " .. show(id) .. " " .. show(info.name) .. " price "
+            .. show(info.price) .. " usable " .. show(info.isUsable)
+        local g = GRIMOIRE_BY_ITEM[id]
+        if g then
+            grimoires = grimoires + 1
+            local _, spellName, spellID = Probe:Try("C_Item.GetItemSpell", resolve("C_Item.GetItemSpell"), id)
+            local _, flags = petKnows(g[2])
+            local _, data = Probe:Try("C_TooltipInfo.GetMerchantItem", resolve("C_TooltipInfo.GetMerchantItem"), i)
+            line = line .. " -> " .. g[3] .. " " .. g[4] .. " (spell " .. g[2] .. ") itemSpell " .. show(spellID)
+                .. " " .. show(spellName) .. " | pet " .. flags .. " | tooltip " .. notableLines(data)
+        elseif id and tostring(info.name or ""):find("Grimoire") then
+            line = line .. " -> a grimoire NOT in the table"
+        end
+        say(line)
+    end
+    say(grimoires .. " of " .. n .. " items are grimoires in the table")
+    for s = 1, (G("MERCHANT_ITEMS_PER_PAGE") or 10) do
+        local slot, button = G("MerchantItem" .. s), G("MerchantItem" .. s .. "ItemButton")
+        say("slot " .. s .. " shown " .. show(slot and slot:IsShown()) .. " button id " .. show(button and button:GetID()))
+    end
+end
+
+-- What fires around a demon change and a learned rank, and when Blizzard
+-- redraws the vendor window (the hook a filter would follow).
+local grimoireWatcher = CreateFrame("Frame")
+local GRIMOIRE_EVENTS = { "UNIT_PET", "PET_BAR_UPDATE", "SPELLS_CHANGED", "LEARNED_SPELL_IN_SKILL_LINE",
+    "MERCHANT_SHOW", "MERCHANT_UPDATE", "MERCHANT_FILTER_ITEM_UPDATE", "MERCHANT_CLOSED" }
+grimoireWatcher:SetScript("OnEvent", function(_, event, a1)
+    say("event " .. event .. " " .. show(a1))
+end)
+local redrawHooked, watching
+local function grimoireWatch(on)
+    watching = on
+    if on then
+        Probe:RegisterEvents(grimoireWatcher, GRIMOIRE_EVENTS)
+        local hook = G("hooksecurefunc")
+        if not redrawHooked and hook and G("MerchantFrame_UpdateMerchantInfo") then
+            redrawHooked = true
+            hook("MerchantFrame_UpdateMerchantInfo", function()
+                if watching then say("MerchantFrame_UpdateMerchantInfo ran") end
+            end)
+        end
+        say("grimoire watch on, redraw hook " .. show(redrawHooked == true))
+    else
+        grimoireWatcher:UnregisterAllEvents()
+        say("grimoire watch off")
+    end
+end
+
+Probe:Steps("grimoires", {
+    title = "Grimoires your demon knows, at a demon trainer (#59)",
+    rev = 1,
+    { text = "A Warlock with one of your own demons out (the Imp is fine), out of combat. 123 and this "
+        .. "probe loaded. Turning the grimoire watch on and reading the demon's spellbook.",
+      auto = true, run = function() grimoireWatch(true) petBook() return true end },
+    { text = "Open your spellbook on the Pet tab so the shot shows which ranks it lists, then press Next.",
+      screenshot = "grimoires: pet book" },
+    { text = "Go to a demon trainer and open their goods (the vendor window, not the trainer list).",
+      event = "MERCHANT_SHOW" },
+    { text = "Reading the vendor window: its items, which pet spell each grimoire teaches, and whether the "
+        .. "demon knows it. Page through it if there are more pages, then press Next.",
+      auto = true, run = function() merchant() return true end, screenshot = "grimoires: vendor" },
+    { text = "Hover a grimoire your demon already knows (or the rank below the one it has). Does the tooltip "
+        .. "or the item look different (\"Already known\", red text, a red icon)?", ask = true,
+      screenshot = "grimoires: known tooltip" },
+    { text = "Keep the vendor open if you can. Dismiss the demon, summon another of yours, wait until it "
+        .. "is out, then press Run.", button = "Read again", run = function()
+          petBook() merchant() return true end },
+    { text = "When the demon changed, did the vendor window change by itself (a tint or tooltip that "
+        .. "follows the new demon), without closing it?", ask = true, screenshot = "grimoires: other demon" },
+    { text = "Optional (Skip if nothing fits or you can't afford it): buy a grimoire the summoned demon can "
+        .. "learn but doesn't know, and use it.", event = "UNIT_SPELLCAST_SUCCEEDED" },
+    { text = "Reading the demon's spellbook again: the new rank, and what the ranks below it read now.",
+      auto = true, run = function() petBook() merchant() return true end },
+    { text = "Has a demon of yours ever learned a new rank on its own, just by levelling, without a "
+        .. "grimoire? (Not sure is fine.)", ask = true },
+    { text = "Type /reload to save the results.", reload = true },
+})
+
+Probe:Command("grimoires", function() Probe:StartSteps("grimoires") end,
+    "#59: guided, at a demon trainer with a demon out")
+Probe:Command("petbook", function() petBook() merchant() end,
+    "#59: the demon's known pet spells, and the open vendor window's grimoires")
 
 -- Saved tables only at our own ADDON_LOADED (they load after this file).
 -- Earlier sessions' `runs` (before ForeverProbe) are left as they were.

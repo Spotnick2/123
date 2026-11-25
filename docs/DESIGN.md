@@ -175,6 +175,25 @@ bar's buttons: summon, Sacrifice-or-summon, Armor, Soulstone, Healthstone, Ritua
 Grimoire of Portal of Summoning (item 216748; its use-spell 402265 is the generic "Learning" teach spell, not the portal) is in the database; whether it is
 live is unknown (its IDs look like Season of Discovery leftovers in Forever's database). Everything about it is hidden unless the spell is known; its own spell ID is still to be measured.
 
+## Grimoires at the demon trainer (#59)
+Which grimoires you still need, without summoning each demon at the trainer.
+- **What a demon knows** is read whenever one of your own demons is out, anywhere: the highest
+  rank of each of its abilities (`C_SpellBook.IsSpellKnown(spell, Pet)` answers for the summoned
+  demon only, and only its highest rank reads known: FOREVER-PROBE.md run 3). It is saved per
+  character (`ns.char.grimoires[summon]`), so you summon each demon once after installing.
+- **The vendor window:** at a vendor whose every item is a grimoire (a demon trainer), a
+  grimoire is hidden when every demon of yours that can learn it (a summon you know) has been
+  read and knows that rank or a higher one. A demon never read keeps its grimoires shown. The
+  Succubus and the Incubus learn the same grimoires, each on its own (the owner, 2026-11-25):
+  one is hidden once both know it. A checkbox on the window ("Hide known grimoires", on by default) and the options page
+  turn it off. The remaining grimoires are redrawn after Blizzard's `MerchantFrame_UpdateMerchantInfo`
+  (a post-hook), with the real merchant index on each button, and paged on their own count.
+- **The tooltip** of a grimoire lists each of your demons that can learn it: the rank it knows,
+  "not learned", or "summon it once" when 123 hasn't read it yet. The client's own "Already
+  known" speaks for the summoned demon only.
+- The table (59 grimoires, `Data.GRIMOIRES` and `Data.PET_RANKS`) is the client's own data
+  (71139, same as 70532); the Imp's and Voidwalker's are checked in game.
+
 ## Options, minimap, sounds (#14, #15)
 - **Options > AddOns > 123** (`Options/Options.lua`): a Settings canvas category, built on first
   show, Portal Roulette's widgets (checkboxes, cycling buttons, steppers; no dropdown). A bar
