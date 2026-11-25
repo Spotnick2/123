@@ -96,10 +96,10 @@ ns.Data = {
         [417] = 691,     -- Felhunter
     },
 
-    -- Each demon's grimoire abilities, by its summon (#59). The Incubus is
-    -- assumed to learn the Succubus' (unmeasured): a grimoire is hidden only
-    -- when every demon of yours that can learn it knows it, so a wrong guess
-    -- keeps a grimoire shown, never hides one.
+    -- Each demon's grimoire abilities, by its summon (#59). The Succubus and
+    -- the Incubus learn the same grimoires, each on its own (the owner,
+    -- 2026-11-25): a grimoire is hidden only when every demon of yours that
+    -- can learn it knows it.
     DEMON_ABILITIES = {
         [688] = { "Firebolt", "Blood Pact", "Fire Shield", "Phase Shift" },                 -- Imp
         [697] = { "Torment", "Sacrifice", "Consume Shadows", "Suffering" },                 -- Voidwalker

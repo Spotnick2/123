@@ -130,8 +130,9 @@ sells({ { 16316, "Grimoire of Firebolt (Rank 3)", 1500 }, { 6265, "Soul Shard", 
 check(not G.check:IsShown(), "no checkbox at another vendor")
 eq(slotID(1), 1, "nothing hidden there")
 
--- The Succubus and the Incubus: hidden only when both (if you have both)
--- know it; an Incubus never summoned keeps it shown.
+-- The Succubus and the Incubus learn the same grimoires, each on its own
+-- (the owner): hidden only when both (if you have both) know it; an Incubus
+-- never summoned keeps it shown.
 WoW.spells[712].known = true
 pet(SUCCUBUS, { [7815] = true })   -- Lash of Pain 2
 sells({ { 16368, "Grimoire of Lash of Pain (Rank 2)", 100 } })
