@@ -70,6 +70,7 @@ check(G.check:GetChecked(), "on by default")
 eq(slotID(1), 2, "Firebolt 2 is known: the first slot is Firebolt 3")
 eq(_G.MerchantItem1Name:GetText(), "Grimoire of Firebolt (Rank 3)", "with its name")
 eq(_G.MerchantItem1MoneyFrame._price, 1500, "and its price")
+eq(_G.MerchantItem1MoneyFrame._maxWidth, 120, "at Blizzard's price width (its file-local 120)")
 eq(slotID(3), 5, "Blood Pact 1 known: Blood Pact 2 follows Firebolt 4")
 eq(slotID(4), 6, "the Voidwalker not read yet: its Torment 2 stays")
 check(not slotShown(5), "the slots after the last are empty")
@@ -79,10 +80,28 @@ eq(G.hidden, 2, "two hidden")
 pet(VOID, { [3716] = true })
 eq(ns.char.grimoires[697]["Torment"], 1, "the Voidwalker's Torment: rank 1")
 eq(slotID(4), 6, "Torment 2 stays")
--- Rank 2 learned: hidden, without closing the window (SPELLS_CHANGED).
+-- Rank 2 learned while its tooltip is up: hidden, without closing the
+-- window (SPELLS_CHANGED), and the tooltip over the now-empty slot goes.
+MerchantItemButton_OnEnter(_G.MerchantItem4ItemButton)
 WoW.petSpells = { [7809] = true }
 WoW.fire("SPELLS_CHANGED")
 check(not slotShown(4), "Torment 2 learned: hidden at once")
+check(not GameTooltip:IsShown(), "and the tooltip over its slot is hidden")
+-- The Imp learns Firebolt 3 with its tooltip up: the slot now holds
+-- Firebolt 4, and the tooltip is rebuilt for it before a click buys it.
+MerchantItemButton_OnEnter(_G.MerchantItem1ItemButton)
+eq(GameTooltip._text, "item:16316", "hovering Firebolt 3")
+pet(IMP, { [7800] = true, [6307] = true })
+eq(slotID(1), 3, "Firebolt 3 learned: the first slot is Firebolt 4")
+check(GameTooltip:IsShown(), "the tooltip stays up")
+eq(GameTooltip._text, "item:16317", "rebuilt for Firebolt 4, the item a click buys")
+-- Nothing changed under it: left alone.
+GameTooltip._text = "untouched"
+MerchantFrame_Update()
+eq(GameTooltip._text, "untouched", "a redraw that moves nothing leaves the tooltip")
+-- Back to what follows expects: the Imp's run 3 ranks, the Voidwalker out.
+ns.char.grimoires[688] = { ["Firebolt"] = 2, ["Blood Pact"] = 1, ["Fire Shield"] = 0, ["Phase Shift"] = 0 }
+pet(VOID, { [7809] = true })
 
 -- The tooltip: what each demon of yours knows.
 local function tooltip(slot)

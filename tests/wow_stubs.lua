@@ -764,7 +764,6 @@ function GameEvent.HandleExperimentalCVarConfirmationNeeded() end
 WoW.merchant = {}
 MERCHANT_ITEMS_PER_PAGE = 10
 MERCHANT_PAGE_NUMBER = "Page %s of %s"
-MAX_MONEY_DISPLAY_WIDTH = 120
 function GetMerchantNumItems() return #WoW.merchant end
 function GetMerchantItemID(i) return WoW.merchant[i] and WoW.merchant[i][1] end
 function GetMerchantItemLink(i) return WoW.merchant[i] and ("item:" .. WoW.merchant[i][1]) end
@@ -814,7 +813,7 @@ function SetItemButtonNameFrameVertexColor() end
 function SetItemButtonSlotVertexColor() end
 function SetItemButtonTextureVertexColor(b, r, g, bl) b._tint = { r, g, bl } end
 function SetItemButtonNormalTextureVertexColor() end
-function MoneyFrame_SetMaxDisplayWidth() end
+function MoneyFrame_SetMaxDisplayWidth(frame, width) frame._maxWidth = width end
 function MoneyFrame_Update(name, price) _G[name]._price = price end
 function SetMoneyFrameColor() end
 function MerchantFrameItem_UpdateQuality() end
@@ -841,6 +840,13 @@ TooltipDataProcessor = {}
 function TooltipDataProcessor.AddTooltipPostCall(dataType, fn)
     WoW.tooltipPostCalls[dataType] = WoW.tooltipPostCalls[dataType] or {}
     table.insert(WoW.tooltipPostCalls[dataType], fn)
+end
+-- Blizzard's tooltip for a slot (Mainline/MerchantFrame.lua): the item's
+-- link as its text, then shown.
+function MerchantItemButton_OnEnter(button)
+    GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+    GameTooltip:SetText(GetMerchantItemLink(button:GetID()) or "")
+    GameTooltip:Show()
 end
 ------------------------------------------------------------
 -- Strict globals

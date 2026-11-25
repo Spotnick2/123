@@ -101,6 +101,11 @@ end
 -- The vendor window
 ------------------------------------------------------------
 
+-- A price's widest, as Blizzard draws a plain-gold item: its file-local
+-- MAX_MONEY_DISPLAY_WIDTH (Mainline/MerchantFrame.lua:5), not a global
+-- (Codex, PR #66).
+local MONEY_WIDTH = 120
+
 -- Every item a grimoire in the table, for gold: a demon trainer.
 local function demonTrainer()
     local n = API.Number(GetMerchantNumItems())
@@ -138,7 +143,7 @@ local function drawSlot(slot, index)
     SetItemButtonTexture(itemButton, info.texture)
     itemButton.price, itemButton.extendedCost = info.price, nil
     itemButton.name, itemButton.link, itemButton.texture = info.name, link, info.texture
-    MoneyFrame_SetMaxDisplayWidth(money, MAX_MONEY_DISPLAY_WIDTH)
+    MoneyFrame_SetMaxDisplayWidth(money, MONEY_WIDTH)
     MoneyFrame_Update(money:GetName(), info.price)
     SetMoneyFrameColor(money:GetName(), CanAffordMerchantItem(index) == false and "gray" or nil)
     altCurrency:Hide()
@@ -188,8 +193,39 @@ local function drawPaging(pages)
     end
 end
 
--- After Blizzard's redraw of the Merchant tab.
+-- The tooltip over a slot whose item just changed is rebuilt for the new
+-- one, or hidden (Codex, PR #66): Blizzard's click buys the button's ID at
+-- once, while the tooltip only refreshes on a timer, so a rank learned with
+-- the window open could leave the old grimoire's tooltip over the next one.
+-- `before` is what each slot showed until now.
+local function settleTooltip(before)
+    local owner = GameTooltip:IsShown() and GameTooltip:GetOwner()
+    for slot = 1, MERCHANT_ITEMS_PER_PAGE do
+        local button = _G["MerchantItem" .. slot .. "ItemButton"]
+        if owner == button and before[slot] ~= Grimoires.slotIDs[slot] then
+            if button:IsShown() and button.hasItem then
+                MerchantItemButton_OnEnter(button)
+            else
+                GameTooltip:Hide()
+            end
+        end
+    end
+end
+
+-- After Blizzard's redraw of the Merchant tab: ours, then the tooltip.
 function Grimoires:Redraw()
+    local before = self.slotIDs or {}
+    self:Remap()
+    self.slotIDs = {}
+    for slot = 1, MERCHANT_ITEMS_PER_PAGE do
+        local button = _G["MerchantItem" .. slot .. "ItemButton"]
+        self.slotIDs[slot] = button:IsShown() and button:GetID() or 0
+    end
+    settleTooltip(before)
+end
+
+-- The grimoires still to show, on the ten slots and their pages.
+function Grimoires:Remap()
     local n = demonTrainer()
     if self.check then
         self.check:SetShown(n ~= nil)
