@@ -1,6 +1,8 @@
 # Changelog
 
-## Unreleased
+## v1.0.0-beta2 (2026-11-25)
+Grimoires at the demon trainer, and a camera that follows again after the demon wheel. A beta:
+the grimoires are tested in game before 1.0.0.
 - The camera follows your character again after the demon wheel closes (LibShowcase r15). It
   used to end on a saved view that doesn't follow, which the client kept across logins; players
   left on it are moved back once.

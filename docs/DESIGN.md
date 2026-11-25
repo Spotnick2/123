@@ -185,7 +185,8 @@ Which grimoires you still need, without summoning each demon at the trainer.
   grimoire is hidden when every demon of yours that can learn it (a summon you know) has been
   read and knows that rank or a higher one. A demon never read keeps its grimoires shown. The
   Succubus and the Incubus learn the same grimoires, each on its own (the owner, 2026-11-25):
-  one is hidden once both know it. A checkbox on the window ("Hide known grimoires", on by default) and the options page
+  one is hidden once each of them you can summon knows it, so learning Summon Incubus can
+  bring one back until the Incubus is read. A checkbox on the window ("Hide known grimoires", on by default) and the options page
   turn it off. The remaining grimoires are redrawn after Blizzard's `MerchantFrame_UpdateMerchantInfo`
   (a post-hook), with the real merchant index on each button, and paged on their own count.
 - **The tooltip** of a grimoire lists each of your demons that can learn it: the rank it knows,
