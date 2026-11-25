@@ -79,6 +79,17 @@ whispers it: a small prompt above the Healthstone button says who asks.
 - **Skip** drops a request; it also ends after a trade where you placed the stone, when they
   leave the group, or after 5 minutes. `/123 hs test` shows the prompt alone.
 
+## Grimoires at the demon trainer
+At a demon trainer's goods, the grimoires your demons already know are hidden, so what's left is
+what you can still buy. Each grimoire's tooltip says what each of your demons knows: the rank, or
+"not learned".
+- 123 reads a demon whenever it is out, anywhere, and remembers it. Summon each demon once after
+  installing; until then its grimoires stay shown and the tooltip says to summon it once.
+- The Succubus and the Incubus learn the same grimoires, each on its own: one is hidden once both
+  know it.
+- The "Hide known grimoires" checkbox on the vendor window (and the options page) shows them all
+  again.
+
 ## Commands
 - `/123`: show or hide the bar (also `/onetwothree`, and a key binding)
 - `/123 options`: the options page (Options > AddOns > 123)
