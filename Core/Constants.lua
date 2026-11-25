@@ -65,6 +65,8 @@ ns.Constants = {
         hideGameUI = true,
         cameraOrbit = true,
         showcase = {},
+        -- At a demon trainer, hide the grimoires your demons know (#59).
+        hideKnownGrimoires = true,
         bar = {
             point = "CENTER",
             x = 0,

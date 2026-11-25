@@ -28,6 +28,7 @@ local APPLY = {
     ["pair.sacrifice"] = function() ns.SecureAction.MarkDirty() end,
     ["pair.keep"] = function() ns.SecureAction.MarkDirty() end,
     showMinimapButton = function() ns.Minimap:RefreshVisibility() end,
+    hideKnownGrimoires = function() ns.Grimoires:Refresh() end,
 }
 
 -- Where a key is saved: ns.db, except the bar's own, the alert kits, the
@@ -265,7 +266,12 @@ local function build()
     a = lineBox(panel, a, "summon")
     a = toggle(panel, a, "announce.clickers", L["Ask for clickers when fewer than 2 are near"])
     a = lineBox(panel, a, "clickers")
-    note(panel, L["{name} is who you summon. Sent to instance, raid or party chat when the ritual starts, at most every 10 seconds."], a)
+    a = note(panel, L["{name} is who you summon. Sent to instance, raid or party chat when the ritual starts, at most every 10 seconds."], a)
+
+    -- #59: the demon trainer's grimoires.
+    h = heading(panel, L["Demon trainer"], a)
+    a = toggle(panel, h, "hideKnownGrimoires", L["Hide known grimoires"])
+    note(panel, L["Hides a grimoire once every demon of yours that can learn it knows that rank. Summon each demon once so 123 can read what it knows."], a)
 
     -- Right column.
     local right = CreateFrame("Frame", nil, panel)

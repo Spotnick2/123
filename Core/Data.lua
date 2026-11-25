@@ -96,6 +96,69 @@ ns.Data = {
         [417] = 691,     -- Felhunter
     },
 
+    -- Each demon's grimoire abilities, by its summon (#59). The Incubus is
+    -- assumed to learn the Succubus' (unmeasured): a grimoire is hidden only
+    -- when every demon of yours that can learn it knows it, so a wrong guess
+    -- keeps a grimoire shown, never hides one.
+    DEMON_ABILITIES = {
+        [688] = { "Firebolt", "Blood Pact", "Fire Shield", "Phase Shift" },                 -- Imp
+        [697] = { "Torment", "Sacrifice", "Consume Shadows", "Suffering" },                 -- Voidwalker
+        [712] = { "Lash of Pain", "Soothing Kiss", "Seduction", "Lesser Invisibility" },    -- Succubus
+        [713] = { "Lash of Pain", "Soothing Kiss", "Seduction", "Lesser Invisibility" },    -- Incubus
+        [691] = { "Devour Magic", "Tainted Blood", "Spell Lock", "Paranoia" },             -- Felhunter
+    },
+    -- Grimoires (#59): each pet ability's spell per rank, rank 1 first. Rank 1
+    -- of Firebolt, Torment, Lash of Pain and Devour Magic comes with the demon;
+    -- every other rank is taught by a grimoire. Forever's client data 71139
+    -- (itemsparse + itemxitemeffect + itemeffect + spelleffect, effect 36
+    -- LEARN_SPELL), the same in 70532; the Imp's and the Voidwalker's checked in
+    -- game (docs/FOREVER-PROBE.md run 3).
+    PET_RANKS = {
+        ["Blood Pact"] = { 6307, 7804, 7805, 11766, 11767 },
+        ["Consume Shadows"] = { 17767, 17850, 17851, 17852, 17853, 17854 },
+        ["Devour Magic"] = { 19505, 19731, 19734, 19736 },
+        ["Fire Shield"] = { 2947, 8316, 8317, 11770, 11771 },
+        ["Firebolt"] = { 3110, 7799, 7800, 7801, 7802, 11762, 11763 },
+        ["Lash of Pain"] = { 7814, 7815, 7816, 11778, 11779, 11780 },
+        ["Lesser Invisibility"] = { 7870 },
+        ["Paranoia"] = { 19480 },
+        ["Phase Shift"] = { 4511 },
+        ["Sacrifice"] = { 7812, 19438, 19440, 19441, 19442, 19443 },
+        ["Seduction"] = { 6358 },
+        ["Soothing Kiss"] = { 6360, 7813, 11784, 11785 },
+        ["Spell Lock"] = { 19244, 19647 },
+        ["Suffering"] = { 17735, 17750, 17751, 17752 },
+        ["Tainted Blood"] = { 19478, 19655, 19656, 19660 },
+        ["Torment"] = { 3716, 7809, 7810, 7811, 11774, 11775 },
+    },
+    -- Grimoire item -> { ability, rank }.
+    GRIMOIRES = {
+        [16302] = { "Firebolt", 2 }, [16316] = { "Firebolt", 3 }, [16317] = { "Firebolt", 4 },
+        [16318] = { "Firebolt", 5 }, [16319] = { "Firebolt", 6 }, [16320] = { "Firebolt", 7 },
+        [16321] = { "Blood Pact", 1 }, [16322] = { "Blood Pact", 2 }, [16323] = { "Blood Pact", 3 },
+        [16324] = { "Blood Pact", 4 }, [16325] = { "Blood Pact", 5 }, [16326] = { "Fire Shield", 1 },
+        [16327] = { "Fire Shield", 2 }, [16328] = { "Fire Shield", 3 }, [16329] = { "Fire Shield", 4 },
+        [16330] = { "Fire Shield", 5 }, [16331] = { "Phase Shift", 1 }, [16346] = { "Torment", 2 },
+        [16347] = { "Torment", 3 }, [16348] = { "Torment", 4 }, [16349] = { "Torment", 5 },
+        [16350] = { "Torment", 6 }, [16351] = { "Sacrifice", 1 }, [16352] = { "Sacrifice", 2 },
+        [16353] = { "Sacrifice", 3 }, [16354] = { "Sacrifice", 4 }, [16355] = { "Sacrifice", 5 },
+        [16356] = { "Sacrifice", 6 }, [16357] = { "Consume Shadows", 1 },
+        [16358] = { "Consume Shadows", 2 }, [16359] = { "Consume Shadows", 3 },
+        [16360] = { "Consume Shadows", 4 }, [16361] = { "Consume Shadows", 5 },
+        [16362] = { "Consume Shadows", 6 }, [16363] = { "Suffering", 1 }, [16364] = { "Suffering", 2 },
+        [16365] = { "Suffering", 3 }, [16366] = { "Suffering", 4 }, [16368] = { "Lash of Pain", 2 },
+        [16371] = { "Lash of Pain", 3 }, [16372] = { "Lash of Pain", 4 },
+        [16373] = { "Lash of Pain", 5 }, [16374] = { "Lash of Pain", 6 },
+        [16375] = { "Soothing Kiss", 1 }, [16376] = { "Soothing Kiss", 2 },
+        [16377] = { "Soothing Kiss", 3 }, [16378] = { "Soothing Kiss", 4 },
+        [16379] = { "Seduction", 1 }, [16380] = { "Lesser Invisibility", 1 },
+        [16381] = { "Devour Magic", 2 }, [16382] = { "Devour Magic", 3 },
+        [16383] = { "Devour Magic", 4 }, [16384] = { "Tainted Blood", 1 },
+        [16385] = { "Tainted Blood", 2 }, [16386] = { "Tainted Blood", 3 },
+        [16387] = { "Tainted Blood", 4 }, [16388] = { "Spell Lock", 1 }, [16389] = { "Spell Lock", 2 },
+        [16390] = { "Paranoia", 1 },
+    },
+
     -- Armor families, preferred first, each highest rank first. The button
     -- casts the best known rank of the first family known; any rank of THAT
     -- family on the player counts as wearing it (#7). Rank numbers do not

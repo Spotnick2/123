@@ -45,5 +45,6 @@ UI\QueueList.lua
 UI\SoulPicker.lua
 UI\StonePrompt.lua
 UI\Minimap.lua
+UI\Grimoires.lua
 Options\Options.lua
 Core\Init.lua
