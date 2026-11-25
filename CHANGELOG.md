@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+- The camera follows your character again after the demon wheel closes (LibShowcase r15). It
+  used to end on a saved view that doesn't follow, which the client kept across logins; players
+  left on it are moved back once.
+- `/123 queue`, `/123 hs` and the `/123` help line show their `|` separators (#61).
+
 ## v1.0.0-beta1 (2026-11-03)
 Everything a Warlock does for the group: summon the queue, give soulstones and healthstones,
 Banish and Subjugate, a smarter Demonic Sacrifice, a new look, French and German. A beta: the

@@ -38,7 +38,7 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
     `..\ForeverProbe` (private: CI sets `FOREVERPROBE_OPTIONAL=1` and that file skips).
 - Deploy: `pwsh Tools/deploy.ps1` (`-Probe` adds the dev probe, `-ProbeOnly` deploys just the probe).
   It deploys git-tracked files only (stage new files first) to
-  `C:\Program Files (x86)\World of Warcraft\_classic_beta_\Interface\AddOns`, and LibGlass from the
+  `C:\Program Files (x86)\World of Warcraft\_forever_\Interface\AddOns`, and LibGlass from the
   sibling checkout `..\LibGlass`.
 - `/reload` loads changed files and a brand-new addon folder (ForeverProbe GUIDE.md section 7); exit fully only to test persistence. Enable `/console scriptErrors 1`.
 
@@ -60,6 +60,10 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
   `vX.Y.Z-alpha1` / `-beta1` publish as alpha/beta (a GitHub pre-release); try a packaging change
   on an alpha first. Publish a failed target again with Actions > Package check > Run workflow
   from `main` (`tag`, `publish`). No CurseForge key lives in the repo.
+- A release tag (`vX.Y.Z`, not an alpha or beta) updates both READMEs in its prep PR
+  (RELEASING.md §3): `README.md` and the untracked `README.curseforge.md` describe what that
+  release does, and nothing it no longer does. The PR says whether `README.curseforge.md`
+  changed, since the owner pastes it into CurseForge and Wago after the release.
 
 ## Naming
 - Addon folder and TOC: `123`. Lua identifiers can't start with a digit, so globals, frames and
@@ -100,4 +104,4 @@ is confirmed with the dev probe (`Tools/OneTwoThreeProbe`, a ForeverProbe module
 - Sounds: in-game kits (`PlaySound`, vanilla-era kits) or FileDataIDs; `PlaySoundFile` refuses
   built-in paths. Models: `ModelScene` + `SetModelByCreatureDisplayID`.
 - Embedded libraries live in `Libs\`, gitignored and pinned in `.pkgmeta` (LibGlass-1.0 r10,
-  LibShowcase-1.0 r4); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.
+  LibShowcase-1.0 r15); `tests/fetch_lib.sh` fetches a pin for CI. LibStub is vendored.

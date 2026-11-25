@@ -28,8 +28,18 @@ WoW.counts[6265] = 3
 WoW.petGUID = "Pet-0-4613-0-1234-1860-0000ABCDEF"
 WoW.petActions[5] = { name = "Sacrifice", spellID = 7812 }
 
+-- A player r4 left on saved view 5, on a following camera style.
+WoW.cvars.cameraView, WoW.cvars.cameraSmoothStyle = "5", "1"
 local ns = H.loadAddon(haveLib and { libs = { libFile } } or nil)
 local Wheel = ns.Wheel
+if haveLib then
+    -- The instance exists from login, so LibShowcase's once-only repair runs
+    -- without the wheel ever opening (Codex, PR #65).
+    check(ns.Presentation.lib, "the LibShowcase instance is made at login")
+    eq(WoW.camera.view, 2, "a camera left on view 5 is back on view 2 at login, before the wheel opens")
+    eq(ns.db.showcase and ns.db.showcase.LibShowcaseViewRepaired, true, "once: the flag is in 123's db")
+end
+WoW.cvars.cameraView, WoW.cvars.cameraSmoothStyle, WoW.camera.view = nil, nil, 1
 local function click(button, mouse) button:GetScript("PostClick")(button, mouse or "LeftButton", false) end
 local function attr(node, k) return node.button:GetAttribute(k) end
 local function openWheel() ns.Bar.wheelButton:GetScript("OnClick")() end

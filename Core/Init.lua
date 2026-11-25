@@ -81,7 +81,7 @@ local function registerSlashCommands()
             elseif sub == "clear" then
                 ns.Queue:Clear()
             else
-                printMessage(L["%d waiting. /123 queue test | clear"]:format(#ns.Queue.entries))
+                printMessage(L["%d waiting. /123 queue test || clear"]:format(#ns.Queue.entries))
             end
         elseif cmd == "hs" then
             local sub = string.lower((commandText or ""):match("^%s*%S+%s+(%S*)") or "")
@@ -90,7 +90,7 @@ local function registerSlashCommands()
             elseif sub == "clear" then
                 ns.Requests:Clear()
             else
-                printMessage(L["%d healthstone requests. /123 hs test | clear"]:format(#ns.Requests.entries))
+                printMessage(L["%d healthstone requests. /123 hs test || clear"]:format(#ns.Requests.entries))
             end
         elseif cmd == "wheel" then
             ns.Wheel:Toggle()
@@ -117,7 +117,7 @@ local function registerSlashCommands()
         elseif cmd == "" then
             ns.Bar:Toggle()
         else
-            printMessage(L["/123 | options | queue (test, clear) | hs (test, clear) | wheel | preview (every demon, nothing cast) | camera (cinematic opening) | sounds (demon voices) | labels (names under the icons) | confirm (ask before re-summoning) | debug"])
+            printMessage(L["/123 || options || queue (test, clear) || hs (test, clear) || wheel || preview (every demon, nothing cast) || camera (cinematic opening) || sounds (demon voices) || labels (names under the icons) || confirm (ask before re-summoning) || debug"])
         end
     end
 end
@@ -130,6 +130,11 @@ ns.Events:Register("PLAYER_LOGIN", function()
         return
     end
 
+    -- The LibShowcase instance now, not at the wheel's first opening: its
+    -- login work (the once-only repair of a camera left on saved view 5 by
+    -- r4-r11, a capture a crash left behind) runs only for an instance that
+    -- exists at login (Codex, PR #65).
+    ns.Presentation:Lib()
     ns.SecureAction.Initialize()
     ns.Bar:Initialize()
     ns.Wheel:Initialize()

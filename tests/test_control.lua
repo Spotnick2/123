@@ -55,7 +55,9 @@ eq(banish.timer:GetText(), "30", "30 seconds for rank 2")
 eq(banish.cooldown._cooldown and banish.cooldown._cooldown[2], 30, "and the swipe")
 check(tooltip(banish):find("Banished: 30 left", 1, true) ~= nil, "the tooltip says how long")
 check(tooltip(banish):find("can't be seen", 1, true) ~= nil, "and that it is an estimate")
-WoW.advance(20)
+-- 20.3: the ticker (0.2 s) runs at its due times, and its 100th lands a
+-- float hair past 20 s, so the last tick inside 20.0 read 10.2 s left.
+WoW.advance(20.3)
 eq(banish.timer:GetText(), "10", "ten seconds left")
 eq(banish.barState, "normal", "no glow yet")
 WoW.advance(5.2)
@@ -190,7 +192,7 @@ WoW.targetGUID = MOB
 WoW.enterCombat()
 cast(18647, 9)
 eq(banish.timer:GetText(), "30", "in combat: counts down too")
-WoW.advance(10)
+WoW.advance(10.3)
 eq(banish.timer:GetText(), "20", "and ticks")
 WoW.leaveCombat()
 

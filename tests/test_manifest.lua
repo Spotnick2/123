@@ -5,8 +5,9 @@ local H = dofile("tests/harness.lua")
 
 -- WowTestKit's checks every TOC must pass: the interface, the packager's
 -- version token, every listed .lua file exists, every entry listed once.
--- (Not the probe's TOC: its "## Version: dev" is deliberate, WowTestKit #84.)
 Kit.checkToc("123.toc")
+-- The probe is never packaged: its "## Version: dev" is deliberate.
+Kit.checkToc("OneTwoThreeProbe.toc", { version = "dev", dir = "Tools/OneTwoThreeProbe/" })
 
 local toc = assert(io.open("123.toc")):read("*a"):gsub("\r", "")
 check(toc:find("## SavedVariables: OneTwoThreeDB\n"), "OneTwoThreeDB is the saved table")
