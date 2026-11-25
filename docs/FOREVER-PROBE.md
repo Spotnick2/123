@@ -27,7 +27,7 @@ time. Every global 123 uses is unchanged.
 | 9 | Turning 123 off for one character (#39): which character form `C_AddOns.DisableAddOn` takes | `/fp steps 123 disable` | #39 | **MEASURED** (70374, 2026-10-15): the player's **GUID** (as Blizzard's AddOns list passes it) sets this character to 0 and all to 1; `EnableAddOn` restores 2/2. A name (`UnitName`, "Kaleid") is accepted and does nothing. Not used: 123 skips itself at load instead (every file stops on another class). |
 | 11 | Banish and Subjugate Demon (#29): real durations (Wowhead's Forever database: Banish 20 / 30 s, Subjugate up to 5 min); `UNIT_SPELLCAST_SUCCEEDED`'s spell ID in combat; `UNIT_PET` / `UNIT_DIED` / `PET_DISMISS_START` when a subjugated demon breaks free, is dismissed or dies; the `/stopmacro [nopet][pet:...]` + `/petdismiss` right click | `control` (guided), `watch on` | #29 | OPEN (game offline until 2026-11-04) |
 | 12 | Demonic Sacrifice (#20): the buff per demon (Wowhead's Forever database: Imp 18789 "Burning Shadow", Voidwalker 18790, Succubus 18791 "Touch of Fire", Felhunter 18792; the Incubus' unknown, assumed 18791), its duration, Demonic Pact 425464 known through `IsPlayerSpell` / `C_SpellBook`, which summon ends the buff with and without the talent | `sacrifice` (guided), `auras` | #20 | OPEN (needs a Demonology respec) |
-| 13 | Grimoires (#59): which `MerchantFrame` this client loads (Mainline or Vanilla) and its slot button IDs; `C_SpellBook.IsSpellKnown` / `IsSpellInSpellBook` with the Pet bank for each grimoire rank, the summoned demon's lower ranks once a higher one is learned; `C_Item.GetItemSpell` against the table (DB2 70532: 59 grimoires, effect 36 LEARN_SPELL); "Already known" or red in `C_TooltipInfo.GetMerchantItem`; what fires and redraws the vendor when the demon changes; whether a demon learns ranks without a grimoire | `grimoires` (guided), `petbook` | #59 | OPEN |
+| 13 | Grimoires (#59): which `MerchantFrame` this client loads (Mainline or Vanilla) and its slot button IDs; `C_SpellBook.IsSpellKnown` / `IsSpellInSpellBook` with the Pet bank for each grimoire rank, the summoned demon's lower ranks once a higher one is learned; `C_Item.GetItemSpell` against the table (DB2 70532: 59 grimoires, effect 36 LEARN_SPELL); "Already known" or red in `C_TooltipInfo.GetMerchantItem`; what fires and redraws the vendor when the demon changes; whether a demon learns ranks without a grimoire | `grimoires` (guided), `petbook` | #59 | **MEASURED** (71139, 2026-11-25): run 3 below |
 | 10 | Localization (#22): `GetLocale`, the languages the client ships (`GetAvailableLocales`), and `C_CreatureInfo.GetCreatureFamilyInfo` for families 15, 16, 17, 19, 23, 302 (the wheel's demon names; the code falls back to the summon's name). On a non-English client if possible: the glass font with accents, and whether demon voices play in that language | `locale` | #22 | OPEN (game offline until 2026-11-04) |
 
 ## Run 1 — build 70334, 2026-10-09, open world, party of 2
@@ -96,6 +96,35 @@ INSTANCE_CHAT and inside a dungeon are still open (`/fp 123 watch on`, shapes).
 - party1 about 4.6 yd away (`UnitDistanceSquared` 21).
 - `CheckInteractDistance` 4: true. `UnitIsVisible`: true. `C_Spell.IsSpellInRange(5697)`: true.
 - Same map (1453). `UnitInRange` is still secret.
+
+## Run 3 — build 71139, 2026-11-25, level 10 Warlock at a demon trainer (#59)
+
+`/fp 123 grimoires` at Dannie Fizzwizzle (Kharanos), with the Voidwalker out, then the Imp.
+
+- **The vendor window is the Mainline `MerchantFrame`** (it has `FilterDropdown`): 10 items a page,
+  slots `MerchantItem1..10`, buttons `MerchantItem<i>ItemButton`. Blizzard's redraw sets each button's
+  ID to its merchant index (0 at `MERCHANT_SHOW`, before the first `MerchantFrame_UpdateMerchantInfo`).
+  The redraw runs twice on opening and on each page or purchase; `MERCHANT_UPDATE` didn't fire.
+- **This trainer sells only grimoires: 38 items, 4 pages, all 38 in the table** (DB2 70532) and matching it:
+  Imp (Firebolt 2-7, Blood Pact 1-5, Fire Shield 1-5, Phase Shift) and Voidwalker (Torment 2-6,
+  Sacrifice 1-6, Consume Shadows 1-6, Suffering 1-4), plain gold, no extended cost.
+  `GetMerchantFilter()` is 2 and filters nothing here.
+- **`C_Item.GetItemSpell` gives the grimoire's own use spell** (16302 → 20270 "Firebolt"), not the pet
+  spell it teaches: the item → pet spell table is needed.
+- **`C_SpellBook.IsSpellKnown(petSpell, Enum.SpellBookSpellBank.Pet)` (bank 1) answers only for the summoned
+  demon**: the Imp's Firebolt 2 and Blood Pact 1 read true with the Imp out, false with the Voidwalker
+  out. `IsSpellInSpellBook` always agrees.
+- **Only the highest rank reads known.** With Firebolt 2 learned, Firebolt 1 (3110) reads false, and the
+  pet spellbook lists only `Firebolt (Rank 2)`. A grimoire is known when its rank is at or below the
+  highest rank known.
+- **The client gives no sign in the list**: every grimoire's icon is tinted red, known or not, usable
+  or not (screenshots). Only the tooltip says `Already known` (red), and only for the summoned demon.
+- **A demon change:** three `UNIT_PET player`, then one `SPELLS_CHANGED`. `PET_BAR_UPDATE` didn't fire.
+  Summoning from 123's wheel closed the vendor (`MERCHANT_CLOSED`, the wheel hides the UI); reopened, the
+  list looked the same.
+- **Learning by levelling:** the owner has never seen a demon learn a rank without a grimoire.
+- Not measured: buying and using a grimoire (the step was skipped), so what fires when a rank is learned.
+  The Succubus', Incubus' and Felhunter's grimoires weren't sold here.
 
 Already measured elsewhere (do not re-probe): see `docs/DESIGN.md` and
 `C:\Projects\WoW\References\Docs\PORTING-TBC-TO-FOREVER.md`.
